@@ -13,6 +13,8 @@ requires the bytes to be valid in UTF-8. However, since this crate makes
 conversions directly between the platform encoding and raw bytes, even some
 strings invalid in UTF-8 can be converted.
 
+[![GitHub Build Status](https://github.com/dylni/os_str_bytes/workflows/build/badge.svg?branch=master)](https://github.com/dylni/os_str_bytes/actions)
+
 ## Usage
 
 Add the following lines to your "Cargo.toml" file:
