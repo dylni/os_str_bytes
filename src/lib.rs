@@ -1,0 +1,435 @@
+//! Traits for converting between byte sequences and platform-native strings.
+//!
+//! This crate allows interacting with the bytes stored internally by [`OsStr`]
+//! and [`OsString`], without resorting to panics or data corruption for
+//! invalid UTF-8. Thus, methods can be used that are already defined on
+//! [`[u8]`][slice] and [`Vec<u8>`].
+//!
+//! Typically, the only way to losslessly construct [`OsStr`] or [`OsString`]
+//! from a byte sequence is to use `OsString::from(String::from(bytes)?)`,
+//! which requires the bytes to be valid in UTF-8. However, since this crate
+//! makes conversions directly between the platform encoding and raw bytes,
+//! even some strings invalid in UTF-8 can be converted.
+//!
+//! # Implementation
+//!
+//! All traits are [sealed], meaning that they can only be implemented by this
+//! crate. Otherwise, backwards compatibility would be more difficult to
+//! maintain for new features.
+//!
+//! # Complexity
+//!
+//! The time complexities of methods will vary based on what functionality is
+//! available for the platform. The most efficient implementation will be used,
+//! but it is important to use the most applicable method. For example,
+//! [`OsStringBytes::from_vec`] will be at least as efficient as
+//! [`OsStringBytes::from_bytes`], but the latter should be used when only a
+//! slice is available.
+//!
+//! # Safety
+//!
+//! Some unsafe assumptions are made, with the most egregious being that
+//! [`str::from_utf8_unchecked`] returns a partially usable string for invalid
+//! UTF-8. The alternative would be to encode and decode strings manually,
+//! which would be more dangerous, as it would create a reliance on how the
+//! standard library encodes invalid UTF-8 strings.
+//!
+//! To make this implementation less problematic, it is best to not make any
+//! assumptions about the representation of invalid UTF-8 bytes. However, given
+//! the purpose of this crate, every measure will be taken to ensure that it
+//! matches the raw byte sequence, meaning this is usually not a concern. Tests
+//! exist to validate that the conversions are sound.
+//!
+//! # Examples
+//!
+//! ```
+//! use std::env::temp_dir;
+//! use std::ffi::OsStr;
+//! use std::fs::read_to_string;
+//! use std::fs::write;
+//! # use std::io::Result;
+//!
+//! use os_str_bytes::OsStrBytes;
+//!
+//! # fn main() -> Result<()> {
+//! let string = "hello world";
+//! let file_name = b"\xC3\xA9os_str\xED\xA0\xBDbytes\xF0\x9F\x92\xA9.txt";
+//!
+//! let mut file = temp_dir();
+//! // In this example, conversion always succeeds, so `unwrap()` can be used.
+//! file.push(OsStr::from_bytes(file_name).unwrap());
+//!
+//! write(&file, string)?;
+//! assert_eq!(string, read_to_string(file)?);
+//! #
+//! #     Ok(())
+//! # }
+//! ```
+//!
+//! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
+//! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
+//! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
+//! [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
+//! [`OsStringBytes::from_bytes`]: trait.OsStringBytes.html#tymethod.from_bytes
+//! [`OsStringBytes::from_vec`]: trait.OsStringBytes.html#tymethod.from_vec
+//! [`str::from_utf8_unchecked`]: https://doc.rust-lang.org/std/str/fn.from_utf8_unchecked.html
+//! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
+
+#![doc(html_root_url = "https://docs.rs/os_str_bytes/0.1.0")]
+
+use std::borrow::Cow;
+use std::error::Error;
+use std::fmt::Display;
+use std::fmt::Formatter;
+use std::fmt::Result as FmtResult;
+
+#[cfg(unix)]
+#[path = "unix.rs"]
+mod imp;
+#[cfg(windows)]
+#[path = "windows.rs"]
+mod imp;
+
+/// The error that occurs when a byte sequence is not representable in the
+/// platform encoding.
+///
+/// On Unix, this error should never occur, but [`OsStrExt`] or [`OsStringExt`]
+/// should be used instead if that needs to be guaranteed.
+///
+/// [`OsStrExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStrExt.html
+/// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
+#[derive(Debug, Eq, PartialEq)]
+pub struct EncodingError(());
+
+impl Display for EncodingError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+        "byte sequence is not representable in the platform encoding"
+            .fmt(formatter)
+    }
+}
+
+impl Error for EncodingError {}
+
+/// A platform agnostic variant of [`OsStrExt`].
+///
+/// For more information, see [the module-level documentation][module].
+///
+/// [module]: index.html
+/// [`OsStrExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStrExt.html
+pub trait OsStrBytes: private::Sealed + ToOwned {
+    /// Converts a byte slice into an equivalent platform-native string
+    /// reference.
+    ///
+    /// This method returns [`Cow<Self>`] to account for platform differences.
+    /// However, no guarantee is made that the same variant of that enum will
+    /// always be returned for the same platform. Whichever can be constructed
+    /// most efficiently will be returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::ffi::OsStr;
+    /// #
+    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStrBytes;
+    ///
+    /// # fn main() -> Result<(), EncodingError> {
+    /// let string = b"foo\xED\xA0\xBDbar";
+    /// assert_eq!(string.len(), OsStr::from_bytes(string)?.len());
+    /// #     Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`Cow<Self>`]: https://doc.rust-lang.org/std/borrow/enum.Cow.html
+    fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError>;
+
+    /// The unsafe equivalent of [`from_bytes`].
+    ///
+    /// More information is given in that method's documentation.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe, because it does not check that the bytes passed
+    /// are representable in the platform encoding. If this constraint is
+    /// violated, it may cause memory unsafety issues with future uses of this
+    /// string, as the rest of the standard library assumes that [`OsStr`] and
+    /// [`OsString`] will be usable for the platform. However, the most likely
+    /// issue is that the data gets corrupted.
+    ///
+    /// [`from_bytes`]: #tymethod.from_bytes
+    /// [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
+    /// [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
+    unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self>;
+
+    /// Converts the internal byte representation into a byte slice.
+    ///
+    /// For more information, see [`from_bytes`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::ffi::OsStr;
+    /// #
+    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStrBytes;
+    ///
+    /// # fn main() -> Result<(), EncodingError> {
+    /// let string = b"foo\xED\xA0\xBDbar";
+    /// let os_string = OsStr::from_bytes(string)?.into_owned();
+    /// assert_eq!(string, os_string.to_bytes().as_ref());
+    /// #     Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`from_bytes`]: #tymethod.from_bytes
+    fn to_bytes(&self) -> Cow<'_, [u8]>;
+}
+
+/// A platform agnostic variant of [`OsStringExt`].
+///
+/// For more information, see [the module-level documentation][module].
+///
+/// [module]: index.html
+/// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
+pub trait OsStringBytes: private::Sealed + Sized {
+    /// Copies a byte slice into a new equivalent platform-native string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::ffi::OsString;
+    /// #
+    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStringBytes;
+    ///
+    /// # fn main() -> Result<(), EncodingError> {
+    /// let string = b"foo\xED\xA0\xBDbar";
+    /// assert_eq!(string.len(), OsString::from_bytes(string)?.len());
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
+    where
+        TString: AsRef<[u8]>;
+
+    /// The unsafe equivalent of [`from_bytes`].
+    ///
+    /// More information is given in that method's documentation.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe for the same reason as
+    /// [`OsStrBytes::from_bytes_unchecked`].
+    ///
+    /// [`from_bytes`]: #tymethod.from_bytes
+    /// [`OsStrBytes::from_bytes_unchecked`]: trait.OsStrBytes.html#tymethod.from_bytes_unchecked
+    unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
+    where
+        TString: AsRef<[u8]>;
+
+    /// Converts a byte vector into an equivalent platform-native string.
+    ///
+    /// Whenever possible, the conversion will be performed without copying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::ffi::OsString;
+    /// #
+    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStringBytes;
+    ///
+    /// # fn main() -> Result<(), EncodingError> {
+    /// let string = b"foo\xED\xA0\xBDbar".to_vec();
+    /// assert_eq!(string.len(), OsString::from_vec(string)?.len());
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError>;
+
+    /// The unsafe equivalent of [`from_vec`].
+    ///
+    /// More information is given in that method's documentation.
+    ///
+    /// # Safety
+    ///
+    /// This method is unsafe for the same reason as
+    /// [`OsStrBytes::from_bytes_unchecked`].
+    ///
+    /// [`from_vec`]: #tymethod.from_vec
+    /// [`OsStrBytes::from_bytes_unchecked`]: trait.OsStrBytes.html#tymethod.from_bytes_unchecked
+    unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self;
+
+    /// Converts the internal byte representation into a byte vector.
+    ///
+    /// Whenever possible, the conversion will be performed without copying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::ffi::OsString;
+    /// #
+    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStringBytes;
+    ///
+    /// # fn main() -> Result<(), EncodingError> {
+    /// let string = b"foo\xED\xA0\xBDbar".to_vec();
+    /// let os_string = OsString::from_vec(string.clone())?;
+    /// assert_eq!(string, os_string.into_vec());
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn into_vec(self) -> Vec<u8>;
+}
+
+mod private {
+    use std::ffi::OsStr;
+    use std::ffi::OsString;
+
+    pub trait Sealed {}
+    impl Sealed for OsStr {}
+    impl Sealed for OsString {}
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::OsStr;
+    use std::ffi::OsString;
+    use std::str;
+
+    use getrandom::getrandom;
+    use getrandom::Error as GetRandomError;
+
+    use crate::EncodingError;
+    use crate::OsStrBytes;
+    use crate::OsStringBytes;
+
+    const UTF8_STRING: &str = "string";
+
+    const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
+
+    pub(crate) const INVALID_STRING: &[u8] =
+        b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
+
+    const RANDOM_BYTES_LENGTH: usize = 100;
+
+    #[inline]
+    fn assert_os_eq<TRight>(left: &OsStr, right: Result<TRight, EncodingError>)
+    where
+        TRight: AsRef<OsStr>,
+    {
+        assert_eq!(Ok(left), right.as_ref().map(TRight::as_ref));
+    }
+
+    fn random_os_string(
+        buffer_length: usize,
+    ) -> Result<OsString, GetRandomError> {
+        let mut buffer = vec![0; buffer_length];
+        #[cfg(unix)]
+        {
+            getrandom(&mut buffer)?;
+            Ok(::std::os::unix::ffi::OsStringExt::from_vec(buffer))
+        }
+        #[cfg(windows)]
+        {
+            // SAFETY: These bytes are random, so their values are arbitrary.
+            getrandom(unsafe {
+                ::std::mem::transmute::<&mut [u16], &mut [u8]>(&mut buffer)
+            })?;
+            Ok(::std::os::windows::ffi::OsStringExt::from_wide(&buffer))
+        }
+    }
+
+    #[test]
+    fn test_empty_bytes() {
+        assert_os_eq(&OsString::new(), OsStr::from_bytes(&[]));
+        assert_os_eq(&OsString::new(), OsString::from_bytes([]));
+        assert_eq!(
+            // Assist type inference.
+            &[b'\0'; 0],
+            OsString::new().as_os_str().to_bytes().as_ref(),
+        );
+    }
+
+    #[test]
+    fn test_empty_vec() -> Result<(), EncodingError> {
+        assert_eq!(0, OsString::from_vec(Vec::new())?.len());
+        assert_eq!(Vec::<u8>::new(), OsString::new().into_vec());
+        Ok(())
+    }
+
+    #[test]
+    fn test_utf8_bytes() {
+        let os_str = OsString::from(UTF8_STRING);
+        let os_str = os_str.as_os_str();
+        assert_os_eq(&os_str, OsStr::from_bytes(UTF8_STRING.as_bytes()));
+        assert_os_eq(&os_str, OsString::from_bytes(UTF8_STRING));
+        assert_eq!(UTF8_STRING.as_bytes(), os_str.to_bytes().as_ref());
+    }
+
+    #[test]
+    fn test_utf8_vec() {
+        let os_string = OsString::from(UTF8_STRING);
+        assert_os_eq(
+            &os_string,
+            OsString::from_vec(UTF8_STRING.to_string().into_bytes()),
+        );
+        assert_eq!(UTF8_STRING.to_string().into_bytes(), os_string.into_vec());
+    }
+
+    fn test_string_is_invalid_utf8(string: &[u8]) {
+        assert!(str::from_utf8(string).is_err());
+    }
+
+    pub(crate) fn test_bytes(string: &[u8]) -> Result<(), EncodingError> {
+        let os_string = OsStr::from_bytes(string)?;
+        assert_eq!(string.len(), os_string.len());
+        assert_os_eq(&os_string, OsString::from_bytes(string));
+        assert_eq!(string, os_string.to_bytes().as_ref());
+        Ok(())
+    }
+
+    pub(crate) fn test_vec(string: &[u8]) -> Result<(), EncodingError> {
+        let os_string = OsString::from_vec(string.to_vec())?;
+        assert_eq!(string.len(), os_string.len());
+        assert_eq!(string, os_string.into_vec().as_slice());
+        Ok(())
+    }
+
+    #[test]
+    fn test_invalid_string_is_invalid() {
+        test_string_is_invalid_utf8(INVALID_STRING);
+    }
+
+    #[test]
+    fn test_wtf8_string_is_invalid_utf8() {
+        test_string_is_invalid_utf8(WTF8_STRING);
+    }
+
+    #[test]
+    fn test_wtf8_bytes() -> Result<(), EncodingError> {
+        test_bytes(WTF8_STRING)
+    }
+
+    #[test]
+    fn test_wtf8_vec() -> Result<(), EncodingError> {
+        test_vec(WTF8_STRING)
+    }
+
+    #[test]
+    fn test_random_bytes() {
+        let os_string = random_os_string(RANDOM_BYTES_LENGTH).unwrap();
+        let string = os_string.to_bytes();
+        assert_eq!(os_string.len(), string.len());
+        assert_os_eq(&os_string, OsStr::from_bytes(&string));
+        assert_os_eq(&os_string, OsString::from_bytes(string));
+    }
+
+    #[test]
+    fn test_random_vec() {
+        let os_string = random_os_string(RANDOM_BYTES_LENGTH).unwrap();
+        let string = os_string.clone().into_vec();
+        assert_eq!(os_string.len(), string.len());
+        assert_os_eq(&os_string, OsString::from_vec(string));
+    }
+}

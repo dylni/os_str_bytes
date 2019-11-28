@@ -1,0 +1,17 @@
+[package]
+name = "os_str_bytes"
+version = "0.1.0"
+authors = ["dylni"]
+edition = "2018"
+exclude = ["/.git*", "/target"]
+description = """
+Traits for converting between byte sequences and platform-native strings.
+"""
+repository = "https://github.com/dylni/os_str_bytes"
+readme = "README.md"
+keywords = ["osstr", "os_str", "osstring", "os_string", "bytes"]
+categories = ["command-line-interface", "development-tools::ffi", "os"]
+license = "MIT OR Apache-2.0"
+
+[dev-dependencies]
+getrandom = "0.1.13"
