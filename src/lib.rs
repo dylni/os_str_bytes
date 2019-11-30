@@ -301,85 +301,14 @@ mod tests {
     use std::ffi::OsString;
     use std::str;
 
-    use getrandom::getrandom;
-    use getrandom::Error as GetRandomError;
-
     use crate::EncodingError;
     use crate::OsStrBytes;
     use crate::OsStringBytes;
 
-    const UTF8_STRING: &str = "string";
-
-    const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
-
     pub(crate) const INVALID_STRING: &[u8] =
         b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
-    const RANDOM_BYTES_LENGTH: usize = 100;
-
-    #[inline]
-    fn assert_os_eq<TRight>(left: &OsStr, right: Result<TRight, EncodingError>)
-    where
-        TRight: AsRef<OsStr>,
-    {
-        assert_eq!(Ok(left), right.as_ref().map(TRight::as_ref));
-    }
-
-    fn random_os_string(
-        buffer_length: usize,
-    ) -> Result<OsString, GetRandomError> {
-        let mut buffer = vec![0; buffer_length];
-        #[cfg(unix)]
-        {
-            getrandom(&mut buffer)?;
-            Ok(::std::os::unix::ffi::OsStringExt::from_vec(buffer))
-        }
-        #[cfg(windows)]
-        {
-            // SAFETY: These bytes are random, so their values are arbitrary.
-            getrandom(unsafe {
-                ::std::mem::transmute::<&mut [u16], &mut [u8]>(&mut buffer)
-            })?;
-            Ok(::std::os::windows::ffi::OsStringExt::from_wide(&buffer))
-        }
-    }
-
-    #[test]
-    fn test_empty_bytes() {
-        assert_os_eq(&OsString::new(), OsStr::from_bytes(&[]));
-        assert_os_eq(&OsString::new(), OsString::from_bytes([]));
-        assert_eq!(
-            // Assist type inference.
-            &[b'\0'; 0],
-            OsString::new().as_os_str().to_bytes().as_ref(),
-        );
-    }
-
-    #[test]
-    fn test_empty_vec() -> Result<(), EncodingError> {
-        assert_eq!(0, OsString::from_vec(Vec::new())?.len());
-        assert_eq!(Vec::<u8>::new(), OsString::new().into_vec());
-        Ok(())
-    }
-
-    #[test]
-    fn test_utf8_bytes() {
-        let os_str = OsString::from(UTF8_STRING);
-        let os_str = os_str.as_os_str();
-        assert_os_eq(&os_str, OsStr::from_bytes(UTF8_STRING.as_bytes()));
-        assert_os_eq(&os_str, OsString::from_bytes(UTF8_STRING));
-        assert_eq!(UTF8_STRING.as_bytes(), os_str.to_bytes().as_ref());
-    }
-
-    #[test]
-    fn test_utf8_vec() {
-        let os_string = OsString::from(UTF8_STRING);
-        assert_os_eq(
-            &os_string,
-            OsString::from_vec(UTF8_STRING.to_string().into_bytes()),
-        );
-        assert_eq!(UTF8_STRING.to_string().into_bytes(), os_string.into_vec());
-    }
+    const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
     fn test_string_is_invalid_utf8(string: &[u8]) {
         assert!(str::from_utf8(string).is_err());
@@ -388,7 +317,7 @@ mod tests {
     pub(crate) fn test_bytes(string: &[u8]) -> Result<(), EncodingError> {
         let os_string = OsStr::from_bytes(string)?;
         assert_eq!(string.len(), os_string.len());
-        assert_os_eq(&os_string, OsString::from_bytes(string));
+        assert_eq!(os_string, OsString::from_bytes(string)?);
         assert_eq!(string, os_string.to_bytes().as_ref());
         Ok(())
     }
@@ -418,22 +347,5 @@ mod tests {
     #[test]
     fn test_wtf8_vec() -> Result<(), EncodingError> {
         test_vec(WTF8_STRING)
-    }
-
-    #[test]
-    fn test_random_bytes() {
-        let os_string = random_os_string(RANDOM_BYTES_LENGTH).unwrap();
-        let string = os_string.to_bytes();
-        assert_eq!(os_string.len(), string.len());
-        assert_os_eq(&os_string, OsStr::from_bytes(&string));
-        assert_os_eq(&os_string, OsString::from_bytes(string));
-    }
-
-    #[test]
-    fn test_random_vec() {
-        let os_string = random_os_string(RANDOM_BYTES_LENGTH).unwrap();
-        let string = os_string.clone().into_vec();
-        assert_eq!(os_string.len(), string.len());
-        assert_os_eq(&os_string, OsString::from_vec(string));
     }
 }
