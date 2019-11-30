@@ -43,8 +43,9 @@
 //! # Examples
 //!
 //! ```
-//! use std::env::temp_dir;
-//! use std::ffi::OsStr;
+//! use std::env::args_os;
+//! # use std::env::temp_dir;
+//! # use std::ffi::OsString;
 //! use std::fs::read_to_string;
 //! use std::fs::write;
 //! # use std::io::Result;
@@ -52,16 +53,19 @@
 //! use os_str_bytes::OsStrBytes;
 //!
 //! # fn main() -> Result<()> {
-//! let string = "hello world";
-//! let file_name = b"\xC3\xA9os_str\xED\xA0\xBDbytes\xF0\x9F\x92\xA9.txt";
-//!
-//! let mut file = temp_dir();
-//! // In this example, conversion always succeeds, so `unwrap()` can be used.
-//! file.push(OsStr::from_bytes(file_name).unwrap());
-//!
-//! write(&file, string)?;
-//! assert_eq!(string, read_to_string(file)?);
+//! #     fn args_os() -> impl Iterator<Item=OsString> {
+//! #         let mut file = temp_dir();
+//! #         file.push("os_str_bytes\u{E9}.txt");
+//! #         return vec![OsString::new(), file.into_os_string()].into_iter();
+//! #     }
 //! #
+//! for file in args_os().skip(1) {
+//!     if file.to_bytes().first() != Some(&b'-') {
+//!         let string = "hello world";
+//!         write(&file, string)?;
+//!         assert_eq!(string, read_to_string(file)?);
+//!     }
+//! }
 //! #     Ok(())
 //! # }
 //! ```

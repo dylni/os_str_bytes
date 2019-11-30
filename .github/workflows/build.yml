@@ -35,3 +35,19 @@ jobs:
     - run: rustup default ${{ matrix.version }}
     - run: cargo build
     - run: cargo test
+  test-macos-stable:
+    env:
+      PATH: ~/.cargo/bin:/usr/bin:/bin
+    runs-on: macos-latest
+    needs: [build]
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    - name: Install
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs >rustup-init
+        sh rustup-init -y
+    - run: cargo build
+    - run: cargo test
