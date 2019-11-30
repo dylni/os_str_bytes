@@ -79,7 +79,7 @@
 //! [`str::from_utf8_unchecked`]: https://doc.rust-lang.org/std/str/fn.from_utf8_unchecked.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
-#![doc(html_root_url = "https://docs.rs/os_str_bytes/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/os_str_bytes/0.1.1")]
 
 use std::borrow::Cow;
 use std::error::Error;
