@@ -21,6 +21,7 @@ fn random_os_string(buffer_length: usize) -> Result<OsString, GetRandomError> {
     {
         // SAFETY: These bytes are random, so their values are arbitrary.
         getrandom(unsafe {
+            #[allow(clippy::transmute_ptr_to_ptr)]
             ::std::mem::transmute::<&mut [u16], &mut [u8]>(&mut buffer)
         })?;
         Ok(::std::os::windows::ffi::OsStringExt::from_wide(&buffer))
