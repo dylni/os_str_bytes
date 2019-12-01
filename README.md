@@ -8,12 +8,12 @@ Thus, methods can be used that are already defined on [`[u8]`][slice] and
 [`Vec<u8>`].
 
 Typically, the only way to losslessly construct [`OsStr`] or [`OsString`] from
-a byte sequence is to use `OsString::from(String::from(bytes).unwrap())`, which
+a byte sequence is to use `OsString::from(String::from(bytes)?)`, which
 requires the bytes to be valid in UTF-8. However, since this crate makes
 conversions directly between the platform encoding and raw bytes, even some
 strings invalid in UTF-8 can be converted.
 
-[![GitHub Build Status](https://github.com/dylni/os_str_bytes/workflows/build/badge.svg?branch=master)](https://github.com/dylni/os_str_bytes/actions)
+[![GitHub Build Status](https://github.com/dylni/os_str_bytes/workflows/build/badge.svg?branch=master)](https://github.com/dylni/os_str_bytes/actions?query=branch%3Amaster)
 
 ## Usage
 
