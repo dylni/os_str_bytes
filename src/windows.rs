@@ -17,20 +17,14 @@ fn from_bytes_unchecked(string: &[u8]) -> OsString {
     // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L813-L831
 
     // SAFETY: This conversion technically causes undefined behavior when
-    // [string] is not representable as UTF-8. However,
-    // [str::next_code_point()] is not exposed; it is only available
-    // through [Chars::next()]. This string will be dropped at the end of
-    // this method.
+    // [string] is not representable as UTF-8. However, [next_code_point()] is
+    // not exposed; it is only available through [str] methods. This string
+    // will be dropped at the end of this method.
     // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libcore/str/mod.rs#L500-L528
-    let unchecked_string = unsafe {
-        str::from_utf8_unchecked(string)
-    };
-    let mut encoded_chars = Vec::new();
-    let mut buffer = [0; 2];
-    for unchecked_char in unchecked_string.chars() {
-        encoded_chars.extend(&*unchecked_char.encode_utf16(&mut buffer));
-    }
-    ::std::os::windows::ffi::OsStringExt::from_wide(&encoded_chars)
+    let unchecked_string = unsafe { str::from_utf8_unchecked(string) };
+    ::std::os::windows::ffi::OsStringExt::from_wide(
+        &unchecked_string.encode_utf16().collect::<Vec<_>>(),
+    )
 }
 
 impl OsStrBytes for OsStr {
@@ -52,20 +46,15 @@ impl OsStrBytes for OsStr {
         for ch in char::decode_utf16(
             ::std::os::windows::ffi::OsStrExt::encode_wide(self),
         ) {
-            let unchecked_char = match ch {
-                Ok(ch) => ch,
-                Err(surrogate) => {
-                    let surrogate = surrogate.unpaired_surrogate().into();
-                    // SAFETY: This conversion creates an invalid [char] value.
-                    // However, there is otherwise no way to encode a [u32]
-                    // value as invalid UTF-8, which is why the standard
-                    // library uses the same approach:
-                    // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L206-L208
-                    unsafe {
-                        char::from_u32_unchecked(surrogate)
-                    }
-                },
-            };
+            let unchecked_char = ch.unwrap_or_else(|surrogate| {
+                let surrogate = surrogate.unpaired_surrogate().into();
+                // SAFETY: This conversion creates an invalid [char] value.
+                // However, there is otherwise no way to encode a [u32] value
+                // as invalid UTF-8, which is why the standard library uses the
+                // same approach:
+                // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L206-L208
+                unsafe { char::from_u32_unchecked(surrogate) }
+            });
             string.extend_from_slice(
                 unchecked_char.encode_utf8(&mut buffer).as_bytes(),
             );
