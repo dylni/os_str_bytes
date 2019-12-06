@@ -30,7 +30,17 @@ See the [documentation] for available functionality and examples.
 
 The minimum supported Rust toolchain version is currently Rust 1.32.0.
 
+## License
+
+Licensing terms are specified in [COPYRIGHT].
+
+Unless you explicitly state otherwise, any contribution submitted for inclusion
+in this crate, as defined in [LICENSE-APACHE], shall be licensed according to
+[COPYRIGHT], without any additional terms or conditions.
+
+[COPYRIGHT]: https://github.com/dylni/os_str_bytes/blob/master/COPYRIGHT
 [documentation]: https://docs.rs/os_str_bytes
+[LICENSE-APACHE]: https://github.com/dylni/os_str_bytes/blob/master/LICENSE-APACHE
 [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
 [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
