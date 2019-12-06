@@ -1,4 +1,3 @@
-use std::ffi::OsStr;
 use std::ffi::OsString;
 
 use getrandom::getrandom;
@@ -7,6 +6,10 @@ use getrandom::Error as GetRandomError;
 use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
+
+mod common;
+use common::from_bytes;
+use common::from_vec;
 
 const RANDOM_BYTES_LENGTH: usize = 1024;
 
@@ -33,8 +36,7 @@ fn test_random_bytes() -> Result<(), EncodingError> {
     let os_string = random_os_string(RANDOM_BYTES_LENGTH).unwrap();
     let string = os_string.to_bytes();
     assert_eq!(os_string.len(), string.len());
-    assert_eq!(os_string, OsStr::from_bytes(&string)?);
-    assert_eq!(os_string, OsString::from_bytes(string)?);
+    assert_eq!(os_string, from_bytes(&string)?);
     Ok(())
 }
 
@@ -43,6 +45,6 @@ fn test_random_vec() -> Result<(), EncodingError> {
     let os_string = random_os_string(RANDOM_BYTES_LENGTH).unwrap();
     let string = os_string.clone().into_vec();
     assert_eq!(os_string.len(), string.len());
-    assert_eq!(os_string, OsString::from_vec(string)?);
+    assert_eq!(os_string, from_vec(string)?);
     Ok(())
 }

@@ -103,10 +103,11 @@ mod tests {
     use std::ffi::OsStr;
     use std::ffi::OsString;
 
-    use crate::tests::*;
     use crate::EncodingError;
     use crate::OsStrBytes;
     use crate::OsStringBytes;
+
+    const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
     #[test]
     fn test_invalid_bytes() {

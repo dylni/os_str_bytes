@@ -65,19 +65,3 @@ impl OsStringBytes for OsString {
         ::std::os::unix::ffi::OsStringExt::into_vec(self)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::tests::*;
-    use crate::EncodingError;
-
-    #[test]
-    fn test_invalid_bytes() -> Result<(), EncodingError> {
-        test_bytes(INVALID_STRING)
-    }
-
-    #[test]
-    fn test_invalid_vec() -> Result<(), EncodingError> {
-        test_vec(INVALID_STRING)
-    }
-}
