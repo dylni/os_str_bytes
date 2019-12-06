@@ -19,7 +19,8 @@ jobs:
     - uses: actions/checkout@v1
       with:
         fetch-depth: 1
-    - run: cargo clippy
+    - run: cargo clippy -- -Dwarnings
+    - run: cargo clippy --tests -- -Dwarnings
   test:
     strategy:
       matrix:
@@ -33,7 +34,6 @@ jobs:
       with:
         fetch-depth: 1
     - run: rustup default ${{ matrix.version }}
-    - run: cargo build
     - run: cargo test
   test-macos-stable:
     env:
@@ -49,5 +49,4 @@ jobs:
       run: |
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs >rustup-init
         sh rustup-init -y
-    - run: cargo build
     - run: cargo test
