@@ -21,6 +21,7 @@ jobs:
         fetch-depth: 1
     - run: cargo clippy -- -Dwarnings
     - run: cargo clippy --tests -- -Dwarnings
+    - run: cargo fmt -- --check
   test:
     strategy:
       matrix:
