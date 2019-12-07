@@ -78,7 +78,7 @@
 //! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
-#![doc(html_root_url = "https://docs.rs/os_str_bytes/0.2.0")]
+#![doc(html_root_url = "https://docs.rs/os_str_bytes/0.2.1")]
 
 use std::borrow::Cow;
 use std::error::Error;
