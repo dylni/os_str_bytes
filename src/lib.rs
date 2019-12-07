@@ -68,13 +68,14 @@
 //! # }
 //! ```
 //!
+//! [`char::from_u32_unchecked`]: https://doc.rust-lang.org/std/char/fn.from_u32_unchecked.html
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 //! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
 //! [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
 //! [`OsStringBytes::from_bytes`]: trait.OsStringBytes.html#tymethod.from_bytes
 //! [`OsStringBytes::from_vec`]: trait.OsStringBytes.html#tymethod.from_vec
-//! [`str::from_utf8_unchecked`]: https://doc.rust-lang.org/std/str/fn.from_utf8_unchecked.html
+//! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![doc(html_root_url = "https://docs.rs/os_str_bytes/0.2.0")]
