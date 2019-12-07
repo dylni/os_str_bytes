@@ -9,11 +9,14 @@ use std::ffi::OsString;
 use std::mem::size_of;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::ffi::OsStringExt;
-use std::str;
 
 use crate::EncodingError;
 use crate::OsStrBytes;
 use crate::OsStringBytes;
+
+#[path = "windows_common.rs"]
+mod common;
+use common::next_code_point;
 
 fn decode_utf16<TString>(encoded_string: TString, length: usize) -> Vec<u8>
 where
@@ -26,11 +29,8 @@ where
     for ch in char::decode_utf16(encoded_string) {
         let unchecked_char = ch.unwrap_or_else(|surrogate| {
             let surrogate = surrogate.unpaired_surrogate().into();
-            // SAFETY: This conversion creates an invalid [char] value.
-            // However, there is otherwise no way to encode a [u32] value as
-            // invalid UTF-8, which is why the standard library uses the same
-            // approach:
-            // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L206-L208
+            debug_assert!(surrogate <= u32::from(char::MAX));
+            // SAFETY: https://docs.rs/os_str_bytes/#safety
             unsafe { char::from_u32_unchecked(surrogate) }
         });
         string.extend_from_slice(
@@ -44,13 +44,17 @@ where
 fn encode_utf16(string: &[u8]) -> Vec<u16> {
     // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L813-L831
 
-    // SAFETY: This conversion technically causes undefined behavior when
-    // [string] is not representable as UTF-8. However, [next_code_point()] is
-    // not exposed; it is only available through [str] methods. This string
-    // will be dropped at the end of this method.
-    // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libcore/str/mod.rs#L500-L528
-    let unchecked_string = unsafe { str::from_utf8_unchecked(string) };
-    unchecked_string.encode_utf16().collect::<Vec<_>>()
+    let mut string = string.iter();
+    let mut encoded_string = Vec::new();
+    let mut buffer = [0; 2];
+    while let Some(code_point) = next_code_point(&mut string) {
+        debug_assert!(code_point <= u32::from(char::MAX));
+        // SAFETY: https://docs.rs/os_str_bytes/#safety
+        let unchecked_char = unsafe { char::from_u32_unchecked(code_point) };
+        encoded_string
+            .extend_from_slice(unchecked_char.encode_utf16(&mut buffer));
+    }
+    encoded_string
 }
 
 impl OsStrBytes for OsStr {
@@ -81,7 +85,7 @@ impl OsStringBytes for OsString {
         if decode_utf16(encoded_string.iter().map(|&x| x), string.len())
             == string
         {
-            Ok(OsString::from_wide(&encoded_string))
+            Ok(Self::from_wide(&encoded_string))
         } else {
             Err(EncodingError(()))
         }
@@ -92,7 +96,7 @@ impl OsStringBytes for OsString {
     where
         TString: AsRef<[u8]>,
     {
-        OsString::from_wide(&encode_utf16(string.as_ref()))
+        Self::from_wide(&encode_utf16(string.as_ref()))
     }
 
     #[inline]

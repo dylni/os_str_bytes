@@ -28,17 +28,15 @@
 //!
 //! # Safety
 //!
-//! Some unsafe assumptions are made, with the most egregious being that
-//! [`str::from_utf8_unchecked`] returns a partially usable string for invalid
-//! UTF-8. The alternative would be to encode and decode strings manually,
-//! which would be more dangerous, as it would create a reliance on how the
-//! standard library encodes invalid UTF-8 strings.
+//! A moderately unsafe assumption is made that invalid characters created by
+//! [`char::from_u32_unchecked`] are partially usable. The alternative would be
+//! to always encode and decode strings manually, which would be more
+//! dangerous, as it would create a reliance on how the standard library
+//! encodes invalid UTF-8 strings.
 //!
-//! To make this implementation less problematic, it is best to not make any
-//! assumptions about the representation of invalid UTF-8 bytes. However, given
-//! the purpose of this crate, every measure will be taken to ensure that it
-//! matches the raw byte sequence, meaning this is usually not a concern. Tests
-//! exist to validate that the conversions are sound.
+//! The standard library [makes the same assumption][assumption], since there
+//! are no methods on [`u32`] for encoding. Tests exist to validate the
+//! implementation in this crate.
 //!
 //! # Examples
 //!
