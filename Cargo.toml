@@ -3,7 +3,7 @@ name = "os_str_bytes"
 version = "0.2.1"
 authors = ["dylni"]
 edition = "2018"
-exclude = [".*"]
+exclude = [".*", "/rustfmt.toml", "/tests"]
 description = """
 Traits for converting between byte sequences and platform-native strings.
 """
