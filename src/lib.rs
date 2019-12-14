@@ -105,8 +105,10 @@ mod imp;
 pub struct EncodingError(());
 
 impl Display for EncodingError {
+    #[inline]
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
-        "byte sequence is not representable in the platform encoding"
+        "OsStr Bytes: byte sequence is not representable in the platform \
+         encoding"
             .fmt(formatter)
     }
 }
