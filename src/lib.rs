@@ -41,6 +41,7 @@
 //! # Examples
 //!
 //! ```
+//! # #[allow(unused_imports)]
 //! use std::env::args_os;
 //! # use std::env::temp_dir;
 //! # use std::ffi::OsString;
@@ -51,7 +52,7 @@
 //! use os_str_bytes::OsStrBytes;
 //!
 //! # fn main() -> Result<()> {
-//! #     fn args_os() -> impl Iterator<Item=OsString> {
+//! #     fn args_os() -> impl Iterator<Item = OsString> {
 //! #         let mut file = temp_dir();
 //! #         file.push("os_str_bytes\u{E9}.txt");
 //! #         return vec![OsString::new(), file.into_os_string()].into_iter();
@@ -78,7 +79,10 @@
 //! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
-#![doc(html_root_url = "https://docs.rs/os_str_bytes/0.2.1")]
+#![doc(
+    html_root_url = "https://docs.rs/os_str_bytes/0.2.0",
+    test(attr(deny(warnings)))
+)]
 
 use std::borrow::Cow;
 use std::error::Error;

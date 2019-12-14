@@ -23,7 +23,7 @@ fn unwrap_or_0(opt: Option<&u8>) -> u8 {
 }
 
 #[inline]
-pub fn next_code_point<'a, I: Iterator<Item = &'a u8>>(
+pub(crate) fn next_code_point<'a, I: Iterator<Item = &'a u8>>(
     bytes: &mut I,
 ) -> Option<u32> {
     let x = *bytes.next()?;
