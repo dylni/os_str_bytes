@@ -6,10 +6,11 @@
 //! [`[u8]`][slice] and [`Vec<u8>`].
 //!
 //! Typically, the only way to losslessly construct [`OsStr`] or [`OsString`]
-//! from a byte sequence is to use `OsString::from(String::from(bytes)?)`,
-//! which requires the bytes to be valid in UTF-8. However, since this crate
-//! makes conversions directly between the platform encoding and raw bytes,
-//! even some strings invalid in UTF-8 can be converted.
+//! from a byte sequence is to use
+//! [`OsStr::new`]`(`[`str::from_utf8`]`(bytes)?)`, which requires the bytes
+//! to be valid in UTF-8. However, since this crate makes conversions directly
+//! between the platform encoding and raw bytes, even some strings invalid in
+//! UTF-8 can be converted.
 //!
 //! # Implementation
 //!
@@ -41,28 +42,29 @@
 //! # Examples
 //!
 //! ```
-//! # #[allow(unused_imports)]
-//! use std::env::args_os;
-//! # use std::env::temp_dir;
-//! # use std::ffi::OsString;
-//! use std::fs::read_to_string;
-//! use std::fs::write;
+//! use std::env;
+//! use std::fs;
 //! # use std::io::Result;
 //!
 //! use os_str_bytes::OsStrBytes;
 //!
 //! # fn main() -> Result<()> {
-//! #     fn args_os() -> impl Iterator<Item = OsString> {
-//! #         let mut file = temp_dir();
-//! #         file.push("os_str_bytes\u{E9}.txt");
-//! #         return vec![OsString::new(), file.into_os_string()].into_iter();
+//! #     mod env {
+//! #         use std::ffi::OsString;
+//! #
+//! #         pub fn args_os() -> impl Iterator<Item = OsString> {
+//! #             let mut file = super::env::temp_dir();
+//! #             file.push("os_str_bytes\u{E9}.txt");
+//! #             return vec![OsString::new(), file.into_os_string()]
+//! #                 .into_iter();
+//! #         }
 //! #     }
 //! #
-//! for file in args_os().skip(1) {
+//! for file in env::args_os().skip(1) {
 //!     if file.to_bytes().first() != Some(&b'-') {
 //!         let string = "hello world";
-//!         write(&file, string)?;
-//!         assert_eq!(string, read_to_string(file)?);
+//!         fs::write(&file, string)?;
+//!         assert_eq!(string, fs::read_to_string(file)?);
 //!     }
 //! }
 //! #     Ok(())
@@ -73,9 +75,11 @@
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 //! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
+//! [`OsStr::new`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.new
 //! [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
 //! [`OsStringBytes::from_bytes`]: trait.OsStringBytes.html#tymethod.from_bytes
 //! [`OsStringBytes::from_vec`]: trait.OsStringBytes.html#tymethod.from_vec
+//! [`str::from_utf8`]: https://doc.rust-lang.org/std/str/fn.from_utf8.html
 //! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 

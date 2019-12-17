@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use std::char;
 use std::ffi::OsStr;
 use std::ffi::OsString;
-use std::mem::size_of;
+use std::mem;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::ffi::OsStringExt;
 
@@ -25,7 +25,7 @@ where
     // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L183-L201
 
     let mut string = Vec::with_capacity(length);
-    let mut buffer = [0; size_of::<char>()];
+    let mut buffer = [0; mem::size_of::<char>()];
     for ch in char::decode_utf16(encoded_string) {
         let unchecked_char = ch.unwrap_or_else(|surrogate| {
             let surrogate = surrogate.unpaired_surrogate().into();

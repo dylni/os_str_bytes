@@ -8,7 +8,7 @@ Thus, methods can be used that are already defined on [`[u8]`][slice] and
 [`Vec<u8>`].
 
 Typically, the only way to losslessly construct [`OsStr`] or [`OsString`] from
-a byte sequence is to use `OsString::from(String::from(bytes)?)`, which
+a byte sequence is to use [`OsStr::new`]`(`[`str::from_utf8`]`(bytes)?)`, which
 requires the bytes to be valid in UTF-8. However, since this crate makes
 conversions directly between the platform encoding and raw bytes, even some
 strings invalid in UTF-8 can be converted.
@@ -43,5 +43,7 @@ in this crate, as defined in [LICENSE-APACHE], shall be licensed according to
 [LICENSE-APACHE]: https://github.com/dylni/os_str_bytes/blob/master/LICENSE-APACHE
 [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
+[`OsStr::new`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.new
 [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
+[`str::from_utf8`]: https://doc.rust-lang.org/std/str/fn.from_utf8.html
 [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
