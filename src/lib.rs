@@ -172,6 +172,7 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// [`from_bytes`]: #tymethod.from_bytes
     /// [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
     /// [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
+    #[must_use]
     unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self>;
 
     /// Converts the internal byte representation into a byte slice.
@@ -195,6 +196,7 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// ```
     ///
     /// [`from_bytes`]: #tymethod.from_bytes
+    #[must_use]
     fn to_bytes(&self) -> Cow<'_, [u8]>;
 }
 
@@ -236,6 +238,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// [`from_bytes`]: #tymethod.from_bytes
     /// [`OsStrBytes::from_bytes_unchecked`]: trait.OsStrBytes.html#tymethod.from_bytes_unchecked
+    #[must_use]
     unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
     where
         TString: AsRef<[u8]>;
@@ -271,6 +274,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// [`from_vec`]: #tymethod.from_vec
     /// [`OsStrBytes::from_bytes_unchecked`]: trait.OsStrBytes.html#tymethod.from_bytes_unchecked
+    #[must_use]
     unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self;
 
     /// Converts the internal byte representation into a byte vector.
@@ -292,6 +296,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// #     Ok(())
     /// # }
     /// ```
+    #[must_use]
     fn into_vec(self) -> Vec<u8>;
 }
 
