@@ -81,7 +81,7 @@
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![doc(
-    html_root_url = "https://docs.rs/os_str_bytes/0.3.0",
+    html_root_url = "https://docs.rs/os_str_bytes/1.0.0",
     test(attr(deny(warnings)))
 )]
 
