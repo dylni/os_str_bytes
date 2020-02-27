@@ -19,7 +19,7 @@ jobs:
   test:
     strategy:
       matrix:
-        platform: [ubuntu-latest, windows-latest]
+        platform: [macos-latest, ubuntu-latest, windows-latest]
         version: [1.32.0, stable, nightly]
     runs-on: ${{ matrix.platform }}
     needs: [build]
@@ -30,19 +30,5 @@ jobs:
         fetch-depth: 1
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
-    - run: cargo test
-    - run: cargo test --release
-  test-macos-stable:
-    runs-on: macos-latest
-    needs: [build]
-    timeout-minutes: 10
-    steps:
-    - uses: actions/checkout@v1
-      with:
-        fetch-depth: 1
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
     - run: cargo test
     - run: cargo test --release
