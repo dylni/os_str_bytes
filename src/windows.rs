@@ -22,7 +22,7 @@ fn decode_utf16<TString>(encoded_string: TString, length: usize) -> Vec<u8>
 where
     TString: IntoIterator<Item = u16>,
 {
-    // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L183-L201
+    // https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libstd/sys_common/wtf8.rs#L183-L199
 
     let mut string = Vec::with_capacity(length);
     let mut buffer = [0; mem::size_of::<char>()];
@@ -42,7 +42,7 @@ where
 }
 
 fn encode_utf16(string: &[u8]) -> Vec<u16> {
-    // https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libstd/sys_common/wtf8.rs#L813-L831
+    // https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libstd/sys_common/wtf8.rs#L797-L813
 
     let mut string = string.iter();
     let mut encoded_string = Vec::new();

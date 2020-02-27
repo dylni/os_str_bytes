@@ -1,6 +1,6 @@
 // Everything below was copied from the standard library, since
 // [next_code_point()] is not exposed:
-// https://github.com/rust-lang/rust/blob/4560ea788cb760f0a34127156c78e2552949f734/src/libcore/str/mod.rs#L500
+// https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libcore/str/mod.rs#L515
 
 const CONT_MASK: u8 = 0b0011_1111;
 
