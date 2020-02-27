@@ -1,8 +1,6 @@
 name: build
 
-on:
-  - pull_request
-  - push
+on: [pull_request, push]
 
 jobs:
   build:
@@ -30,6 +28,7 @@ jobs:
     - uses: actions/checkout@v1
       with:
         fetch-depth: 1
+    - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
     - run: cargo test
     - run: cargo test --release
@@ -44,7 +43,6 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-        override: true
         profile: minimal
     - run: cargo test
     - run: cargo test --release
