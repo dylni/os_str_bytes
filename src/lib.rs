@@ -70,6 +70,7 @@
 //! # }
 //! ```
 //!
+//! [assumption]: https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libstd/sys_common/wtf8.rs#L204
 //! [`char::from_u32_unchecked`]: https://doc.rust-lang.org/std/char/fn.from_u32_unchecked.html
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
