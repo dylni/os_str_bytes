@@ -4,11 +4,7 @@ on: [pull_request, push]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        platform: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
-    timeout-minutes: 5
     steps:
     - uses: actions/checkout@v1
       with:
@@ -16,14 +12,15 @@ jobs:
     - run: cargo clippy -- -Dwarnings
     - run: cargo clippy --tests -- -Dwarnings
     - run: cargo fmt -- --check
-  test:
+    timeout-minutes: 5
     strategy:
       matrix:
-        platform: [macos-latest, ubuntu-latest, windows-latest]
-        version: [1.32.0, stable, nightly]
-    runs-on: ${{ matrix.platform }}
+        platform: [ubuntu-latest, windows-latest]
+  test:
     needs: [build]
-    timeout-minutes: 10
+    runs-on: ${{ matrix.platform }}
+    env:
+      RUSTFLAGS: -Dwarnings
     steps:
     - uses: actions/checkout@v1
       with:
@@ -32,3 +29,8 @@ jobs:
     - run: rustup default ${{ matrix.version }}
     - run: cargo test
     - run: cargo test --release
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        platform: [macos-latest, ubuntu-latest, windows-latest]
+        version: [1.34.0, stable, nightly]

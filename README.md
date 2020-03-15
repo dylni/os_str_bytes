@@ -1,7 +1,5 @@
 # OsStr Bytes
 
-Traits for converting between byte sequences and platform-native strings.
-
 This crate allows interacting with the bytes stored internally by [`OsStr`] and
 [`OsString`], without resorting to panics or data corruption for invalid UTF-8.
 Thus, methods can be used that are already defined on [`[u8]`][slice] and

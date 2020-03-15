@@ -76,6 +76,7 @@ impl OsStrBytes for OsStr {
 
 impl OsStringBytes for OsString {
     #[allow(clippy::map_clone)]
+    #[inline]
     fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
     where
         TString: AsRef<[u8]>,

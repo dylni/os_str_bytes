@@ -1,5 +1,3 @@
-//! Traits for converting between byte sequences and platform-native strings.
-//!
 //! This crate allows interacting with the bytes stored internally by [`OsStr`]
 //! and [`OsString`], without resorting to panics or data corruption for
 //! invalid UTF-8. Thus, methods can be used that are already defined on
@@ -14,7 +12,7 @@
 //! # Implementation
 //!
 //! All traits are [sealed], meaning that they can only be implemented by this
-//! crate. Otherwise, backwards compatibility would be more difficult to
+//! crate. Otherwise, backward compatibility would be more difficult to
 //! maintain for new features.
 //!
 //! # Complexity
@@ -81,10 +79,8 @@
 //! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
-#![doc(
-    html_root_url = "https://docs.rs/os_str_bytes/1.0.1",
-    test(attr(deny(warnings)))
-)]
+#![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
+#![warn(unused_results)]
 
 use std::borrow::Cow;
 use std::error::Error;
