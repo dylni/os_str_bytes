@@ -1,6 +1,6 @@
 [package]
 name = "os_str_bytes"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["dylni"]
 edition = "2018"
 exclude = [".*", "/rustfmt.toml", "/tests"]
