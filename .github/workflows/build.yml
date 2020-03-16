@@ -1,6 +1,10 @@
 name: build
 
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+  schedule:
+  - cron: 0 0 * * FRI
 
 jobs:
   build:
