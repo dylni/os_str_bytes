@@ -14,9 +14,8 @@ use crate::EncodingError;
 use crate::OsStrBytes;
 use crate::OsStringBytes;
 
-#[path = "windows_common.rs"]
-mod common;
-use common::next_code_point;
+#[allow(clippy::module_inception)]
+mod imp;
 
 fn decode_utf16<TString>(encoded_string: TString, length: usize) -> Vec<u8>
 where
@@ -47,7 +46,7 @@ fn encode_utf16(string: &[u8]) -> Vec<u16> {
     let mut string = string.iter();
     let mut encoded_string = Vec::new();
     let mut buffer = [0; 2];
-    while let Some(code_point) = next_code_point(&mut string) {
+    while let Some(code_point) = imp::next_code_point(&mut string) {
         debug_assert!(code_point <= u32::from(char::MAX));
         // SAFETY: https://docs.rs/os_str_bytes/#safety
         let unchecked_char = unsafe { char::from_u32_unchecked(code_point) };

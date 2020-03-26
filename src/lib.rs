@@ -92,7 +92,7 @@ use std::fmt::Result as FmtResult;
 #[path = "unix.rs"]
 mod imp;
 #[cfg(windows)]
-#[path = "windows.rs"]
+#[path = "windows/mod.rs"]
 mod imp;
 
 /// The error that occurs when a byte sequence is not representable in the

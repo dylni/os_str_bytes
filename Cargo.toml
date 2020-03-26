@@ -13,8 +13,5 @@ keywords = ["osstr", "os_str", "osstring", "os_string", "bytes"]
 categories = ["command-line-interface", "development-tools::ffi", "encoding", "os", "rust-patterns"]
 license = "MIT OR Apache-2.0"
 
-[badges]
-maintenance = { status = "passively-maintained" }
-
 [dev-dependencies]
 getrandom = "0.1"
