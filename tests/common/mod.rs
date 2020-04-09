@@ -2,6 +2,8 @@
 
 use std::ffi::OsStr;
 use std::ffi::OsString;
+use std::path::Path;
+use std::path::PathBuf;
 
 use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
@@ -16,14 +18,30 @@ pub(crate) fn from_bytes(string: &[u8]) -> Result<OsString, EncodingError> {
         assert_eq!(os_string, OsString::from_bytes_unchecked(string));
         assert_eq!(os_string, OsStr::from_bytes_unchecked(string));
     }
+
+    let path = PathBuf::from_bytes(string)?;
+    assert_eq!(path, Path::from_bytes(string)?);
+    unsafe {
+        assert_eq!(path, PathBuf::from_bytes_unchecked(string));
+        assert_eq!(path, Path::from_bytes_unchecked(string));
+    }
+    assert_eq!(os_string, path);
+
     Ok(os_string)
 }
 
 pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
     let os_string = OsString::from_vec(string.clone())?;
     unsafe {
-        assert_eq!(os_string, OsString::from_vec_unchecked(string));
+        assert_eq!(os_string, OsString::from_vec_unchecked(string.clone()));
     }
+
+    let path = PathBuf::from_vec(string.clone())?;
+    unsafe {
+        assert_eq!(path, PathBuf::from_vec_unchecked(string));
+    }
+    assert_eq!(os_string, path);
+
     Ok(os_string)
 }
 

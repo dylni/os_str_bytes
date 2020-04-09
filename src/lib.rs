@@ -92,9 +92,13 @@
 
 use std::borrow::Cow;
 use std::error::Error;
+use std::ffi::OsStr;
+use std::ffi::OsString;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
+use std::path::Path;
+use std::path::PathBuf;
 
 #[cfg(unix)]
 #[path = "unix.rs"]
@@ -202,6 +206,30 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     fn to_bytes(&self) -> Cow<'_, [u8]>;
 }
 
+fn os_str_into_path(os_string: Cow<'_, OsStr>) -> Cow<'_, Path> {
+    match os_string {
+        Cow::Borrowed(os_string) => Cow::Borrowed(Path::new(os_string)),
+        Cow::Owned(os_string) => Cow::Owned(os_string.into()),
+    }
+}
+
+impl OsStrBytes for Path {
+    #[inline]
+    fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
+        OsStr::from_bytes(string).map(os_str_into_path)
+    }
+
+    #[inline]
+    unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self> {
+        os_str_into_path(OsStr::from_bytes_unchecked(string))
+    }
+
+    #[inline]
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
+        self.as_os_str().to_bytes()
+    }
+}
+
 /// A platform agnostic variant of [`OsStringExt`].
 ///
 /// For more information, see [the module-level documentation][module].
@@ -302,11 +330,48 @@ pub trait OsStringBytes: private::Sealed + Sized {
     fn into_vec(self) -> Vec<u8>;
 }
 
+impl OsStringBytes for PathBuf {
+    #[inline]
+    fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
+    where
+        TString: AsRef<[u8]>,
+    {
+        OsString::from_bytes(string).map(Into::into)
+    }
+
+    #[inline]
+    unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
+    where
+        TString: AsRef<[u8]>,
+    {
+        OsString::from_bytes_unchecked(string).into()
+    }
+
+    #[inline]
+    fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
+        OsString::from_vec(string).map(Into::into)
+    }
+
+    #[inline]
+    unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self {
+        OsString::from_vec_unchecked(string).into()
+    }
+
+    #[inline]
+    fn into_vec(self) -> Vec<u8> {
+        self.into_os_string().into_vec()
+    }
+}
+
 mod private {
     use std::ffi::OsStr;
     use std::ffi::OsString;
+    use std::path::Path;
+    use std::path::PathBuf;
 
     pub trait Sealed {}
     impl Sealed for OsStr {}
     impl Sealed for OsString {}
+    impl Sealed for Path {}
+    impl Sealed for PathBuf {}
 }
