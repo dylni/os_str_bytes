@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
+use std::os::unix::ffi::OsStrExt;
+use std::os::unix::ffi::OsStringExt;
 
 use crate::EncodingError;
 use crate::OsStrBytes;
@@ -8,12 +10,12 @@ use crate::OsStringBytes;
 
 #[inline]
 fn from_bytes(string: &[u8]) -> Cow<'_, OsStr> {
-    Cow::Borrowed(::std::os::unix::ffi::OsStrExt::from_bytes(string))
+    Cow::Borrowed(OsStrExt::from_bytes(string))
 }
 
 #[inline]
 fn from_vec(string: Vec<u8>) -> OsString {
-    ::std::os::unix::ffi::OsStringExt::from_vec(string)
+    OsStringExt::from_vec(string)
 }
 
 impl OsStrBytes for OsStr {
@@ -29,7 +31,7 @@ impl OsStrBytes for OsStr {
 
     #[inline]
     fn to_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Borrowed(::std::os::unix::ffi::OsStrExt::as_bytes(self))
+        Cow::Borrowed(OsStrExt::as_bytes(self))
     }
 }
 
@@ -62,6 +64,6 @@ impl OsStringBytes for OsString {
 
     #[inline]
     fn into_vec(self) -> Vec<u8> {
-        ::std::os::unix::ffi::OsStringExt::into_vec(self)
+        OsStringExt::into_vec(self)
     }
 }

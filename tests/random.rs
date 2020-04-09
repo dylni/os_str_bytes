@@ -17,17 +17,22 @@ fn random_os_string(buffer_length: usize) -> Result<OsString, GetRandomError> {
     let mut buffer = vec![0; buffer_length];
     #[cfg(unix)]
     {
+        use std::os::unix::ffi::OsStringExt;
+
         getrandom(&mut buffer)?;
-        Ok(::std::os::unix::ffi::OsStringExt::from_vec(buffer))
+        Ok(OsStringExt::from_vec(buffer))
     }
     #[cfg(windows)]
     {
+        use std::mem;
+        use std::os::windows::ffi::OsStringExt;
+
         // SAFETY: These bytes are random, so their values are arbitrary.
         getrandom(unsafe {
             #[allow(clippy::transmute_ptr_to_ptr)]
-            ::std::mem::transmute::<&mut [u16], &mut [u8]>(&mut buffer)
+            mem::transmute::<&mut [u16], &mut [u8]>(&mut buffer)
         })?;
-        Ok(::std::os::windows::ffi::OsStringExt::from_wide(&buffer))
+        Ok(OsStringExt::from_wide(&buffer))
     }
 }
 

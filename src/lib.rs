@@ -36,6 +36,13 @@
 //! are no methods on [`u32`] for encoding. Tests exist to validate the
 //! implementation in this crate.
 //!
+//! # Related Crates
+//!
+//! - [print_bytes] -
+//!   Assists in writing the stored bytes to an output stream, since some
+//!   terminals require unicode. Internally, it uses this crate for some of its
+//!   conversions.
+//!
 //! # Examples
 //!
 //! ```
@@ -76,6 +83,7 @@
 //! [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
 //! [`OsStringBytes::from_bytes`]: trait.OsStringBytes.html#tymethod.from_bytes
 //! [`OsStringBytes::from_vec`]: trait.OsStringBytes.html#tymethod.from_vec
+//! [print_bytes]: https://crates.io/crates/print_bytes
 //! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 

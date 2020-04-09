@@ -59,17 +59,17 @@ fn encode_utf16(string: &[u8]) -> Vec<u16> {
 impl OsStrBytes for OsStr {
     #[inline]
     fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
-        Ok(Cow::Owned(OsString::from_bytes(string)?))
+        Ok(Cow::Owned(OsStringBytes::from_bytes(string)?))
     }
 
     #[inline]
     unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self> {
-        Cow::Owned(OsString::from_bytes_unchecked(string))
+        Cow::Owned(OsStringBytes::from_bytes_unchecked(string))
     }
 
     #[inline]
     fn to_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Owned(decode_utf16(self.encode_wide(), self.len()))
+        Cow::Owned(decode_utf16(OsStrExt::encode_wide(self), self.len()))
     }
 }
 
@@ -85,7 +85,7 @@ impl OsStringBytes for OsString {
         if decode_utf16(encoded_string.iter().map(|&x| x), string.len())
             == string
         {
-            Ok(Self::from_wide(&encoded_string))
+            Ok(OsStringExt::from_wide(&encoded_string))
         } else {
             Err(EncodingError(()))
         }
@@ -96,22 +96,22 @@ impl OsStringBytes for OsString {
     where
         TString: AsRef<[u8]>,
     {
-        Self::from_wide(&encode_utf16(string.as_ref()))
+        OsStringExt::from_wide(&encode_utf16(string.as_ref()))
     }
 
     #[inline]
     fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
-        Self::from_bytes(string)
+        OsStringBytes::from_bytes(string)
     }
 
     #[inline]
     unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self {
-        Self::from_bytes_unchecked(string)
+        OsStringBytes::from_bytes_unchecked(string)
     }
 
     #[inline]
     fn into_vec(self) -> Vec<u8> {
-        self.to_bytes().into_owned()
+        OsStrBytes::to_bytes(self.as_os_str()).into_owned()
     }
 }
 
