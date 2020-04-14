@@ -24,18 +24,6 @@
 //! [`OsStringBytes::from_bytes`], but the latter should be used when only a
 //! slice is available.
 //!
-//! # Safety
-//!
-//! A moderately unsafe assumption is made that invalid characters created by
-//! [`char::from_u32_unchecked`] are partially usable. The alternative would be
-//! to always encode and decode strings manually, which would be more
-//! dangerous, as it would create a reliance on how the standard library
-//! encodes invalid UTF-8 strings.
-//!
-//! The standard library [makes the same assumption][assumption], since there
-//! are no methods on [`u32`] for encoding. Tests exist to validate the
-//! implementation in this crate.
-//!
 //! # Related Crates
 //!
 //! - [print_bytes] -
