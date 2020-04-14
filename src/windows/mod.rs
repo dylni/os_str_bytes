@@ -17,7 +17,7 @@ use crate::OsStringBytes;
 #[allow(clippy::module_inception)]
 mod imp;
 
-fn decode_utf16<TString>(encoded_string: TString, length: usize) -> Vec<u8>
+fn wide_to_wtf8<TString>(encoded_string: TString, length: usize) -> Vec<u8>
 where
     TString: IntoIterator<Item = u16>,
 {
@@ -40,7 +40,7 @@ where
     string
 }
 
-fn encode_utf16(string: &[u8]) -> Vec<u16> {
+fn wtf8_to_wide(string: &[u8]) -> Vec<u16> {
     // https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libstd/sys_common/wtf8.rs#L797-L813
 
     let mut string = string.iter();
@@ -69,7 +69,7 @@ impl OsStrBytes for OsStr {
 
     #[inline]
     fn to_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Owned(decode_utf16(OsStrExt::encode_wide(self), self.len()))
+        Cow::Owned(wide_to_wtf8(OsStrExt::encode_wide(self), self.len()))
     }
 }
 
@@ -81,8 +81,8 @@ impl OsStringBytes for OsString {
         TString: AsRef<[u8]>,
     {
         let string = string.as_ref();
-        let encoded_string = encode_utf16(string);
-        if decode_utf16(encoded_string.iter().map(|&x| x), string.len())
+        let encoded_string = wtf8_to_wide(string);
+        if wide_to_wtf8(encoded_string.iter().map(|&x| x), string.len())
             == string
         {
             Ok(OsStringExt::from_wide(&encoded_string))
@@ -96,7 +96,7 @@ impl OsStringBytes for OsString {
     where
         TString: AsRef<[u8]>,
     {
-        OsStringExt::from_wide(&encode_utf16(string.as_ref()))
+        OsStringExt::from_wide(&wtf8_to_wide(string.as_ref()))
     }
 
     #[inline]
