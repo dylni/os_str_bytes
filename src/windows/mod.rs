@@ -40,11 +40,6 @@ impl OsStrBytes for OsStr {
     }
 
     #[inline]
-    unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self> {
-        Cow::Owned(OsStringBytes::from_bytes_unchecked(string))
-    }
-
-    #[inline]
     fn to_bytes(&self) -> Cow<'_, [u8]> {
         Cow::Owned(DecodeWide::new(OsStrExt::encode_wide(self)).collect())
     }
@@ -60,21 +55,8 @@ impl OsStringBytes for OsString {
     }
 
     #[inline]
-    unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
-    where
-        TString: AsRef<[u8]>,
-    {
-        OsStringExt::from_wide(&encode_wide(string).unwrap())
-    }
-
-    #[inline]
     fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
         OsStringBytes::from_bytes(string)
-    }
-
-    #[inline]
-    unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self {
-        OsStringBytes::from_bytes_unchecked(string)
     }
 
     #[inline]

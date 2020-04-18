@@ -8,25 +8,10 @@ use super::EncodingError;
 use super::OsStrBytes;
 use super::OsStringBytes;
 
-#[inline]
-fn from_bytes(string: &[u8]) -> Cow<'_, OsStr> {
-    Cow::Borrowed(OsStrExt::from_bytes(string))
-}
-
-#[inline]
-fn from_vec(string: Vec<u8>) -> OsString {
-    OsStringExt::from_vec(string)
-}
-
 impl OsStrBytes for OsStr {
     #[inline]
     fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
-        Ok(from_bytes(string))
-    }
-
-    #[inline]
-    unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self> {
-        from_bytes(string)
+        Ok(Cow::Borrowed(OsStrExt::from_bytes(string)))
     }
 
     #[inline]
@@ -41,25 +26,12 @@ impl OsStringBytes for OsString {
     where
         TString: AsRef<[u8]>,
     {
-        Ok(from_bytes(string.as_ref()).into_owned())
-    }
-
-    #[inline]
-    unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
-    where
-        TString: AsRef<[u8]>,
-    {
-        from_bytes(string.as_ref()).into_owned()
+        <OsStr as OsStrBytes>::from_bytes(string.as_ref()).map(Cow::into_owned)
     }
 
     #[inline]
     fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
-        Ok(from_vec(string))
-    }
-
-    #[inline]
-    unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self {
-        from_vec(string)
+        Ok(OsStringExt::from_vec(string))
     }
 
     #[inline]

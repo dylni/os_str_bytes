@@ -121,6 +121,7 @@
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
+#![forbid(unsafe_code)]
 #![warn(unused_results)]
 
 use std::borrow::Cow;
@@ -193,24 +194,6 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// [`EncodingError`]: struct.EncodingError.html
     fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError>;
 
-    /// The unsafe equivalent of [`from_bytes`].
-    ///
-    /// More information is given in that method's documentation.
-    ///
-    /// # Safety
-    ///
-    /// This method is unsafe, because it does not check that the bytes passed
-    /// are representable in the platform encoding. If this constraint is
-    /// violated, it may cause memory unsafety issues with future uses of this
-    /// string. The standard library assumes that [`OsStr`] and [`OsString`]
-    /// are always usable for the platform.
-    ///
-    /// [`from_bytes`]: #tymethod.from_bytes
-    /// [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
-    /// [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
-    #[must_use]
-    unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self>;
-
     /// Converts a platform-native string into an equivalent byte slice.
     ///
     /// # Examples
@@ -232,22 +215,13 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     fn to_bytes(&self) -> Cow<'_, [u8]>;
 }
 
-fn os_str_into_path(os_string: Cow<'_, OsStr>) -> Cow<'_, Path> {
-    match os_string {
-        Cow::Borrowed(os_string) => Cow::Borrowed(Path::new(os_string)),
-        Cow::Owned(os_string) => Cow::Owned(os_string.into()),
-    }
-}
-
 impl OsStrBytes for Path {
     #[inline]
     fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
-        OsStr::from_bytes(string).map(os_str_into_path)
-    }
-
-    #[inline]
-    unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self> {
-        os_str_into_path(OsStr::from_bytes_unchecked(string))
+        OsStr::from_bytes(string).map(|os_string| match os_string {
+            Cow::Borrowed(os_string) => Cow::Borrowed(Self::new(os_string)),
+            Cow::Owned(os_string) => Cow::Owned(os_string.into()),
+        })
     }
 
     #[inline]
@@ -289,21 +263,6 @@ pub trait OsStringBytes: private::Sealed + Sized {
     where
         TString: AsRef<[u8]>;
 
-    /// The unsafe equivalent of [`from_bytes`].
-    ///
-    /// More information is given in that method's documentation.
-    ///
-    /// # Safety
-    ///
-    /// See documentation for [`OsStrBytes::from_bytes_unchecked`][safety].
-    ///
-    /// [`from_bytes`]: #tymethod.from_bytes
-    /// [safety]: trait.OsStrBytes.html#safety
-    #[must_use]
-    unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
-    where
-        TString: AsRef<[u8]>;
-
     /// Converts a byte vector into an equivalent platform-native string.
     ///
     /// # Errors
@@ -327,19 +286,6 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// [`EncodingError`]: struct.EncodingError.html
     fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError>;
-
-    /// The unsafe equivalent of [`from_vec`].
-    ///
-    /// More information is given in that method's documentation.
-    ///
-    /// # Safety
-    ///
-    /// See documentation for [`OsStrBytes::from_bytes_unchecked`][safety].
-    ///
-    /// [`from_vec`]: #tymethod.from_vec
-    /// [safety]: trait.OsStrBytes.html#safety
-    #[must_use]
-    unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self;
 
     /// Converts a platform-native string into an equivalent byte vector.
     ///
@@ -372,21 +318,8 @@ impl OsStringBytes for PathBuf {
     }
 
     #[inline]
-    unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
-    where
-        TString: AsRef<[u8]>,
-    {
-        OsString::from_bytes_unchecked(string).into()
-    }
-
-    #[inline]
     fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
         OsString::from_vec(string).map(Into::into)
-    }
-
-    #[inline]
-    unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self {
-        OsString::from_vec_unchecked(string).into()
     }
 
     #[inline]
