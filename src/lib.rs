@@ -192,7 +192,11 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
-    fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError>;
+    fn from_bytes<TString>(
+        string: &TString,
+    ) -> Result<Cow<'_, Self>, EncodingError>
+    where
+        TString: AsRef<[u8]> + ?Sized;
 
     /// Converts a platform-native string into an equivalent byte slice.
     ///
@@ -217,7 +221,12 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
 
 impl OsStrBytes for Path {
     #[inline]
-    fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
+    fn from_bytes<TString>(
+        string: &TString,
+    ) -> Result<Cow<'_, Self>, EncodingError>
+    where
+        TString: AsRef<[u8]> + ?Sized,
+    {
         OsStr::from_bytes(string).map(|os_string| match os_string {
             Cow::Borrowed(os_string) => Cow::Borrowed(Self::new(os_string)),
             Cow::Owned(os_string) => Cow::Owned(os_string.into()),

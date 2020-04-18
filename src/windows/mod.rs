@@ -35,7 +35,12 @@ where
 
 impl OsStrBytes for OsStr {
     #[inline]
-    fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
+    fn from_bytes<TString>(
+        string: &TString,
+    ) -> Result<Cow<'_, Self>, EncodingError>
+    where
+        TString: AsRef<[u8]> + ?Sized,
+    {
         Ok(Cow::Owned(OsStringBytes::from_bytes(string)?))
     }
 

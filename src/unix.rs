@@ -10,8 +10,13 @@ use super::OsStringBytes;
 
 impl OsStrBytes for OsStr {
     #[inline]
-    fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError> {
-        Ok(Cow::Borrowed(OsStrExt::from_bytes(string)))
+    fn from_bytes<TString>(
+        string: &TString,
+    ) -> Result<Cow<'_, Self>, EncodingError>
+    where
+        TString: AsRef<[u8]> + ?Sized,
+    {
+        Ok(Cow::Borrowed(OsStrExt::from_bytes(string.as_ref())))
     }
 
     #[inline]
