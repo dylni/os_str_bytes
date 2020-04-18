@@ -11,6 +11,11 @@
 //!
 //! # Implementation
 //!
+//! Some methods return [`Cow`] to account for platform differences. However,
+//! no guarantee is made that the same variant of that enum will always be
+//! returned for the same platform. Whichever can be constructed most
+//! efficiently will be returned.
+//!
 //! All traits are [sealed], meaning that they can only be implemented by this
 //! crate. Otherwise, backward compatibility would be more difficult to
 //! maintain for new features.
@@ -77,6 +82,7 @@
 //!
 //! [assumption]: https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libstd/sys_common/wtf8.rs#L204
 //! [`char::from_u32_unchecked`]: https://doc.rust-lang.org/std/char/fn.from_u32_unchecked.html
+//! [`Cow`]: https://doc.rust-lang.org/std/borrow/enum.Cow.html
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 //! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
@@ -136,13 +142,11 @@ impl Error for EncodingError {}
 /// [module]: index.html
 /// [`OsStrExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStrExt.html
 pub trait OsStrBytes: private::Sealed + ToOwned {
-    /// Converts a byte slice into an equivalent platform-native string
-    /// reference.
+    /// Converts a byte slice into an equivalent platform-native string.
     ///
-    /// This method returns [`Cow<Self>`] to account for platform differences.
-    /// However, no guarantee is made that the same variant of that enum will
-    /// always be returned for the same platform. Whichever can be constructed
-    /// most efficiently will be returned.
+    /// # Errors
+    ///
+    /// See documentation for [`EncodingError`].
     ///
     /// # Examples
     ///
@@ -159,7 +163,7 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # }
     /// ```
     ///
-    /// [`Cow<Self>`]: https://doc.rust-lang.org/std/borrow/enum.Cow.html
+    /// [`EncodingError`]: struct.EncodingError.html
     fn from_bytes(string: &[u8]) -> Result<Cow<'_, Self>, EncodingError>;
 
     /// The unsafe equivalent of [`from_bytes`].
@@ -171,9 +175,8 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// This method is unsafe, because it does not check that the bytes passed
     /// are representable in the platform encoding. If this constraint is
     /// violated, it may cause memory unsafety issues with future uses of this
-    /// string, as the rest of the standard library assumes that [`OsStr`] and
-    /// [`OsString`] will be usable for the platform. However, the most likely
-    /// issue is that the data gets corrupted.
+    /// string. The standard library assumes that [`OsStr`] and [`OsString`]
+    /// are always usable for the platform.
     ///
     /// [`from_bytes`]: #tymethod.from_bytes
     /// [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
@@ -182,8 +185,6 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self>;
 
     /// Converts the internal byte representation into a byte slice.
-    ///
-    /// For more information, see [`from_bytes`].
     ///
     /// # Examples
     ///
@@ -200,8 +201,6 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// #     Ok(())
     /// # }
     /// ```
-    ///
-    /// [`from_bytes`]: #tymethod.from_bytes
     #[must_use]
     fn to_bytes(&self) -> Cow<'_, [u8]>;
 }
@@ -237,7 +236,11 @@ impl OsStrBytes for Path {
 /// [module]: index.html
 /// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
 pub trait OsStringBytes: private::Sealed + Sized {
-    /// Copies a byte slice into a new equivalent platform-native string.
+    /// Copies a byte slice into an equivalent platform-native string.
+    ///
+    /// # Errors
+    ///
+    /// See documentation for [`EncodingError`].
     ///
     /// # Examples
     ///
@@ -253,6 +256,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// #     Ok(())
     /// # }
     /// ```
+    ///
+    /// [`EncodingError`]: struct.EncodingError.html
     fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
     where
         TString: AsRef<[u8]>;
@@ -263,11 +268,10 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// # Safety
     ///
-    /// This method is unsafe for the same reason as
-    /// [`OsStrBytes::from_bytes_unchecked`].
+    /// See documentation for [`OsStrBytes::from_bytes_unchecked`][safety].
     ///
     /// [`from_bytes`]: #tymethod.from_bytes
-    /// [`OsStrBytes::from_bytes_unchecked`]: trait.OsStrBytes.html#tymethod.from_bytes_unchecked
+    /// [safety]: trait.OsStrBytes.html#safety
     #[must_use]
     unsafe fn from_bytes_unchecked<TString>(string: TString) -> Self
     where
@@ -276,6 +280,10 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// Converts a byte vector into an equivalent platform-native string.
     ///
     /// Whenever possible, the conversion will be performed without copying.
+    ///
+    /// # Errors
+    ///
+    /// See documentation for [`EncodingError`].
     ///
     /// # Examples
     ///
@@ -291,6 +299,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// #     Ok(())
     /// # }
     /// ```
+    ///
+    /// [`EncodingError`]: struct.EncodingError.html
     fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError>;
 
     /// The unsafe equivalent of [`from_vec`].
@@ -299,11 +309,10 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// # Safety
     ///
-    /// This method is unsafe for the same reason as
-    /// [`OsStrBytes::from_bytes_unchecked`].
+    /// See documentation for [`OsStrBytes::from_bytes_unchecked`][safety].
     ///
     /// [`from_vec`]: #tymethod.from_vec
-    /// [`OsStrBytes::from_bytes_unchecked`]: trait.OsStrBytes.html#tymethod.from_bytes_unchecked
+    /// [safety]: trait.OsStrBytes.html#safety
     #[must_use]
     unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self;
 
