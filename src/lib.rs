@@ -134,6 +134,8 @@ use std::fmt::Result as FmtResult;
 use std::path::Path;
 use std::path::PathBuf;
 
+mod error;
+
 #[cfg(unix)]
 #[path = "unix.rs"]
 mod imp;
@@ -144,20 +146,26 @@ mod imp;
 /// The error that occurs when a byte sequence is not representable in the
 /// platform encoding.
 ///
-/// On Unix, this error should never occur, but [`OsStrExt`] or [`OsStringExt`]
+/// [`Result::unwrap`] should almost always be called on results containing
+/// this error. It should be known whether or not byte sequences are properly
+/// encoded for the platform, since [the module-level documentation][encoding]
+/// discourages using encoded bytes in interchange. Results are returned
+/// primarily to make panicking behavior explicit.
+///
+/// On Unix, this error is never returned, but [`OsStrExt`] or [`OsStringExt`]
 /// should be used instead if that needs to be guaranteed.
 ///
+/// [encoding]: index.html#encoding
 /// [`OsStrExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStrExt.html
 /// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
+/// [`Result::unwrap`]: https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap
 #[derive(Debug, Eq, PartialEq)]
-pub struct EncodingError(());
+pub struct EncodingError(pub(crate) error::EncodingError);
 
 impl Display for EncodingError {
     #[inline]
     fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
-        "os_str_bytes: byte sequence is not representable in the platform \
-         encoding"
-            .fmt(formatter)
+        self.0.fmt(formatter)
     }
 }
 

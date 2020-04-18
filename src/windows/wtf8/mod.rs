@@ -6,6 +6,8 @@ use std::char;
 use std::char::DecodeUtf16;
 use std::char::DecodeUtf16Error;
 
+use crate::error::EncodingError;
+
 mod code_points;
 use code_points::CodePoints;
 use code_points::BYTE_SHIFT;
@@ -108,7 +110,7 @@ impl<TIter> Iterator for EncodeWide<CodePoints<TIter>>
 where
     TIter: Iterator<Item = u8>,
 {
-    type Item = Result<u16, ()>;
+    type Item = Result<u16, EncodingError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(surrogate) = self.surrogate.take() {

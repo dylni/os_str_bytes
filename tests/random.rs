@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+use std::ffi::OsStr;
 use std::ffi::OsString;
 
 use getrandom::getrandom;
@@ -56,5 +58,18 @@ fn test_random_vec() -> Result<(), GetRandomError> {
     let string = os_string.clone().into_vec();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(os_string), from_vec(string));
+    Ok(())
+}
+
+#[test]
+fn test_from_random() -> Result<(), GetRandomError> {
+    for _ in 1..1024 {
+        let mut string = vec![0; 16];
+        getrandom(&mut string)?;
+        if let Ok(os_string) = OsStr::from_bytes(&string) {
+            let encoded_string = os_string.to_bytes();
+            assert_eq!(string, Borrow::<[u8]>::borrow(&encoded_string));
+        }
+    }
     Ok(())
 }

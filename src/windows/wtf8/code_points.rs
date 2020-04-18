@@ -1,6 +1,8 @@
 use std::iter::Fuse;
 use std::mem;
 
+use crate::error::EncodingError;
+
 pub(super) const BYTE_SHIFT: u8 = 6;
 
 pub(super) const CONT_MASK: u8 = (1 << BYTE_SHIFT) - 1;
@@ -38,7 +40,7 @@ impl<TIter> Iterator for CodePoints<TIter>
 where
     TIter: Iterator<Item = u8>,
 {
-    type Item = Result<u32, ()>;
+    type Item = Result<u32, EncodingError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let byte = self.next.or_else(|| self.iter.next())?;
@@ -46,18 +48,19 @@ where
 
         macro_rules! r#continue {
             () => {
-                let byte = self.iter.next();
-                if let Some(byte) = byte.filter(|x| x & !CONT_MASK == CONT_TAG)
-                {
+                if let Some(byte) = self.iter.next() {
+                    if byte & !CONT_MASK != CONT_TAG {
+                        // Saving this byte will be useful if this crate ever
+                        // offers a way to encode lossily.
+                        self.next = Some(byte);
+                        self.surrogate = false;
+                        return Some(Err(EncodingError::Byte(byte)));
+                    }
                     code_point = (code_point << BYTE_SHIFT)
                         | u32::from(byte & CONT_MASK);
                 } else {
-                    // Saving this byte will be useful if this crate ever
-                    // offers a way to encode lossily.
-                    self.next = byte;
-                    self.surrogate = false;
-                    return Some(Err(()));
-                }
+                    return Some(Err(EncodingError::End()));
+                };
             };
         }
 
@@ -66,7 +69,7 @@ where
         let mut invalid = false;
         if !byte.is_ascii() {
             if byte < 0xC2 {
-                return Some(Err(()));
+                return Some(Err(EncodingError::Byte(byte)));
             }
 
             if byte < 0xE0 {
@@ -96,7 +99,7 @@ where
             r#continue!();
         }
         if invalid {
-            return Some(Err(()));
+            return Some(Err(EncodingError::CodePoint(code_point)));
         }
 
         Some(Ok(code_point))
