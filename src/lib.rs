@@ -9,6 +9,49 @@
 //! conversions directly between the platform encoding and raw bytes, even some
 //! strings invalid in UTF-8 can be converted.
 //!
+//! # Encoding
+//!
+//! The encoding of bytes returned or accepted by methods of this crate is
+//! intentionally left unspecified. It may vary for different platforms, so
+//! defining it would run contrary to the goal of generic string handling.
+//! However, the following invariants will always be upheld:
+//!
+//! - The encoding will be compatible with UTF-8. In particular, splitting an
+//!   encoded byte sequence by a UTF-8–encoded character always produces other
+//!   valid byte sequences. They can be re-encoded without error using
+//!   [`OsStrBytes::from_bytes`] and similar methods.
+//!
+//! - All characters valid in platform strings are representable. [`OsStr`] and
+//!   [`OsString`] can always be losslessly reconstructed from extracted bytes.
+//!
+//! Note that the chosen encoding may not match how Rust stores these strings
+//! internally, which is undocumented. For instance, the result of calling
+//! [`OsStr::len`] will not necessarily match the number of bytes this crate
+//! uses to represent the same string.
+//!
+//! Additionally, concatenation may yield unexpected results without a UTF-8
+//! separator. If two platform strings need to be concatenated, the only safe
+//! way to do so is using [`OsString::push`]. This limitation also makes it
+//! undesirable to use the bytes in interchange unless absolutely necessary. If
+//! the strings need to be written as output, crate [print\_bytes] can do so
+//! more safely than directly writing the bytes.
+//!
+//! # User Input
+//!
+//! Traits in this crate should ideally not be used to convert byte sequences
+//! that did not originate from [`OsStr`] or a related struct. The encoding
+//! used by this crate is an implementation detail, so it does not make sense
+//! to expose it to users.
+//!
+//! Crate [bstr] offers some useful alternative methods, such as
+//! [`ByteSlice::to_os_str`] and [`ByteVec::into_os_string`], that are meant
+//! for user input. But, they reject some byte sequences used to represent
+//! valid platform strings, which would be undesirable for reliable path
+//! handling. They are best used only when accepting unknown input.
+//!
+//! This crate is meant to help when you already have an instance of [`OsStr`]
+//! and need to modify the data in a lossless way.
+//!
 //! # Implementation
 //!
 //! Some methods return [`Cow`] to account for platform differences. However,
@@ -28,25 +71,6 @@
 //! [`OsStringBytes::from_vec`] will be at least as efficient as
 //! [`OsStringBytes::from_bytes`], but the latter should be used when only a
 //! slice is available.
-//!
-//! # Safety
-//!
-//! A moderately unsafe assumption is made that invalid characters created by
-//! [`char::from_u32_unchecked`] are partially usable. The alternative would be
-//! to always encode and decode strings manually, which would be more
-//! dangerous, as it would create a reliance on how the standard library
-//! encodes invalid UTF-8 strings.
-//!
-//! The standard library [makes the same assumption][assumption], since there
-//! are no methods on [`u32`] for encoding. Tests exist to validate the
-//! implementation in this crate.
-//!
-//! # Related Crates
-//!
-//! - [print_bytes] -
-//!   Assists in writing the stored bytes to an output stream, since some
-//!   terminals require unicode. Internally, it uses this crate for some of its
-//!   conversions.
 //!
 //! # Examples
 //!
@@ -80,17 +104,20 @@
 //! # }
 //! ```
 //!
-//! [assumption]: https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libstd/sys_common/wtf8.rs#L204
-//! [`char::from_u32_unchecked`]: https://doc.rust-lang.org/std/char/fn.from_u32_unchecked.html
+//! [bstr]: https://crates.io/crates/bstr
+//! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
+//! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
 //! [`Cow`]: https://doc.rust-lang.org/std/borrow/enum.Cow.html
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 //! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
+//! [`OsStr::len`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.len
+//! [`OsStrBytes::from_bytes`]: trait.OsStrBytes.html#tymethod.from_bytes
 //! [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
+//! [`OsString::push`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html#method.push
 //! [`OsStringBytes::from_bytes`]: trait.OsStringBytes.html#tymethod.from_bytes
 //! [`OsStringBytes::from_vec`]: trait.OsStringBytes.html#tymethod.from_vec
-//! [print_bytes]: https://crates.io/crates/print_bytes
-//! [`u32`]: https://doc.rust-lang.org/std/primitive.u32.html
+//! [print\_bytes]: https://crates.io/crates/print_bytes
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
@@ -184,7 +211,7 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     #[must_use]
     unsafe fn from_bytes_unchecked(string: &[u8]) -> Cow<'_, Self>;
 
-    /// Converts the internal byte representation into a byte slice.
+    /// Converts a platform-native string into an equivalent byte slice.
     ///
     /// # Examples
     ///
@@ -279,8 +306,6 @@ pub trait OsStringBytes: private::Sealed + Sized {
 
     /// Converts a byte vector into an equivalent platform-native string.
     ///
-    /// Whenever possible, the conversion will be performed without copying.
-    ///
     /// # Errors
     ///
     /// See documentation for [`EncodingError`].
@@ -316,9 +341,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     #[must_use]
     unsafe fn from_vec_unchecked(string: Vec<u8>) -> Self;
 
-    /// Converts the internal byte representation into a byte vector.
-    ///
-    /// Whenever possible, the conversion will be performed without copying.
+    /// Converts a platform-native string into an equivalent byte vector.
     ///
     /// # Examples
     ///

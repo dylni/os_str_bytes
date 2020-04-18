@@ -4,9 +4,9 @@ use std::ffi::OsString;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::ffi::OsStringExt;
 
-use crate::EncodingError;
-use crate::OsStrBytes;
-use crate::OsStringBytes;
+use super::EncodingError;
+use super::OsStrBytes;
+use super::OsStringBytes;
 
 #[inline]
 fn from_bytes(string: &[u8]) -> Cow<'_, OsStr> {
