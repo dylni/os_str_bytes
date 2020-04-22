@@ -192,8 +192,8 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # Examples
     ///
     /// ```
-    /// # use std::ffi::OsStr;
-    /// #
+    /// use std::ffi::OsStr;
+    ///
     /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStrBytes;
     ///
@@ -216,8 +216,8 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # Examples
     ///
     /// ```
-    /// # use std::ffi::OsStr;
-    /// #
+    /// use std::ffi::OsStr;
+    ///
     /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStrBytes;
     ///
@@ -268,8 +268,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
-    /// # use std::ffi::OsString;
-    /// #
+    /// use std::ffi::OsString;
+    ///
     /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStringBytes;
     ///
@@ -285,6 +285,46 @@ pub trait OsStringBytes: private::Sealed + Sized {
     where
         TString: AsRef<[u8]>;
 
+    /// A convenience method to call either [`from_bytes`] or [`from_vec`],
+    /// depending on whether a byte sequence is owned.
+    ///
+    /// This method can be useful in coordination with
+    /// [`OsStrBytes::to_bytes`], since the parameter type matches that
+    /// method's return type.
+    ///
+    /// # Errors
+    ///
+    /// See documentation for [`EncodingError`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::ffi::OsStr;
+    /// use std::ffi::OsString;
+    ///
+    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStrBytes;
+    /// use os_str_bytes::OsStringBytes;
+    ///
+    /// # fn main() -> Result<(), EncodingError> {
+    /// let os_string = OsStr::from_bytes(b"foo\xED\xA0\xBDbar")?;
+    /// assert_eq!(os_string, OsString::from_cow(os_string.to_bytes())?);
+    /// #     Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`EncodingError`]: struct.EncodingError.html
+    /// [`from_bytes`]: #tymethod.from_bytes
+    /// [`from_vec`]: #tymethod.from_vec
+    /// [`OsStrBytes::to_bytes`]: trait.OsStrBytes.html#tymethod.to_bytes
+    #[inline]
+    fn from_cow(string: Cow<'_, [u8]>) -> Result<Self, EncodingError> {
+        match string {
+            Cow::Borrowed(string) => Self::from_bytes(string),
+            Cow::Owned(string) => Self::from_vec(string),
+        }
+    }
+
     /// Converts a byte vector into an equivalent platform-native string.
     ///
     /// # Errors
@@ -294,8 +334,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
-    /// # use std::ffi::OsString;
-    /// #
+    /// use std::ffi::OsString;
+    ///
     /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStringBytes;
     ///
@@ -314,8 +354,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
-    /// # use std::ffi::OsString;
-    /// #
+    /// use std::ffi::OsString;
+    ///
     /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStringBytes;
     ///
