@@ -4,7 +4,7 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fmt::Result as FmtResult;
 
-#[cfg_attr(unix, allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) enum EncodingError {
     Byte(u8),

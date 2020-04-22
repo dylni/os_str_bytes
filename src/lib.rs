@@ -136,7 +136,12 @@ use std::path::PathBuf;
 
 mod error;
 
-#[cfg(unix)]
+#[cfg(any(
+    target_os = "hermit",
+    target_os = "redox",
+    unix,
+    target_os = "vxworks"
+))]
 #[path = "unix.rs"]
 mod imp;
 #[cfg(windows)]

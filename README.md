@@ -26,7 +26,15 @@ See the [documentation] for available functionality and examples.
 
 ## Rust version support
 
-The minimum supported Rust toolchain version is currently Rust 1.32.0.
+The minimum supported Rust toolchain version depends on the platform:
+
+| Platform | Minimum Version |
+| --- | --- |
+| HermitCore | 1.44.0 |
+| Redox | 1.32.0 |
+| Unix | 1.32.0 |
+| vxWorks | 1.38.0 |
+| Windows | 1.32.0 |
 
 ## License
 

@@ -16,7 +16,7 @@ const RANDOM_BYTES_LENGTH: usize = 1024;
 
 fn random_os_string(buffer_length: usize) -> Result<OsString, GetRandomError> {
     let mut buffer = vec![0; buffer_length];
-    #[cfg(unix)]
+    #[cfg(not(windows))]
     {
         use std::os::unix::ffi::OsStringExt;
 
