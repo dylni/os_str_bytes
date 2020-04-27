@@ -30,10 +30,8 @@ The minimum supported Rust toolchain version depends on the platform:
 
 | `target_os` | Minimum Version |
 | --- | --- |
-| hermit | 1.44.0 |
 | redox | 1.32.0 |
 | unix | 1.32.0 |
-| vxworks | 1.38.0 (all versions) |
 | wasi | 1.35.0 (all versions) |
 | windows | 1.32.0 |
 
