@@ -20,7 +20,8 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest]
-  build-redox:
+  build-other:
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
@@ -29,12 +30,18 @@ jobs:
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
     - run: rustup component add clippy
-    - run: rustup target add x86_64-unknown-redox
-    - run: cargo clippy --target x86_64-unknown-redox -- -Dwarnings
+    - run: rustup target add ${{ matrix.target }}
+    - run: cargo clippy --target ${{ matrix.target }} -- -Dwarnings
     timeout-minutes: 5
     strategy:
       matrix:
-        version: [1.32.0, stable, nightly]
+        target: [wasm32-wasi, x86_64-unknown-redox]
+        version: [stable, beta]
+        include:
+        - target: wasm32-unknown-wasi
+          version: 1.35.0
+        - target: x86_64-unknown-redox
+          version: 1.32.0
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}

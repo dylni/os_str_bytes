@@ -1,8 +1,19 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
-use std::os::unix::ffi::OsStrExt;
-use std::os::unix::ffi::OsStringExt;
+
+#[cfg(any(
+    target_os = "hermit",
+    target_os = "redox",
+    unix,
+    target_os = "vxworks"
+))]
+use std::os::unix as os;
+#[cfg(any(target_env = "wasi", target_os = "wasi"))]
+use std::os::wasi as os;
+
+use os::ffi::OsStrExt;
+use os::ffi::OsStringExt;
 
 use super::EncodingError;
 use super::OsStrBytes;
