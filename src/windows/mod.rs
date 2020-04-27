@@ -80,60 +80,52 @@ mod tests {
 
     #[test]
     fn test_invalid() {
-        test_byte_error(b"\x0C\x83\xD7\x3E", b'\x83');
-        test_byte_error(b"\x19\xF7\x52\x84", b'\x52');
-        test_byte_error(b"\x70\xB8\x1F\x66", b'\xB8');
-        test_code_point_error(b"\x70\xFD\x80\x8E\x88", 0x34_0388);
-        test_byte_error(b"\x80", b'\x80');
-        test_byte_error(b"\x80\x80", b'\x80');
-        test_byte_error(b"\x80\x80\x80", b'\x80');
-        test_byte_error(b"\x81", b'\x81');
-        test_byte_error(b"\x88\xB4\xC7\x46", b'\x88');
-        test_byte_error(b"\x97\xCE\x06", b'\x97');
-        test_byte_error(b"\xC2\x00", b'\x00');
-        test_byte_error(b"\xC2\x7F", b'\x7F');
-        test_byte_error(b"\xCD\x09\x95", b'\x09');
-        test_byte_error(b"\xCD\x43\x5F\xA0", b'\x43');
-        test_byte_error(b"\xD7\x69\xB2", b'\x69');
-        test_code_point_error(b"\xE0\x94\xA8", 0x528);
-        test_code_point_error(b"\xE0\x9D\xA6\x12\xAE", 0x766);
-        test_byte_error(b"\xE2\xAB\xFD\x51", b'\xFD');
-        test_byte_error(b"\xE3\xC4", b'\xC4');
-        test_code_point_error(b"\xED\xA0\x80\xED\xB0\x80", 0xDC00);
-        test_end_error(b"\xF1");
-        test_end_error(b"\xF1\x80");
-        test_end_error(b"\xF1\x80\x80");
-        test_byte_error(b"\xF1\x80\x80\xF1", b'\xF1');
-        test_code_point_error(b"\xF5\x9E\xB1\x86", 0x15_EC46);
-        test_end_error(b"\xFB");
-        test_end_error(b"\xFB\x80");
-        test_end_error(b"\xFB\x80\x80");
-        test_code_point_error(b"\xFB\x80\x80\x80", 0x2C_0000);
-        test_end_error(b"\xFF");
-        test_end_error(b"\xFF\x80");
-        test_end_error(b"\xFF\x80\x80");
-        test_code_point_error(b"\xFF\x80\x80\x80", 0x3C_0000);
-        test_code_point_error(b"\xFF\x86\x85\x83", 0x3C_6143);
+        use EncodingError::Byte;
+        use EncodingError::CodePoint;
+        use EncodingError::End;
 
-        fn test(string: &[u8], error: EncodingError) {
+        test_error(Byte(b'\x83'), b"\x0C\x83\xD7\x3E");
+        test_error(Byte(b'\x52'), b"\x19\xF7\x52\x84");
+        test_error(Byte(b'\xB8'), b"\x70\xB8\x1F\x66");
+        test_error(CodePoint(0x34_0388), b"\x70\xFD\x80\x8E\x88");
+        test_error(Byte(b'\x80'), b"\x80");
+        test_error(Byte(b'\x80'), b"\x80\x80");
+        test_error(Byte(b'\x80'), b"\x80\x80\x80");
+        test_error(Byte(b'\x81'), b"\x81");
+        test_error(Byte(b'\x88'), b"\x88\xB4\xC7\x46");
+        test_error(Byte(b'\x97'), b"\x97\xCE\x06");
+        test_error(Byte(b'\x00'), b"\xC2\x00");
+        test_error(Byte(b'\x7F'), b"\xC2\x7F");
+        test_error(Byte(b'\x09'), b"\xCD\x09\x95");
+        test_error(Byte(b'\x43'), b"\xCD\x43\x5F\xA0");
+        test_error(Byte(b'\x69'), b"\xD7\x69\xB2");
+        test_error(CodePoint(0x528), b"\xE0\x94\xA8");
+        test_error(CodePoint(0x766), b"\xE0\x9D\xA6\x12\xAE");
+        test_error(Byte(b'\xFD'), b"\xE2\xAB\xFD\x51");
+        test_error(Byte(b'\xC4'), b"\xE3\xC4");
+        test_error(CodePoint(0xDC00), b"\xED\xA0\x80\xED\xB0\x80");
+        test_error(End(), b"\xF1");
+        test_error(End(), b"\xF1\x80");
+        test_error(End(), b"\xF1\x80\x80");
+        test_error(Byte(b'\xF1'), b"\xF1\x80\x80\xF1");
+        test_error(CodePoint(0x15_EC46), b"\xF5\x9E\xB1\x86");
+        test_error(End(), b"\xFB");
+        test_error(End(), b"\xFB\x80");
+        test_error(End(), b"\xFB\x80\x80");
+        test_error(CodePoint(0x2C_0000), b"\xFB\x80\x80\x80");
+        test_error(End(), b"\xFF");
+        test_error(End(), b"\xFF\x80");
+        test_error(End(), b"\xFF\x80\x80");
+        test_error(CodePoint(0x3C_0000), b"\xFF\x80\x80\x80");
+        test_error(CodePoint(0x3C_6143), b"\xFF\x86\x85\x83");
+
+        fn test_error(error: EncodingError, string: &[u8]) {
             use crate::EncodingError;
 
             assert_eq!(
                 Err(error),
                 OsStr::from_bytes(string).map_err(|EncodingError(x)| x),
             );
-        }
-
-        fn test_byte_error(string: &[u8], byte: u8) {
-            test(string, EncodingError::Byte(byte));
-        }
-
-        fn test_code_point_error(string: &[u8], code_point: u32) {
-            test(string, EncodingError::CodePoint(code_point));
-        }
-
-        fn test_end_error(string: &[u8]) {
-            test(string, EncodingError::End());
         }
     }
 }
