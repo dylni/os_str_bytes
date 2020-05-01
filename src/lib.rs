@@ -95,7 +95,7 @@
 //! #
 //! for file in env::args_os().skip(1) {
 //!     if file.to_bytes().first() != Some(&b'-') {
-//!         let string = "hello world";
+//!         let string = "Hello, world!";
 //!         fs::write(&file, string)?;
 //!         assert_eq!(string, fs::read_to_string(file)?);
 //!     }
@@ -128,9 +128,9 @@ use std::borrow::Cow;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::ffi::OsString;
+use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -164,7 +164,7 @@ pub struct EncodingError(pub(crate) error::EncodingError);
 
 impl Display for EncodingError {
     #[inline]
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         self.0.fmt(formatter)
     }
 }
@@ -187,14 +187,16 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # Examples
     ///
     /// ```
+    /// use std::env;
     /// use std::ffi::OsStr;
+    /// # use std::io;
     ///
-    /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStrBytes;
     ///
-    /// # fn main() -> Result<(), EncodingError> {
-    /// let string = b"foo\xED\xA0\xBDbar";
-    /// assert_eq!(string.len(), OsStr::from_bytes(string)?.len());
+    /// # fn main() -> io::Result<()> {
+    /// let os_string = env::current_exe()?;
+    /// let os_bytes = os_string.to_bytes();
+    /// assert_eq!(os_string, OsStr::from_bytes(&os_bytes).unwrap());
     /// #     Ok(())
     /// # }
     /// ```
@@ -211,15 +213,14 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # Examples
     ///
     /// ```
-    /// use std::ffi::OsStr;
+    /// use std::env;
+    /// # use std::io;
     ///
-    /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStrBytes;
     ///
-    /// # fn main() -> Result<(), EncodingError> {
-    /// let string = b"foo\xED\xA0\xBDbar";
-    /// let os_string = OsStr::from_bytes(string)?.into_owned();
-    /// assert_eq!(string, os_string.to_bytes().as_ref());
+    /// # fn main() -> io::Result<()> {
+    /// let os_string = env::current_exe()?;
+    /// println!("{:?}", os_string.to_bytes());
     /// #     Ok(())
     /// # }
     /// ```
@@ -256,6 +257,8 @@ impl OsStrBytes for Path {
 pub trait OsStringBytes: private::Sealed + Sized {
     /// Copies a byte slice into an equivalent platform-native string.
     ///
+    /// It is always better to use [`from_cow`] when the bytes may be owned.
+    ///
     /// # Errors
     ///
     /// See documentation for [`EncodingError`].
@@ -263,19 +266,23 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
+    /// use std::env;
     /// use std::ffi::OsString;
+    /// # use std::io;
     ///
-    /// # use os_str_bytes::EncodingError;
+    /// use os_str_bytes::OsStrBytes;
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> Result<(), EncodingError> {
-    /// let string = b"foo\xED\xA0\xBDbar";
-    /// assert_eq!(string.len(), OsString::from_bytes(string)?.len());
+    /// # fn main() -> io::Result<()> {
+    /// let os_string = env::current_exe()?;
+    /// let os_bytes = os_string.to_bytes();
+    /// assert_eq!(os_string, OsString::from_bytes(os_bytes).unwrap());
     /// #     Ok(())
     /// # }
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
+    /// [`from_cow`]: #method.from_cow
     fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
     where
         TString: AsRef<[u8]>;
@@ -294,16 +301,17 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
-    /// use std::ffi::OsStr;
+    /// use std::env;
     /// use std::ffi::OsString;
+    /// # use std::io;
     ///
-    /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStrBytes;
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> Result<(), EncodingError> {
-    /// let os_string = OsStr::from_bytes(b"foo\xED\xA0\xBDbar")?;
-    /// assert_eq!(os_string, OsString::from_cow(os_string.to_bytes())?);
+    /// # fn main() -> io::Result<()> {
+    /// let os_string = env::current_exe()?;
+    /// let os_bytes = os_string.to_bytes();
+    /// assert_eq!(os_string, OsString::from_cow(os_bytes).unwrap());
     /// #     Ok(())
     /// # }
     /// ```
@@ -329,14 +337,16 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
+    /// use std::env;
     /// use std::ffi::OsString;
+    /// # use std::io;
     ///
-    /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> Result<(), EncodingError> {
-    /// let string = b"foo\xED\xA0\xBDbar".to_vec();
-    /// assert_eq!(string.len(), OsString::from_vec(string)?.len());
+    /// # fn main() -> io::Result<()> {
+    /// let os_string = env::current_exe()?;
+    /// let os_bytes = os_string.clone().into_vec();
+    /// assert_eq!(os_string, OsString::from_vec(os_bytes).unwrap());
     /// #     Ok(())
     /// # }
     /// ```
@@ -349,15 +359,14 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Examples
     ///
     /// ```
-    /// use std::ffi::OsString;
+    /// use std::env;
+    /// # use std::io;
     ///
-    /// # use os_str_bytes::EncodingError;
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> Result<(), EncodingError> {
-    /// let string = b"foo\xED\xA0\xBDbar".to_vec();
-    /// let os_string = OsString::from_vec(string.clone())?;
-    /// assert_eq!(string, os_string.into_vec());
+    /// # fn main() -> io::Result<()> {
+    /// let os_string = env::current_exe()?;
+    /// println!("{:?}", os_string.into_vec());
     /// #     Ok(())
     /// # }
     /// ```

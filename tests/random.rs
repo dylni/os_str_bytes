@@ -3,7 +3,6 @@ use std::ffi::OsStr;
 use std::ffi::OsString;
 
 use getrandom::getrandom;
-use getrandom::Error as GetRandomError;
 
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
@@ -14,7 +13,9 @@ use common::from_vec;
 
 const RANDOM_BYTES_LENGTH: usize = 1024;
 
-fn random_os_string(buffer_length: usize) -> Result<OsString, GetRandomError> {
+fn random_os_string(
+    buffer_length: usize,
+) -> Result<OsString, getrandom::Error> {
     let mut buffer = vec![0; buffer_length];
     #[cfg(not(windows))]
     {
@@ -44,7 +45,7 @@ fn random_os_string(buffer_length: usize) -> Result<OsString, GetRandomError> {
 }
 
 #[test]
-fn test_random_bytes() -> Result<(), GetRandomError> {
+fn test_random_bytes() -> Result<(), getrandom::Error> {
     let os_string = random_os_string(RANDOM_BYTES_LENGTH)?;
     let string = os_string.to_bytes();
     assert_eq!(os_string.len(), string.len());
@@ -53,7 +54,7 @@ fn test_random_bytes() -> Result<(), GetRandomError> {
 }
 
 #[test]
-fn test_random_vec() -> Result<(), GetRandomError> {
+fn test_random_vec() -> Result<(), getrandom::Error> {
     let os_string = random_os_string(RANDOM_BYTES_LENGTH)?;
     let string = os_string.clone().into_vec();
     assert_eq!(os_string.len(), string.len());
@@ -62,7 +63,7 @@ fn test_random_vec() -> Result<(), GetRandomError> {
 }
 
 #[test]
-fn test_from_random() -> Result<(), GetRandomError> {
+fn test_lossless() -> Result<(), getrandom::Error> {
     for _ in 1..1024 {
         let mut string = vec![0; 16];
         getrandom(&mut string)?;

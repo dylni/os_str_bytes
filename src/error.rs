@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 use std::error::Error;
+use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
-use std::fmt::Result as FmtResult;
 
 #[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Debug, Eq, PartialEq)]
@@ -29,7 +29,7 @@ impl EncodingError {
 }
 
 impl Display for EncodingError {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
             "os_str_bytes: byte sequence is not representable in the platform \
