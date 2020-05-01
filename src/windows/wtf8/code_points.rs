@@ -76,24 +76,26 @@ where
                 code_point &= 0x1F;
             } else {
                 code_point &= 0x0F;
+                r#continue!();
+
                 if byte >= 0xF0 {
-                    r#continue!();
                     if code_point.wrapping_sub(0x10) > 0x100 {
                         invalid = true;
                     }
-                }
-                r#continue!();
+                    r#continue!();
 
-                if code_point < 0x20 {
-                    invalid = true;
+                // This condition is optimized to detect surrogate code points.
                 } else if code_point & 0xFE0 == 0x360 {
                     if code_point & 0x10 == 0 {
                         self.surrogate = true;
                     } else if prev_surrogate {
-                        // This is a broken surrogate pair, so decoding it
-                        // would be lossy.
+                        // Decoding a broken surrogate pair would be lossy.
                         invalid = true;
                     }
+                }
+
+                if code_point < 0x20 {
+                    invalid = true;
                 }
             }
             r#continue!();
