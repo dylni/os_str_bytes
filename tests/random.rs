@@ -11,7 +11,11 @@ mod common;
 use common::from_bytes;
 use common::from_vec;
 
-const RANDOM_BYTES_LENGTH: usize = 1024;
+const SMALL_LENGTH: usize = 16;
+
+const LARGE_LENGTH: usize = 1024;
+
+const ITERATIONS: usize = 1024;
 
 fn random_os_string(
     buffer_length: usize,
@@ -46,7 +50,7 @@ fn random_os_string(
 
 #[test]
 fn test_random_bytes() -> Result<(), getrandom::Error> {
-    let os_string = random_os_string(RANDOM_BYTES_LENGTH)?;
+    let os_string = random_os_string(LARGE_LENGTH)?;
     let string = os_string.to_bytes();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(&os_string), from_bytes(&string).as_ref());
@@ -55,7 +59,7 @@ fn test_random_bytes() -> Result<(), getrandom::Error> {
 
 #[test]
 fn test_random_vec() -> Result<(), getrandom::Error> {
-    let os_string = random_os_string(RANDOM_BYTES_LENGTH)?;
+    let os_string = random_os_string(LARGE_LENGTH)?;
     let string = os_string.clone().into_vec();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(os_string), from_vec(string));
@@ -64,12 +68,49 @@ fn test_random_vec() -> Result<(), getrandom::Error> {
 
 #[test]
 fn test_lossless() -> Result<(), getrandom::Error> {
-    for _ in 1..1024 {
-        let mut string = vec![0; 16];
+    for _ in 1..ITERATIONS {
+        let mut string = vec![0; SMALL_LENGTH];
         getrandom(&mut string)?;
         if let Ok(os_string) = OsStr::from_bytes(&string) {
             let encoded_string = os_string.to_bytes();
             assert_eq!(string, Borrow::<[u8]>::borrow(&encoded_string));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "raw")]
+#[test]
+fn test_raw() -> Result<(), getrandom::Error> {
+    use os_str_bytes::raw;
+
+    macro_rules! test {
+        ( $result:expr , $raw_fn:ident ( $string:expr , $substring:expr ) ) => {
+            assert_eq!(
+                $result,
+                raw::$raw_fn(&$string, &$substring),
+                concat!("raw::", stringify!($raw_fn), "({:?}, {:?})"),
+                $string,
+                $substring,
+            );
+        };
+    }
+
+    for _ in 1..ITERATIONS {
+        let mut string = random_os_string(SMALL_LENGTH)?;
+        let prefix = string.to_bytes().into_owned();
+        let suffix = random_os_string(SMALL_LENGTH)?;
+        string.push(&suffix);
+
+        let string = string.into_vec();
+        let suffix = suffix.into_vec();
+
+        test!(true, ends_with(string, suffix));
+        test!(true, starts_with(string, prefix));
+
+        if prefix != suffix {
+            test!(false, ends_with(string, prefix));
+            test!(false, starts_with(string, suffix));
         }
     }
     Ok(())

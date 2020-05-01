@@ -12,6 +12,10 @@ use super::EncodingError;
 use super::OsStrBytes;
 use super::OsStringBytes;
 
+if_raw! {
+    pub(crate) mod raw;
+}
+
 mod wtf8;
 use wtf8::DecodeWide;
 use wtf8::EncodeWide;

@@ -12,6 +12,8 @@ use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
 
+pub(super) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
+
 fn assert_bytes_eq<TString>(
     expected: &Result<TString::Owned, EncodingError>,
     result: &Result<Cow<'_, TString>, EncodingError>,

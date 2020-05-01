@@ -19,6 +19,10 @@ use super::EncodingError;
 use super::OsStrBytes;
 use super::OsStringBytes;
 
+if_raw! {
+    pub(crate) mod raw;
+}
+
 impl OsStrBytes for OsStr {
     #[inline]
     fn from_bytes<TString>(

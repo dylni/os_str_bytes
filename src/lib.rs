@@ -52,6 +52,16 @@
 //! This crate is meant to help when you already have an instance of [`OsStr`]
 //! and need to modify the data in a lossless way.
 //!
+//! # Features
+//!
+//! These features are optional and can be enabled or disabled in a
+//! "Cargo.toml" file.
+//!
+//! ### Optional Features
+//!
+//! - **raw** -
+//!   Enables use of the [`raw`] module.
+//!
 //! # Implementation
 //!
 //! Some methods return [`Cow`] to account for platform differences. However,
@@ -109,6 +119,7 @@
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
 //! [`Cow`]: https://doc.rust-lang.org/std/borrow/enum.Cow.html
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
+//! [`raw`]: raw/index.html
 //! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
 //! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
 //! [`OsStr::len`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.len
@@ -121,6 +132,7 @@
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
+#![cfg_attr(all(doc, not(doctest)), feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(unused_results)]
 
@@ -134,10 +146,23 @@ use std::fmt::Formatter;
 use std::path::Path;
 use std::path::PathBuf;
 
+macro_rules! if_raw {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(any(all(doc, not(doctest)), feature = "raw"))]
+            $item
+        )+
+    };
+}
+
 mod error;
 
+if_raw! {
+    pub mod raw;
+}
+
 #[cfg(not(windows))]
-#[path = "common.rs"]
+#[path = "common/mod.rs"]
 mod imp;
 #[cfg(windows)]
 #[path = "windows/mod.rs"]

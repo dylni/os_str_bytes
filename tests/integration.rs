@@ -7,12 +7,11 @@ use common::test_bytes;
 use common::test_utf8_bytes;
 use common::test_utf8_vec;
 use common::test_vec;
+use common::WTF8_STRING;
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
 const UTF8_STRING: &str = "string";
-
-const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
 fn test_string_is_invalid_utf8(string: &[u8]) {
     assert!(str::from_utf8(string).is_err());

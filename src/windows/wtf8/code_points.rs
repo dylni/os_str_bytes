@@ -3,11 +3,9 @@ use std::mem;
 
 use crate::error::EncodingError;
 
-pub(super) const BYTE_SHIFT: u8 = 6;
-
-pub(super) const CONT_MASK: u8 = (1 << BYTE_SHIFT) - 1;
-
-pub(super) const CONT_TAG: u8 = 0b1000_0000;
+use super::is_continuation;
+use super::BYTE_SHIFT;
+use super::CONT_MASK;
 
 #[derive(Debug)]
 pub(in super::super) struct CodePoints<TIter> {
@@ -49,7 +47,7 @@ where
         macro_rules! r#continue {
             () => {
                 if let Some(byte) = self.iter.next() {
-                    if byte & !CONT_MASK != CONT_TAG {
+                    if !is_continuation(byte) {
                         // Saving this byte will be useful if this crate ever
                         // offers a way to encode lossily.
                         self.next = Some(byte);

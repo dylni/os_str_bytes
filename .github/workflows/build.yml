@@ -14,7 +14,7 @@ jobs:
       with:
         fetch-depth: 1
     - run: cargo clippy -- -Dwarnings
-    - run: cargo clippy --tests -- -Dwarnings
+    - run: cargo clippy --all-features --tests -- -Dwarnings
     - run: cargo fmt -- --check
     timeout-minutes: 5
     strategy:
@@ -31,7 +31,7 @@ jobs:
     - run: rustup default ${{ matrix.version }}
     - run: rustup component add clippy
     - run: rustup target add ${{ matrix.target }}
-    - run: cargo clippy --target ${{ matrix.target }} -- -Dwarnings
+    - run: cargo clippy --all-features --target ${{ matrix.target }} -- -Dwarnings
     timeout-minutes: 5
     strategy:
       matrix:
@@ -54,6 +54,7 @@ jobs:
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
     - run: cargo test
+    - run: cargo test --all-features
     - run: cargo test --release
     timeout-minutes: 10
     strategy:
