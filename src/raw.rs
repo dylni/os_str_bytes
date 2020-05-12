@@ -14,7 +14,7 @@
 //! [limited specification]: ../index.html#encoding
 //! [`OsStrBytes::from_bytes`]: ../trait.OsStrBytes.html#tymethod.from_bytes
 
-#![cfg_attr(all(doc, not(doctest)), doc(cfg(feature = "raw")))]
+#![cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw")))]
 
 use super::imp::raw as imp;
 

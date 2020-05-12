@@ -13,6 +13,10 @@ keywords = ["osstr", "osstring", "path", "bytes", "windows"]
 categories = ["command-line-interface", "development-tools::ffi", "encoding", "os", "rust-patterns"]
 license = "MIT OR Apache-2.0"
 
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "os_str_bytes_docs_rs"]
+rustdoc-args = ["--cfg", "os_str_bytes_docs_rs"]
+
 [features]
 raw = []
 

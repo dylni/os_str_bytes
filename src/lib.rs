@@ -133,7 +133,11 @@
 
 #![allow(clippy::map_clone)]
 #![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
-#![cfg_attr(all(doc, not(doctest)), feature(doc_cfg))]
+// Only require a nightly compiler when building documentation for docs.rs.
+// This is a private option that should not be used.
+// https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
+// https://github.com/dylni/os_str_bytes/issues/2
+#![cfg_attr(os_str_bytes_docs_rs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(unused_results)]
 
