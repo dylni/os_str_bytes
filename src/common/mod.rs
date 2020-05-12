@@ -46,7 +46,7 @@ impl OsStringBytes for OsString {
     where
         TString: AsRef<[u8]>,
     {
-        <OsStr as OsStrBytes>::from_bytes(string.as_ref()).map(Cow::into_owned)
+        <OsStr as OsStrBytes>::from_bytes(&string).map(Cow::into_owned)
     }
 
     #[inline]

@@ -20,23 +20,6 @@ mod wtf8;
 use wtf8::DecodeWide;
 use wtf8::EncodeWide;
 
-fn encode_wide<TString>(string: TString) -> Result<Vec<u16>, EncodingError>
-where
-    TString: AsRef<[u8]>,
-{
-    let string = string.as_ref();
-    #[allow(clippy::map_clone)]
-    let encoder = EncodeWide::new(string.iter().map(|&x| x));
-
-    // Collecting an iterator into a result ignores the size hint:
-    // https://github.com/rust-lang/rust/issues/48994
-    let mut encoded_string = Vec::with_capacity(encoder.size_hint().0);
-    for wchar in encoder {
-        encoded_string.push(wchar.map_err(EncodingError)?);
-    }
-    Ok(encoded_string)
-}
-
 impl OsStrBytes for OsStr {
     #[inline]
     fn from_bytes<TString>(
@@ -60,7 +43,15 @@ impl OsStringBytes for OsString {
     where
         TString: AsRef<[u8]>,
     {
-        encode_wide(string).map(|x| OsStringExt::from_wide(&x))
+        let encoder = EncodeWide::new(string.as_ref().iter().map(|&x| x));
+
+        // Collecting an iterator into a result ignores the size hint:
+        // https://github.com/rust-lang/rust/issues/48994
+        let mut encoded_string = Vec::with_capacity(encoder.size_hint().0);
+        for wchar in encoder {
+            encoded_string.push(wchar.map_err(EncodingError)?);
+        }
+        Ok(OsStringExt::from_wide(&encoded_string))
     }
 
     #[inline]

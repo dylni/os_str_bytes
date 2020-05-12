@@ -8,7 +8,6 @@ const SURROGATE_LENGTH: usize = 3;
 fn to_wide(
     string: &[u8],
 ) -> impl '_ + Iterator<Item = Result<u16, EncodingError>> {
-    #[allow(clippy::map_clone)]
     EncodeWide::new(string.iter().map(|&x| x))
 }
 

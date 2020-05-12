@@ -131,6 +131,7 @@
 //! [print\_bytes]: https://crates.io/crates/print_bytes
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
+#![allow(clippy::map_clone)]
 #![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
 #![cfg_attr(all(doc, not(doctest)), feature(doc_cfg))]
 #![forbid(unsafe_code)]
