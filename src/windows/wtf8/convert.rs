@@ -15,7 +15,6 @@ const MIN_LOW_SURROGATE: u16 = 0xDC00;
 
 const MIN_SURROGATE_CODE: u32 = (u16::max_value() as u32) + 1;
 
-#[derive(Debug)]
 pub(in super::super) struct DecodeWide<TIter> {
     iter: TIter,
     code_point: Option<u32>,
@@ -80,7 +79,6 @@ where
     }
 }
 
-#[derive(Debug)]
 pub(in super::super) struct EncodeWide<TIter> {
     iter: TIter,
     surrogate: Option<u16>,

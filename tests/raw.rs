@@ -11,8 +11,7 @@ fn test_ends_with() {
     test(true, b"r");
     test(true, b"ar");
     test(true, b"bar");
-    #[cfg(not(windows))]
-    {
+    if cfg!(not(windows)) {
         test(true, b"\xA9bar");
         test(true, b"\x92\xA9bar");
         test(true, b"\x9F\x92\xA9bar");
@@ -43,8 +42,7 @@ fn test_starts_with() {
     test(true, b"fo");
     test(true, b"foo");
     test(true, b"foo\xED\xA0\xBD");
-    #[cfg(not(windows))]
-    {
+    if cfg!(not(windows)) {
         test(true, b"foo\xED\xA0\xBD\xF0");
         test(true, b"foo\xED\xA0\xBD\xF0\x9F");
         test(true, b"foo\xED\xA0\xBD\xF0\x9F\x92");

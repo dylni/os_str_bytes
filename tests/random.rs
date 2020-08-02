@@ -1,4 +1,3 @@
-use std::borrow::Borrow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
 
@@ -73,7 +72,7 @@ fn test_lossless() -> Result<(), getrandom::Error> {
         getrandom(&mut string)?;
         if let Ok(os_string) = OsStr::from_bytes(&string) {
             let encoded_string = os_string.to_bytes();
-            assert_eq!(string, Borrow::<[u8]>::borrow(&encoded_string));
+            assert_eq!(string, &*encoded_string);
         }
     }
     Ok(())

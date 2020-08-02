@@ -20,7 +20,7 @@ use super::OsStrBytes;
 use super::OsStringBytes;
 
 if_raw! {
-    pub(crate) mod raw;
+    pub(super) mod raw;
 }
 
 impl OsStrBytes for OsStr {

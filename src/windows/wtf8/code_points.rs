@@ -7,7 +7,6 @@ use super::is_continuation;
 use super::BYTE_SHIFT;
 use super::CONT_MASK;
 
-#[derive(Debug)]
 pub(in super::super) struct CodePoints<TIter> {
     iter: Fuse<TIter>,
     next: Option<u8>,

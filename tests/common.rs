@@ -5,6 +5,7 @@ use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::fmt::Debug;
+use std::ops::Deref;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -22,7 +23,7 @@ fn assert_bytes_eq<TString>(
 {
     assert_eq!(
         expected.as_ref().map(Borrow::borrow),
-        result.as_ref().map(Borrow::borrow),
+        result.as_ref().map(Deref::deref),
     );
 }
 
@@ -49,7 +50,7 @@ pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
 pub(crate) fn test_bytes(string: &[u8]) -> Result<(), EncodingError> {
     let os_string = from_bytes(string)?;
     assert_eq!(string.len(), os_string.len());
-    assert_eq!(string, os_string.to_bytes().as_ref());
+    assert_eq!(string, &*os_string.to_bytes());
     Ok(())
 }
 
@@ -64,7 +65,7 @@ pub(crate) fn test_utf8_bytes(string: &str) {
     let os_string = string.into();
     let string = string.as_bytes();
     assert_eq!(Ok(&os_string), from_bytes(string).as_ref());
-    assert_eq!(string, os_string.to_bytes().as_ref());
+    assert_eq!(string, &*os_string.to_bytes());
 }
 
 pub(crate) fn test_utf8_vec(string: &str) {

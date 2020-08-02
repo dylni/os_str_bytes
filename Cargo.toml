@@ -9,16 +9,17 @@ Traits for converting between byte sequences and platform-native strings
 """
 repository = "https://github.com/dylni/os_str_bytes"
 readme = "README.md"
-keywords = ["osstr", "osstring", "path", "bytes", "windows"]
+keywords = ["bytes", "osstr", "osstring", "path", "windows"]
 categories = ["command-line-interface", "development-tools::ffi", "encoding", "os", "rust-patterns"]
 license = "MIT OR Apache-2.0"
 
 [package.metadata.docs.rs]
+all-features = true
 rustc-args = ["--cfg", "os_str_bytes_docs_rs"]
 rustdoc-args = ["--cfg", "os_str_bytes_docs_rs"]
 
-[features]
-raw = []
-
 [dev-dependencies]
 getrandom = "0.1"
+
+[features]
+raw = []

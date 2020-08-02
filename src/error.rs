@@ -6,7 +6,7 @@ use std::fmt::Formatter;
 
 #[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Debug, Eq, PartialEq)]
-pub(crate) enum EncodingError {
+pub(super) enum EncodingError {
     Byte(u8),
     CodePoint(u32),
     End(),

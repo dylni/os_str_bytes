@@ -154,7 +154,7 @@ use std::path::PathBuf;
 macro_rules! if_raw {
     ( $($item:item)+ ) => {
         $(
-            #[cfg(any(all(doc, not(doctest)), feature = "raw"))]
+            #[cfg(feature = "raw")]
             $item
         )+
     };
@@ -190,7 +190,7 @@ mod imp;
 /// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
 /// [`Result::unwrap`]: https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap
 #[derive(Debug, Eq, PartialEq)]
-pub struct EncodingError(pub(crate) error::EncodingError);
+pub struct EncodingError(error::EncodingError);
 
 impl Display for EncodingError {
     #[inline]
