@@ -2,12 +2,7 @@ use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
 
-#[cfg(any(
-    target_os = "hermit",
-    target_os = "redox",
-    unix,
-    target_os = "vxworks"
-))]
+#[cfg(any(target_os = "hermit", target_os = "redox", unix))]
 use std::os::unix as os;
 #[cfg(any(target_env = "wasi", target_os = "wasi"))]
 use std::os::wasi as os;
