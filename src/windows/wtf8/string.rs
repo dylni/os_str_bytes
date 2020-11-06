@@ -42,10 +42,6 @@ pub(in super::super) fn starts_with(
     string: &[u8],
     mut prefix: &[u8],
 ) -> Option<bool> {
-    if prefix.is_empty() {
-        return Some(true);
-    }
-
     if let Some(&byte) = string.get(prefix.len()) {
         if is_continuation(byte) {
             let index = prefix.len().checked_sub(SURROGATE_LENGTH)?;

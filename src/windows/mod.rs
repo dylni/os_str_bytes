@@ -61,7 +61,7 @@ impl OsStringBytes for OsString {
 
     #[inline]
     fn into_vec(self) -> Vec<u8> {
-        OsStrBytes::to_bytes(self.as_os_str()).into_owned()
+        OsStrBytes::to_bytes(&*self).into_owned()
     }
 }
 

@@ -160,18 +160,15 @@ macro_rules! if_raw {
     };
 }
 
+#[cfg_attr(windows, path = "windows/mod.rs")]
+#[cfg_attr(not(windows), path = "common/mod.rs")]
+mod imp;
+
 mod error;
 
 if_raw! {
     pub mod raw;
 }
-
-#[cfg(not(windows))]
-#[path = "common/mod.rs"]
-mod imp;
-#[cfg(windows)]
-#[path = "windows/mod.rs"]
-mod imp;
 
 /// The error that occurs when a byte sequence is not representable in the
 /// platform encoding.

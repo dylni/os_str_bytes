@@ -112,15 +112,14 @@ where
 
         self.iter.next().map(|code_point| {
             code_point.map(|code_point| {
-                if let Some(offset) =
-                    code_point.checked_sub(MIN_SURROGATE_CODE)
-                {
-                    self.surrogate =
-                        Some((offset & 0x3FF) as u16 | MIN_LOW_SURROGATE);
-                    (offset >> 10) as u16 | MIN_HIGH_SURROGATE
-                } else {
-                    code_point as u16
-                }
+                code_point
+                    .checked_sub(MIN_SURROGATE_CODE)
+                    .map(|offset| {
+                        self.surrogate =
+                            Some((offset & 0x3FF) as u16 | MIN_LOW_SURROGATE);
+                        (offset >> 10) as u16 | MIN_HIGH_SURROGATE
+                    })
+                    .unwrap_or(code_point as u16)
             })
         })
     }
