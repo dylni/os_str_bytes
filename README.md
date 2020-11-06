@@ -30,10 +30,10 @@ The minimum supported Rust toolchain version depends on the platform:
 
 | `target_os` | Minimum Version |
 | --- | --- |
-| emscripten (wasm32) | 1.32.0 |
+| emscripten (wasm32) | 1.34.0 |
 | redox | 1.34.0 |
 | unix | 1.34.0 |
-| unknown (wasm32) | 1.32.0 |
+| unknown (wasm32) | 1.34.0 |
 | wasi | 1.35.0 (all versions) |
 | windows | 1.34.0 |
 

@@ -1,10 +1,7 @@
 use std::borrow::Cow;
-use std::error::Error;
+use std::convert::Infallible;
 use std::ffi::OsStr;
 use std::ffi::OsString;
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
 use std::result;
 
 #[cfg(any(target_os = "hermit", target_os = "redox", unix))]
@@ -19,16 +16,7 @@ if_raw! {
     pub(super) mod raw;
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub(super) enum EncodingError {}
-
-impl Display for EncodingError {
-    fn fmt(&self, _: &mut Formatter<'_>) -> fmt::Result {
-        match *self {}
-    }
-}
-
-impl Error for EncodingError {}
+pub(super) type EncodingError = Infallible;
 
 type Result<T> = result::Result<T, EncodingError>;
 

@@ -19,7 +19,7 @@ rustc-args = ["--cfg", "os_str_bytes_docs_rs"]
 rustdoc-args = ["--cfg", "os_str_bytes_docs_rs"]
 
 [dev-dependencies]
-getrandom = "0.2"
+getrandom = { version = "0.2", features = ["js"] }
 
 [features]
 raw = []

@@ -47,9 +47,8 @@ fn random_os_string(
             }
         }
     }
-    #[allow(deprecated)]
     #[cfg(not(any(unix, windows)))]
-    Err(getrandom::Error::UNAVAILABLE)
+    Err(getrandom::Error::UNSUPPORTED)
 }
 
 #[test]
