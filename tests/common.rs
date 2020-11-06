@@ -57,7 +57,7 @@ pub(crate) fn test_bytes(string: &[u8]) -> Result<(), EncodingError> {
 pub(crate) fn test_vec(string: &[u8]) -> Result<(), EncodingError> {
     let os_string = from_vec(string.to_vec())?;
     assert_eq!(string.len(), os_string.len());
-    assert_eq!(string, os_string.into_vec().as_slice());
+    assert_eq!(string, &*os_string.into_vec());
     Ok(())
 }
 
@@ -72,5 +72,5 @@ pub(crate) fn test_utf8_vec(string: &str) {
     let os_string = string.to_string().into();
     let string = string.as_bytes();
     assert_eq!(Ok(&os_string), from_vec(string.to_vec()).as_ref());
-    assert_eq!(string, os_string.into_vec().as_slice());
+    assert_eq!(string, &*os_string.into_vec());
 }

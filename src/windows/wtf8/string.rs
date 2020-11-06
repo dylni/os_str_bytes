@@ -1,13 +1,10 @@
-use crate::error::EncodingError;
-
 use super::is_continuation;
 use super::EncodeWide;
+use super::Result;
 
 const SURROGATE_LENGTH: usize = 3;
 
-fn to_wide(
-    string: &[u8],
-) -> impl '_ + Iterator<Item = Result<u16, EncodingError>> {
+fn to_wide(string: &[u8]) -> impl '_ + Iterator<Item = Result<u16>> {
     EncodeWide::new(string.iter().map(|&x| x))
 }
 
@@ -42,10 +39,6 @@ pub(in super::super) fn starts_with(
     string: &[u8],
     mut prefix: &[u8],
 ) -> Option<bool> {
-    if prefix.is_empty() {
-        return Some(true);
-    }
-
     if let Some(&byte) = string.get(prefix.len()) {
         if is_continuation(byte) {
             let index = prefix.len().checked_sub(SURROGATE_LENGTH)?;

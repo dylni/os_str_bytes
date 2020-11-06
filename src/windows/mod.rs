@@ -1,16 +1,18 @@
-// These methods are necessarily inefficient, because they must revert encoding
-// conversions performed by the standard library. However, there is currently
-// no better alternative.
+// These functions are necessarily inefficient, because they must revert
+// encoding conversions performed by the standard library. However, there is
+// currently no better alternative.
 
 use std::borrow::Cow;
+use std::error::Error;
 use std::ffi::OsStr;
 use std::ffi::OsString;
+use std::fmt;
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::os::windows::ffi::OsStrExt;
 use std::os::windows::ffi::OsStringExt;
-
-use super::EncodingError;
-use super::OsStrBytes;
-use super::OsStringBytes;
+use std::result;
+use std::str;
 
 if_raw! {
     pub(super) mod raw;
@@ -20,58 +22,79 @@ mod wtf8;
 use wtf8::DecodeWide;
 use wtf8::EncodeWide;
 
-impl OsStrBytes for OsStr {
-    #[inline]
-    fn from_bytes<TString>(
-        string: &TString,
-    ) -> Result<Cow<'_, Self>, EncodingError>
-    where
-        TString: AsRef<[u8]> + ?Sized,
-    {
-        Ok(Cow::Owned(OsStringBytes::from_bytes(string)?))
-    }
+#[derive(Debug, Eq, PartialEq)]
+pub(super) enum EncodingError {
+    Byte(u8),
+    CodePoint(u32),
+    End(),
+}
 
-    #[inline]
-    fn to_bytes(&self) -> Cow<'_, [u8]> {
-        Cow::Owned(DecodeWide::new(OsStrExt::encode_wide(self)).collect())
+impl EncodingError {
+    fn position(&self) -> Cow<'_, str> {
+        // Variants are not recognized on type aliases in older versions:
+        // https://github.com/rust-lang/rust/pull/61682
+        match self {
+            EncodingError::Byte(byte) => {
+                Cow::Owned(format!("byte b'\\x{:02X}'", byte))
+            }
+            EncodingError::CodePoint(code_point) => {
+                Cow::Owned(format!("code point U+{:04X}", code_point))
+            }
+            EncodingError::End() => Cow::Borrowed("end of string"),
+        }
     }
 }
 
-impl OsStringBytes for OsString {
-    #[inline]
-    fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
-    where
-        TString: AsRef<[u8]>,
-    {
-        let encoder = EncodeWide::new(string.as_ref().iter().map(|&x| x));
-
-        // Collecting an iterator into a result ignores the size hint:
-        // https://github.com/rust-lang/rust/issues/48994
-        let mut encoded_string = Vec::with_capacity(encoder.size_hint().0);
-        for wchar in encoder {
-            encoded_string.push(wchar.map_err(EncodingError)?);
-        }
-        Ok(OsStringExt::from_wide(&encoded_string))
+impl Display for EncodingError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "os_str_bytes: byte sequence is not representable in the platform \
+            encoding; error at {}",
+            self.position(),
+        )
     }
+}
 
-    #[inline]
-    fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
-        OsStringBytes::from_bytes(string)
-    }
+impl Error for EncodingError {}
 
-    #[inline]
-    fn into_vec(self) -> Vec<u8> {
-        OsStrBytes::to_bytes(self.as_os_str()).into_owned()
+type Result<T> = result::Result<T, EncodingError>;
+
+pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
+    Ok(Cow::Owned(os_string_from_bytes(string)?))
+}
+
+pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
+    Cow::Owned(DecodeWide::new(OsStrExt::encode_wide(os_string)).collect())
+}
+
+pub(crate) fn os_string_from_bytes(string: &[u8]) -> Result<OsString> {
+    let encoder = EncodeWide::new(string.iter().map(|&x| x));
+
+    // Collecting an iterator into a result ignores the size hint:
+    // https://github.com/rust-lang/rust/issues/48994
+    let mut encoded_string = Vec::with_capacity(encoder.size_hint().0);
+    for wchar in encoder {
+        encoded_string.push(wchar?);
     }
+    Ok(OsStringExt::from_wide(&encoded_string))
+}
+
+pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
+    os_string_from_bytes(&string)
+}
+
+pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
+    os_str_to_bytes(&os_string).into_owned()
 }
 
 #[cfg(test)]
 mod tests {
     use std::ffi::OsStr;
 
-    use crate::error::EncodingError;
+    use crate::OsStrBytes;
 
-    use super::OsStrBytes;
+    use super::EncodingError;
 
     #[test]
     fn test_invalid() {

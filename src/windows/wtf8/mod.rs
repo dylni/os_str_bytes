@@ -1,6 +1,9 @@
 // This module implements the WTF-8 encoding specification:
 // https://simonsapin.github.io/wtf-8/
 
+use super::EncodingError;
+use super::Result;
+
 mod code_points;
 use code_points::CodePoints;
 
