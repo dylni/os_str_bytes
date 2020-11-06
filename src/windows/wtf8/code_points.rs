@@ -1,9 +1,9 @@
 use std::iter::Fuse;
 use std::mem;
 
-use crate::error::EncodingError;
-
 use super::is_continuation;
+use super::EncodingError;
+use super::Result;
 use super::BYTE_SHIFT;
 use super::CONT_MASK;
 
@@ -37,7 +37,7 @@ impl<TIter> Iterator for CodePoints<TIter>
 where
     TIter: Iterator<Item = u8>,
 {
-    type Item = Result<u32, EncodingError>;
+    type Item = Result<u32>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let byte = self.next.or_else(|| self.iter.next())?;

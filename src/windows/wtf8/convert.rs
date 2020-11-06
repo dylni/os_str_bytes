@@ -1,10 +1,10 @@
 use std::char;
 use std::char::DecodeUtf16;
 use std::char::DecodeUtf16Error;
-
-use crate::error::EncodingError;
+use std::result;
 
 use super::CodePoints;
+use super::Result;
 use super::BYTE_SHIFT;
 use super::CONT_MASK;
 use super::CONT_TAG;
@@ -39,7 +39,7 @@ where
 
 impl<TIter> Iterator for DecodeWide<TIter>
 where
-    TIter: Iterator<Item = Result<char, DecodeUtf16Error>>,
+    TIter: Iterator<Item = result::Result<char, DecodeUtf16Error>>,
 {
     type Item = u8;
 
@@ -103,7 +103,7 @@ impl<TIter> Iterator for EncodeWide<CodePoints<TIter>>
 where
     TIter: Iterator<Item = u8>,
 {
-    type Item = Result<u16, EncodingError>;
+    type Item = Result<u16>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(surrogate) = self.surrogate.take() {

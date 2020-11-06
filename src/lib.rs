@@ -150,6 +150,7 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 use std::path::Path;
 use std::path::PathBuf;
+use std::result;
 
 macro_rules! if_raw {
     ( $($item:item)+ ) => {
@@ -160,11 +161,25 @@ macro_rules! if_raw {
     };
 }
 
+#[cfg_attr(
+    all(
+        target_arch = "wasm32",
+        any(target_os = "emscripten", target_os = "unknown"),
+    ),
+    path = "wasm32/mod.rs"
+)]
 #[cfg_attr(windows, path = "windows/mod.rs")]
-#[cfg_attr(not(windows), path = "common/mod.rs")]
+#[cfg_attr(
+    not(any(
+        all(
+            target_arch = "wasm32",
+            any(target_os = "emscripten", target_os = "unknown"),
+        ),
+        windows,
+    )),
+    path = "common/mod.rs"
+)]
 mod imp;
-
-mod error;
 
 if_raw! {
     pub mod raw;
@@ -187,7 +202,7 @@ if_raw! {
 /// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
 /// [`Result::unwrap`]: https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap
 #[derive(Debug, Eq, PartialEq)]
-pub struct EncodingError(error::EncodingError);
+pub struct EncodingError(imp::EncodingError);
 
 impl Display for EncodingError {
     #[inline]
@@ -197,6 +212,8 @@ impl Display for EncodingError {
 }
 
 impl Error for EncodingError {}
+
+type Result<T> = result::Result<T, EncodingError>;
 
 /// A platform agnostic variant of [`OsStrExt`].
 ///
@@ -229,9 +246,7 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
-    fn from_bytes<TString>(
-        string: &TString,
-    ) -> Result<Cow<'_, Self>, EncodingError>
+    fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
     where
         TString: AsRef<[u8]> + ?Sized;
 
@@ -255,11 +270,24 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     fn to_bytes(&self) -> Cow<'_, [u8]>;
 }
 
+impl OsStrBytes for OsStr {
+    #[inline]
+    fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
+    where
+        TString: AsRef<[u8]> + ?Sized,
+    {
+        imp::os_str_from_bytes(string.as_ref()).map_err(EncodingError)
+    }
+
+    #[inline]
+    fn to_bytes(&self) -> Cow<'_, [u8]> {
+        imp::os_str_to_bytes(self)
+    }
+}
+
 impl OsStrBytes for Path {
     #[inline]
-    fn from_bytes<TString>(
-        string: &TString,
-    ) -> Result<Cow<'_, Self>, EncodingError>
+    fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
     where
         TString: AsRef<[u8]> + ?Sized,
     {
@@ -310,7 +338,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// [`EncodingError`]: struct.EncodingError.html
     /// [`from_cow`]: #method.from_cow
-    fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
+    fn from_bytes<TString>(string: TString) -> Result<Self>
     where
         TString: AsRef<[u8]>;
 
@@ -348,7 +376,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// [`from_vec`]: #tymethod.from_vec
     /// [`OsStrBytes::to_bytes`]: trait.OsStrBytes.html#tymethod.to_bytes
     #[inline]
-    fn from_cow(string: Cow<'_, [u8]>) -> Result<Self, EncodingError> {
+    fn from_cow(string: Cow<'_, [u8]>) -> Result<Self> {
         match string {
             Cow::Borrowed(string) => Self::from_bytes(string),
             Cow::Owned(string) => Self::from_vec(string),
@@ -379,7 +407,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
-    fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError>;
+    fn from_vec(string: Vec<u8>) -> Result<Self>;
 
     /// Converts a platform-native string into an equivalent byte vector.
     ///
@@ -401,9 +429,29 @@ pub trait OsStringBytes: private::Sealed + Sized {
     fn into_vec(self) -> Vec<u8>;
 }
 
+impl OsStringBytes for OsString {
+    #[inline]
+    fn from_bytes<TString>(string: TString) -> Result<Self>
+    where
+        TString: AsRef<[u8]>,
+    {
+        imp::os_string_from_bytes(string.as_ref()).map_err(EncodingError)
+    }
+
+    #[inline]
+    fn from_vec(string: Vec<u8>) -> Result<Self> {
+        imp::os_string_from_vec(string).map_err(EncodingError)
+    }
+
+    #[inline]
+    fn into_vec(self) -> Vec<u8> {
+        imp::os_string_into_vec(self)
+    }
+}
+
 impl OsStringBytes for PathBuf {
     #[inline]
-    fn from_bytes<TString>(string: TString) -> Result<Self, EncodingError>
+    fn from_bytes<TString>(string: TString) -> Result<Self>
     where
         TString: AsRef<[u8]>,
     {
@@ -411,7 +459,7 @@ impl OsStringBytes for PathBuf {
     }
 
     #[inline]
-    fn from_vec(string: Vec<u8>) -> Result<Self, EncodingError> {
+    fn from_vec(string: Vec<u8>) -> Result<Self> {
         OsString::from_vec(string).map(Into::into)
     }
 

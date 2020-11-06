@@ -1,13 +1,10 @@
-use crate::error::EncodingError;
-
 use super::is_continuation;
 use super::EncodeWide;
+use super::Result;
 
 const SURROGATE_LENGTH: usize = 3;
 
-fn to_wide(
-    string: &[u8],
-) -> impl '_ + Iterator<Item = Result<u16, EncodingError>> {
+fn to_wide(string: &[u8]) -> impl '_ + Iterator<Item = Result<u16>> {
     EncodeWide::new(string.iter().map(|&x| x))
 }
 
