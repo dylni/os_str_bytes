@@ -20,6 +20,8 @@ pub(super) type EncodingError = Infallible;
 
 type Result<T> = result::Result<T, EncodingError>;
 
+#[allow(clippy::unknown_clippy_lints)]
+#[allow(clippy::unnecessary_wraps)]
 pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
     Ok(Cow::Borrowed(OsStrExt::from_bytes(string)))
 }
@@ -32,6 +34,8 @@ pub(crate) fn os_string_from_bytes(string: &[u8]) -> Result<OsString> {
     os_str_from_bytes(&string).map(Cow::into_owned)
 }
 
+#[allow(clippy::unknown_clippy_lints)]
+#[allow(clippy::unnecessary_wraps)]
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
     Ok(OsStringExt::from_vec(string))
 }
