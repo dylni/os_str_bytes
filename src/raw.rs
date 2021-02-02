@@ -46,9 +46,9 @@ use super::imp::raw as imp;
 /// [`slice::ends_with`]: https://doc.rust-lang.org/std/primitive.slice.html#method.ends_with
 #[inline]
 #[must_use]
-pub fn ends_with<TString>(string: &TString, suffix: &[u8]) -> bool
+pub fn ends_with<TString>(string: TString, suffix: &[u8]) -> bool
 where
-    TString: AsRef<[u8]> + ?Sized,
+    TString: AsRef<[u8]>,
 {
     imp::ends_with(string.as_ref(), suffix)
 }
@@ -82,9 +82,9 @@ where
 /// [`slice::starts_with`]: https://doc.rust-lang.org/std/primitive.slice.html#method.starts_with
 #[inline]
 #[must_use]
-pub fn starts_with<TString>(string: &TString, prefix: &[u8]) -> bool
+pub fn starts_with<TString>(string: TString, prefix: &[u8]) -> bool
 where
-    TString: AsRef<[u8]> + ?Sized,
+    TString: AsRef<[u8]>,
 {
     imp::starts_with(string.as_ref(), prefix)
 }
