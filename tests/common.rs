@@ -69,7 +69,7 @@ pub(crate) fn test_utf8_bytes(string: &str) {
 }
 
 pub(crate) fn test_utf8_vec(string: &str) {
-    let os_string = string.to_string().into();
+    let os_string = string.to_owned().into();
     let string = string.as_bytes();
     assert_eq!(Ok(&os_string), from_vec(string.to_vec()).as_ref());
     assert_eq!(string, &*os_string.into_vec());

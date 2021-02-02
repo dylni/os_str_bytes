@@ -85,23 +85,23 @@
 //! # Examples
 //!
 //! ```
+//! # #[cfg(any())]
 //! use std::env;
 //! use std::fs;
-//! # use std::io::Result;
+//! # use std::io;
 //!
 //! use os_str_bytes::OsStrBytes;
 //!
-//! # fn main() -> Result<()> {
-//! #     mod env {
-//! #         use std::ffi::OsString;
+//! # mod env {
+//! #   use std::env;
+//! #   use std::ffi::OsString;
 //! #
-//! #         pub fn args_os() -> impl Iterator<Item = OsString> {
-//! #             let mut file = super::env::temp_dir();
-//! #             file.push("os_str_bytes\u{E9}.txt");
-//! #             return vec![OsString::new(), file.into_os_string()]
-//! #                 .into_iter();
-//! #         }
-//! #     }
+//! #   pub fn args_os() -> impl Iterator<Item = OsString> {
+//! #       let mut file = env::temp_dir();
+//! #       file.push("os_str_bytes\u{E9}.txt");
+//! #       return vec![OsString::new(), file.into_os_string()].into_iter();
+//! #   }
+//! # }
 //! #
 //! for file in env::args_os().skip(1) {
 //!     if file.to_bytes().first() != Some(&b'-') {
@@ -110,8 +110,8 @@
 //!         assert_eq!(string, fs::read_to_string(file)?);
 //!     }
 //! }
-//! #     Ok(())
-//! # }
+//! #
+//! # Ok::<_, io::Error>(())
 //! ```
 //!
 //! [bstr]: https://crates.io/crates/bstr
@@ -132,7 +132,6 @@
 //! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![allow(clippy::map_clone)]
-#![doc(html_root_url = "https://docs.rs/os_str_bytes/*")]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
@@ -237,12 +236,11 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     ///
     /// use os_str_bytes::OsStrBytes;
     ///
-    /// # fn main() -> io::Result<()> {
     /// let os_string = env::current_exe()?;
     /// let os_bytes = os_string.to_bytes();
     /// assert_eq!(os_string, OsStr::from_bytes(&os_bytes).unwrap());
-    /// #     Ok(())
-    /// # }
+    /// #
+    /// # Ok::<_, io::Error>(())
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
@@ -260,11 +258,10 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     ///
     /// use os_str_bytes::OsStrBytes;
     ///
-    /// # fn main() -> io::Result<()> {
     /// let os_string = env::current_exe()?;
     /// println!("{:?}", os_string.to_bytes());
-    /// #     Ok(())
-    /// # }
+    /// #
+    /// # Ok::<_, io::Error>(())
     /// ```
     #[must_use]
     fn to_bytes(&self) -> Cow<'_, [u8]>;
@@ -328,12 +325,11 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// use os_str_bytes::OsStrBytes;
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> io::Result<()> {
     /// let os_string = env::current_exe()?;
     /// let os_bytes = os_string.to_bytes();
     /// assert_eq!(os_string, OsString::from_bytes(os_bytes).unwrap());
-    /// #     Ok(())
-    /// # }
+    /// #
+    /// # Ok::<_, io::Error>(())
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
@@ -363,12 +359,11 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// use os_str_bytes::OsStrBytes;
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> io::Result<()> {
     /// let os_string = env::current_exe()?;
     /// let os_bytes = os_string.to_bytes();
     /// assert_eq!(os_string, OsString::from_cow(os_bytes).unwrap());
-    /// #     Ok(())
-    /// # }
+    /// #
+    /// # Ok::<_, io::Error>(())
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
@@ -398,12 +393,11 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> io::Result<()> {
     /// let os_string = env::current_exe()?;
     /// let os_bytes = os_string.clone().into_vec();
     /// assert_eq!(os_string, OsString::from_vec(os_bytes).unwrap());
-    /// #     Ok(())
-    /// # }
+    /// #
+    /// # Ok::<_, io::Error>(())
     /// ```
     ///
     /// [`EncodingError`]: struct.EncodingError.html
@@ -419,11 +413,10 @@ pub trait OsStringBytes: private::Sealed + Sized {
     ///
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// # fn main() -> io::Result<()> {
     /// let os_string = env::current_exe()?;
     /// println!("{:?}", os_string.into_vec());
-    /// #     Ok(())
-    /// # }
+    /// #
+    /// # Ok::<_, io::Error>(())
     /// ```
     #[must_use]
     fn into_vec(self) -> Vec<u8>;
