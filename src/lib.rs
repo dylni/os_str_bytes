@@ -117,19 +117,8 @@
 //! [bstr]: https://crates.io/crates/bstr
 //! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
-//! [`Cow`]: https://doc.rust-lang.org/std/borrow/enum.Cow.html
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
-//! [`raw`]: raw/index.html
-//! [slice]: https://doc.rust-lang.org/std/primitive.slice.html
-//! [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
-//! [`OsStr::len`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.len
-//! [`OsStrBytes::from_bytes`]: trait.OsStrBytes.html#tymethod.from_bytes
-//! [`OsString`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html
-//! [`OsString::push`]: https://doc.rust-lang.org/std/ffi/struct.OsString.html#method.push
-//! [`OsStringBytes::from_bytes`]: trait.OsStringBytes.html#tymethod.from_bytes
-//! [`OsStringBytes::from_vec`]: trait.OsStringBytes.html#tymethod.from_vec
 //! [print\_bytes]: https://crates.io/crates/print_bytes
-//! [`Vec<u8>`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
 
 #![allow(clippy::map_clone)]
 // Only require a nightly compiler when building documentation for docs.rs.
@@ -196,10 +185,10 @@ if_raw! {
 /// On Unix, this error is never returned, but [`OsStrExt`] or [`OsStringExt`]
 /// should be used instead if that needs to be guaranteed.
 ///
-/// [encoding]: index.html#encoding
-/// [`OsStrExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStrExt.html
-/// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
-/// [`Result::unwrap`]: https://doc.rust-lang.org/std/result/enum.Result.html#method.unwrap
+/// [encoding]: self#encoding
+/// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
+/// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
+/// [`Result::unwrap`]: ::std::result::Result::unwrap
 #[derive(Debug, Eq, PartialEq)]
 pub struct EncodingError(imp::EncodingError);
 
@@ -218,8 +207,8 @@ type Result<T> = result::Result<T, EncodingError>;
 ///
 /// For more information, see [the module-level documentation][module].
 ///
-/// [module]: index.html
-/// [`OsStrExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStrExt.html
+/// [module]: self
+/// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
 pub trait OsStrBytes: private::Sealed + ToOwned {
     /// Converts a byte slice into an equivalent platform-native string.
     ///
@@ -242,8 +231,6 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    ///
-    /// [`EncodingError`]: struct.EncodingError.html
     fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
     where
         TString: AsRef<[u8]> + ?Sized;
@@ -304,8 +291,8 @@ impl OsStrBytes for Path {
 ///
 /// For more information, see [the module-level documentation][module].
 ///
-/// [module]: index.html
-/// [`OsStringExt`]: https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
+/// [module]: self
+/// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
 pub trait OsStringBytes: private::Sealed + Sized {
     /// Copies a byte slice into an equivalent platform-native string.
     ///
@@ -332,8 +319,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
-    /// [`EncodingError`]: struct.EncodingError.html
-    /// [`from_cow`]: #method.from_cow
+    /// [`from_cow`]: Self::from_cow
     fn from_bytes<TString>(string: TString) -> Result<Self>
     where
         TString: AsRef<[u8]>;
@@ -366,10 +352,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
-    /// [`EncodingError`]: struct.EncodingError.html
-    /// [`from_bytes`]: #tymethod.from_bytes
-    /// [`from_vec`]: #tymethod.from_vec
-    /// [`OsStrBytes::to_bytes`]: trait.OsStrBytes.html#tymethod.to_bytes
+    /// [`from_bytes`]: Self::from_bytes
+    /// [`from_vec`]: Self::from_vec
     #[inline]
     fn from_cow(string: Cow<'_, [u8]>) -> Result<Self> {
         match string {
@@ -399,8 +383,6 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    ///
-    /// [`EncodingError`]: struct.EncodingError.html
     fn from_vec(string: Vec<u8>) -> Result<Self>;
 
     /// Converts a platform-native string into an equivalent byte vector.
