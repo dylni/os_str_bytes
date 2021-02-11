@@ -45,10 +45,6 @@ pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
     Cow::Borrowed(expect_utf8!(os_string.to_str()).as_bytes())
 }
 
-pub(crate) fn os_string_from_bytes(string: &[u8]) -> Result<OsString> {
-    os_str_from_bytes(&string).map(Cow::into_owned)
-}
-
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
     String::from_utf8(string)
         .map(Into::into)

@@ -30,10 +30,6 @@ pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
     Cow::Borrowed(OsStrExt::as_bytes(os_string))
 }
 
-pub(crate) fn os_string_from_bytes(string: &[u8]) -> Result<OsString> {
-    os_str_from_bytes(&string).map(Cow::into_owned)
-}
-
 #[allow(clippy::unknown_clippy_lints)]
 #[allow(clippy::unnecessary_wraps)]
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {

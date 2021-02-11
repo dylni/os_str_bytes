@@ -61,14 +61,6 @@ impl Error for EncodingError {}
 type Result<T> = result::Result<T, EncodingError>;
 
 pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
-    Ok(Cow::Owned(os_string_from_bytes(string)?))
-}
-
-pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Owned(DecodeWide::new(OsStrExt::encode_wide(os_string)).collect())
-}
-
-pub(crate) fn os_string_from_bytes(string: &[u8]) -> Result<OsString> {
     let encoder = EncodeWide::new(string.iter().map(|&x| x));
 
     // Collecting an iterator into a result ignores the size hint:
@@ -77,11 +69,15 @@ pub(crate) fn os_string_from_bytes(string: &[u8]) -> Result<OsString> {
     for wchar in encoder {
         encoded_string.push(wchar?);
     }
-    Ok(OsStringExt::from_wide(&encoded_string))
+    Ok(Cow::Owned(OsStringExt::from_wide(&encoded_string)))
+}
+
+pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
+    Cow::Owned(DecodeWide::new(OsStrExt::encode_wide(os_string)).collect())
 }
 
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
-    os_string_from_bytes(&string)
+    os_str_from_bytes(&string).map(Cow::into_owned)
 }
 
 pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {

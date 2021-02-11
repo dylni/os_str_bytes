@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
 
@@ -59,7 +60,7 @@ fn test_random_bytes() -> Result<(), getrandom::Error> {
     let os_string = random_os_string(LARGE_LENGTH)?;
     let string = os_string.to_bytes();
     assert_eq!(os_string.len(), string.len());
-    assert_eq!(Ok(&os_string), from_bytes(&string).as_ref());
+    assert_eq!(Ok(Cow::Borrowed(&*os_string)), from_bytes(&string));
     Ok(())
 }
 

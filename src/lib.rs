@@ -76,11 +76,9 @@
 //! # Complexity
 //!
 //! The time complexities of methods will vary based on what functionality is
-//! available for the platform. The most efficient implementation will be used,
-//! but it is important to use the most applicable method. For example,
-//! [`OsStringBytes::from_vec`] will be at least as efficient as
-//! [`OsStringBytes::from_bytes`], but the latter should be used when only a
-//! slice is available.
+//! available for the platform. At worst, they will all be linear, but some can
+//! take constant time. For example, [`OsStringBytes::from_vec`] might be able
+//! to reuse the allocation for its argument.
 //!
 //! # Examples
 //!
@@ -227,13 +225,13 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     ///
     /// let os_string = env::current_exe()?;
     /// let os_bytes = os_string.to_bytes();
-    /// assert_eq!(os_string, OsStr::from_bytes(&os_bytes).unwrap());
+    /// assert_eq!(os_string, OsStr::from_bytes(os_bytes).unwrap());
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
+    fn from_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
     where
-        TString: AsRef<[u8]> + ?Sized;
+        TString: Into<Cow<'a, [u8]>>;
 
     /// Converts a platform-native string into an equivalent byte slice.
     ///
@@ -256,11 +254,18 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
 
 impl OsStrBytes for OsStr {
     #[inline]
-    fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
+    fn from_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
     where
-        TString: AsRef<[u8]> + ?Sized,
+        TString: Into<Cow<'a, [u8]>>,
     {
-        imp::os_str_from_bytes(string.as_ref()).map_err(EncodingError)
+        match string.into() {
+            Cow::Borrowed(string) => {
+                imp::os_str_from_bytes(string).map_err(EncodingError)
+            }
+            Cow::Owned(string) => {
+                OsStringBytes::from_vec(string).map(Cow::Owned)
+            }
+        }
     }
 
     #[inline]
@@ -271,9 +276,9 @@ impl OsStrBytes for OsStr {
 
 impl OsStrBytes for Path {
     #[inline]
-    fn from_bytes<TString>(string: &TString) -> Result<Cow<'_, Self>>
+    fn from_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
     where
-        TString: AsRef<[u8]> + ?Sized,
+        TString: Into<Cow<'a, [u8]>>,
     {
         OsStr::from_bytes(string).map(|os_string| match os_string {
             Cow::Borrowed(os_string) => Cow::Borrowed(Self::new(os_string)),
@@ -294,74 +299,6 @@ impl OsStrBytes for Path {
 /// [module]: self
 /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
 pub trait OsStringBytes: private::Sealed + Sized {
-    /// Copies a byte slice into an equivalent platform-native string.
-    ///
-    /// It is always better to use [`from_cow`] when the bytes may be owned.
-    ///
-    /// # Errors
-    ///
-    /// See documentation for [`EncodingError`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::env;
-    /// use std::ffi::OsString;
-    /// # use std::io;
-    ///
-    /// use os_str_bytes::OsStrBytes;
-    /// use os_str_bytes::OsStringBytes;
-    ///
-    /// let os_string = env::current_exe()?;
-    /// let os_bytes = os_string.to_bytes();
-    /// assert_eq!(os_string, OsString::from_bytes(os_bytes).unwrap());
-    /// #
-    /// # Ok::<_, io::Error>(())
-    /// ```
-    ///
-    /// [`from_cow`]: Self::from_cow
-    fn from_bytes<TString>(string: TString) -> Result<Self>
-    where
-        TString: AsRef<[u8]>;
-
-    /// A convenience method to call either [`from_bytes`] or [`from_vec`],
-    /// depending on whether a byte sequence is owned.
-    ///
-    /// This method can be useful in coordination with
-    /// [`OsStrBytes::to_bytes`], since the parameter type matches that
-    /// method's return type.
-    ///
-    /// # Errors
-    ///
-    /// See documentation for [`EncodingError`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::env;
-    /// use std::ffi::OsString;
-    /// # use std::io;
-    ///
-    /// use os_str_bytes::OsStrBytes;
-    /// use os_str_bytes::OsStringBytes;
-    ///
-    /// let os_string = env::current_exe()?;
-    /// let os_bytes = os_string.to_bytes();
-    /// assert_eq!(os_string, OsString::from_cow(os_bytes).unwrap());
-    /// #
-    /// # Ok::<_, io::Error>(())
-    /// ```
-    ///
-    /// [`from_bytes`]: Self::from_bytes
-    /// [`from_vec`]: Self::from_vec
-    #[inline]
-    fn from_cow(string: Cow<'_, [u8]>) -> Result<Self> {
-        match string {
-            Cow::Borrowed(string) => Self::from_bytes(string),
-            Cow::Owned(string) => Self::from_vec(string),
-        }
-    }
-
     /// Converts a byte vector into an equivalent platform-native string.
     ///
     /// # Errors
@@ -406,14 +343,6 @@ pub trait OsStringBytes: private::Sealed + Sized {
 
 impl OsStringBytes for OsString {
     #[inline]
-    fn from_bytes<TString>(string: TString) -> Result<Self>
-    where
-        TString: AsRef<[u8]>,
-    {
-        imp::os_string_from_bytes(string.as_ref()).map_err(EncodingError)
-    }
-
-    #[inline]
     fn from_vec(string: Vec<u8>) -> Result<Self> {
         imp::os_string_from_vec(string).map_err(EncodingError)
     }
@@ -425,14 +354,6 @@ impl OsStringBytes for OsString {
 }
 
 impl OsStringBytes for PathBuf {
-    #[inline]
-    fn from_bytes<TString>(string: TString) -> Result<Self>
-    where
-        TString: AsRef<[u8]>,
-    {
-        OsString::from_bytes(string).map(Into::into)
-    }
-
     #[inline]
     fn from_vec(string: Vec<u8>) -> Result<Self> {
         OsString::from_vec(string).map(Into::into)
