@@ -118,7 +118,6 @@
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [print\_bytes]: https://crates.io/crates/print_bytes
 
-#![allow(clippy::map_clone)]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407

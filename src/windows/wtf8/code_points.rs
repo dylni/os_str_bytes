@@ -1,4 +1,4 @@
-use std::iter::Fuse;
+use std::iter::Peekable;
 use std::mem;
 
 use super::is_continuation;
@@ -7,9 +7,11 @@ use super::Result;
 use super::BYTE_SHIFT;
 use super::CONT_MASK;
 
-pub(in super::super) struct CodePoints<TIter> {
-    iter: Fuse<TIter>,
-    next: Option<u8>,
+pub(in super::super) struct CodePoints<TIter>
+where
+    TIter: Iterator<Item = u8>,
+{
+    iter: Peekable<TIter>,
     surrogate: bool,
 }
 
@@ -22,14 +24,13 @@ where
         TString: IntoIterator<IntoIter = TIter, Item = TIter::Item>,
     {
         Self {
-            iter: string.into_iter().fuse(),
-            next: None,
+            iter: string.into_iter().peekable(),
             surrogate: false,
         }
     }
 
-    pub(super) fn inner_iter(&self) -> &impl Iterator<Item = u8> {
-        &self.iter
+    pub(super) fn inner_size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
     }
 }
 
@@ -40,21 +41,23 @@ where
     type Item = Result<u32>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let byte = self.next.or_else(|| self.iter.next())?;
+        let byte = self.iter.next()?;
         let mut code_point: u32 = byte.into();
 
         macro_rules! r#continue {
             () => {
-                if let Some(byte) = self.iter.next() {
+                if let Some(&byte) = self.iter.peek() {
                     if !is_continuation(byte) {
-                        // Saving this byte will be useful if this crate ever
-                        // offers a way to encode lossily.
-                        self.next = Some(byte);
                         self.surrogate = false;
+                        // Not consuming this byte will be useful if this crate
+                        // ever offers a way to encode lossily.
                         return Some(Err(EncodingError::Byte(byte)));
                     }
                     code_point = (code_point << BYTE_SHIFT)
                         | u32::from(byte & CONT_MASK);
+
+                    let removed = self.iter.next();
+                    debug_assert_eq!(Some(byte), removed);
                 } else {
                     return Some(Err(EncodingError::End()));
                 };

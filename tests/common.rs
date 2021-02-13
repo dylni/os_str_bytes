@@ -3,7 +3,6 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
-use std::ops::Deref;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -13,23 +12,34 @@ use os_str_bytes::OsStringBytes;
 
 pub(crate) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
+fn test_from_bytes<'a, T, U, S>(result: &Result<U, EncodingError>, string: S)
+where
+    S: Into<Cow<'a, [u8]>>,
+    T: 'a + AsRef<OsStr> + OsStrBytes + ?Sized,
+    U: AsRef<OsStr>,
+{
+    assert_eq!(
+        result.as_ref().map(AsRef::as_ref),
+        T::from_bytes(string).as_ref().map(|x| (**x).as_ref()),
+    );
+}
+
 pub(crate) fn from_bytes(
     string: &[u8],
 ) -> Result<Cow<'_, OsStr>, EncodingError> {
     let os_string = OsStr::from_bytes(string);
 
-    assert_eq!(
-        os_string.as_ref().map(Deref::deref),
-        Path::from_bytes(string).as_ref().map(|x| x.as_os_str()),
-    );
+    test_from_bytes::<Path, _, _>(&os_string, string);
 
     os_string
 }
 
 pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
     let os_string = OsString::from_vec(string.clone());
+    test_from_bytes::<OsStr, _, _>(&os_string, string.clone());
 
-    let path = PathBuf::from_vec(string);
+    let path = PathBuf::from_vec(string.clone());
+    test_from_bytes::<Path, _, _>(&path, string);
     assert_eq!(os_string, path.map(PathBuf::into_os_string));
 
     os_string

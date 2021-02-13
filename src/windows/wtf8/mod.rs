@@ -8,8 +8,8 @@ mod code_points;
 use code_points::CodePoints;
 
 mod convert;
+pub(super) use convert::encode_wide;
 pub(super) use convert::DecodeWide;
-pub(super) use convert::EncodeWide;
 
 if_raw! {
     mod string;

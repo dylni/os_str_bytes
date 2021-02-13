@@ -1,7 +1,5 @@
 use std::char;
 use std::char::DecodeUtf16;
-use std::char::DecodeUtf16Error;
-use std::result;
 
 use super::CodePoints;
 use super::Result;
@@ -15,13 +13,16 @@ const MIN_LOW_SURROGATE: u16 = 0xDC00;
 
 const MIN_SURROGATE_CODE: u32 = (u16::max_value() as u32) + 1;
 
-pub(in super::super) struct DecodeWide<TIter> {
-    iter: TIter,
+pub(in super::super) struct DecodeWide<TIter>
+where
+    TIter: Iterator<Item = u16>,
+{
+    iter: DecodeUtf16<TIter>,
     code_point: Option<u32>,
     shift: u8,
 }
 
-impl<TIter> DecodeWide<DecodeUtf16<TIter>>
+impl<TIter> DecodeWide<TIter>
 where
     TIter: Iterator<Item = u16>,
 {
@@ -39,7 +40,7 @@ where
 
 impl<TIter> Iterator for DecodeWide<TIter>
 where
-    TIter: Iterator<Item = result::Result<char, DecodeUtf16Error>>,
+    TIter: Iterator<Item = u16>,
 {
     type Item = u8;
 
@@ -79,12 +80,15 @@ where
     }
 }
 
-pub(in super::super) struct EncodeWide<TIter> {
-    iter: TIter,
+struct EncodeWide<TIter>
+where
+    TIter: Iterator<Item = u8>,
+{
+    iter: CodePoints<TIter>,
     surrogate: Option<u16>,
 }
 
-impl<TIter> EncodeWide<CodePoints<TIter>>
+impl<TIter> EncodeWide<TIter>
 where
     TIter: Iterator<Item = u8>,
 {
@@ -99,7 +103,7 @@ where
     }
 }
 
-impl<TIter> Iterator for EncodeWide<CodePoints<TIter>>
+impl<TIter> Iterator for EncodeWide<TIter>
 where
     TIter: Iterator<Item = u8>,
 {
@@ -125,7 +129,14 @@ where
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size_hint = self.iter.inner_iter().size_hint();
-        (size_hint.0.saturating_add(2) / 3, size_hint.1)
+        let (low, high) = self.iter.inner_size_hint();
+        (low.saturating_add(2) / 3, high)
     }
+}
+
+pub(in super::super) fn encode_wide(
+    string: &[u8],
+) -> impl '_ + Iterator<Item = Result<u16>> {
+    #[allow(clippy::map_clone)]
+    EncodeWide::new(string.iter().map(|&x| x))
 }
