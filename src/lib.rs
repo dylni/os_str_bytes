@@ -228,9 +228,9 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    fn from_raw_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
+    fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
-        TString: Into<Cow<'a, [u8]>>;
+        S: Into<Cow<'a, [u8]>>;
 
     /// Converts a platform-native string into an equivalent byte slice.
     ///
@@ -253,9 +253,9 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
 
 impl OsStrBytes for OsStr {
     #[inline]
-    fn from_raw_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
+    fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
-        TString: Into<Cow<'a, [u8]>>,
+        S: Into<Cow<'a, [u8]>>,
     {
         match string.into() {
             Cow::Borrowed(string) => {
@@ -275,9 +275,9 @@ impl OsStrBytes for OsStr {
 
 impl OsStrBytes for Path {
     #[inline]
-    fn from_raw_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
+    fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
-        TString: Into<Cow<'a, [u8]>>,
+        S: Into<Cow<'a, [u8]>>,
     {
         OsStr::from_raw_bytes(string).map(|os_string| match os_string {
             Cow::Borrowed(os_string) => Cow::Borrowed(Self::new(os_string)),

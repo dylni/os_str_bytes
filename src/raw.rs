@@ -44,9 +44,9 @@ use super::imp::raw as imp;
 /// ```
 #[inline]
 #[must_use]
-pub fn ends_with<TString>(string: TString, suffix: &[u8]) -> bool
+pub fn ends_with<S>(string: S, suffix: &[u8]) -> bool
 where
-    TString: AsRef<[u8]>,
+    S: AsRef<[u8]>,
 {
     imp::ends_with(string.as_ref(), suffix)
 }
@@ -78,9 +78,9 @@ where
 /// ```
 #[inline]
 #[must_use]
-pub fn starts_with<TString>(string: TString, prefix: &[u8]) -> bool
+pub fn starts_with<S>(string: S, prefix: &[u8]) -> bool
 where
-    TString: AsRef<[u8]>,
+    S: AsRef<[u8]>,
 {
     imp::starts_with(string.as_ref(), prefix)
 }

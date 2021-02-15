@@ -1,12 +1,11 @@
 use std::str;
 
-use os_str_bytes::EncodingError;
-
 mod common;
 use common::test_bytes;
 use common::test_utf8_bytes;
 use common::test_utf8_vec;
 use common::test_vec;
+use common::Result;
 use common::WTF8_STRING;
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
@@ -17,7 +16,7 @@ fn test_string_is_invalid_utf8(string: &[u8]) {
     assert!(str::from_utf8(string).is_err());
 }
 
-fn test_invalid_result(result: &Result<(), EncodingError>) {
+fn test_invalid_result(result: &Result<()>) {
     if cfg!(windows) {
         assert!(result.is_err());
     } else {

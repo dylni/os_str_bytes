@@ -7,21 +7,21 @@ use super::Result;
 use super::BYTE_SHIFT;
 use super::CONT_MASK;
 
-pub(in super::super) struct CodePoints<TIter>
+pub(in super::super) struct CodePoints<I>
 where
-    TIter: Iterator<Item = u8>,
+    I: Iterator<Item = u8>,
 {
-    iter: Peekable<TIter>,
+    iter: Peekable<I>,
     surrogate: bool,
 }
 
-impl<TIter> CodePoints<TIter>
+impl<I> CodePoints<I>
 where
-    TIter: Iterator<Item = u8>,
+    I: Iterator<Item = u8>,
 {
-    pub(super) fn new<TString>(string: TString) -> Self
+    pub(super) fn new<S>(string: S) -> Self
     where
-        TString: IntoIterator<IntoIter = TIter, Item = TIter::Item>,
+        S: IntoIterator<IntoIter = I, Item = I::Item>,
     {
         Self {
             iter: string.into_iter().peekable(),
@@ -34,9 +34,9 @@ where
     }
 }
 
-impl<TIter> Iterator for CodePoints<TIter>
+impl<I> Iterator for CodePoints<I>
 where
-    TIter: Iterator<Item = u8>,
+    I: Iterator<Item = u8>,
 {
     type Item = Result<u32>;
 

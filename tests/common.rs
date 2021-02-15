@@ -5,14 +5,17 @@ use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::path::Path;
 use std::path::PathBuf;
+use std::result;
 
 use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
 
+pub(crate) type Result<T> = result::Result<T, EncodingError>;
+
 pub(crate) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
-fn test_from_bytes<'a, T, U, S>(result: &Result<U, EncodingError>, string: S)
+fn test_from_bytes<'a, T, U, S>(result: &Result<U>, string: S)
 where
     S: Into<Cow<'a, [u8]>>,
     T: 'a + AsRef<OsStr> + OsStrBytes + ?Sized,
@@ -24,9 +27,7 @@ where
     );
 }
 
-pub(crate) fn from_bytes(
-    string: &[u8],
-) -> Result<Cow<'_, OsStr>, EncodingError> {
+pub(crate) fn from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
     let os_string = OsStr::from_raw_bytes(string);
 
     test_from_bytes::<Path, _, _>(&os_string, string);
@@ -34,7 +35,7 @@ pub(crate) fn from_bytes(
     os_string
 }
 
-pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
+pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString> {
     let os_string = OsString::from_raw_vec(string.clone());
     test_from_bytes::<OsStr, _, _>(&os_string, string.clone());
 
@@ -45,14 +46,14 @@ pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
     os_string
 }
 
-pub(crate) fn test_bytes(string: &[u8]) -> Result<(), EncodingError> {
+pub(crate) fn test_bytes(string: &[u8]) -> Result<()> {
     let os_string = from_bytes(string)?;
     assert_eq!(string.len(), os_string.len());
     assert_eq!(string, &*os_string.to_raw_bytes());
     Ok(())
 }
 
-pub(crate) fn test_vec(string: &[u8]) -> Result<(), EncodingError> {
+pub(crate) fn test_vec(string: &[u8]) -> Result<()> {
     let os_string = from_vec(string.to_vec())?;
     assert_eq!(string.len(), os_string.len());
     assert_eq!(string, &*os_string.into_raw_vec());

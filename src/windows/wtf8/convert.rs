@@ -13,22 +13,22 @@ const MIN_LOW_SURROGATE: u16 = 0xDC00;
 
 const MIN_SURROGATE_CODE: u32 = (u16::max_value() as u32) + 1;
 
-pub(in super::super) struct DecodeWide<TIter>
+pub(in super::super) struct DecodeWide<I>
 where
-    TIter: Iterator<Item = u16>,
+    I: Iterator<Item = u16>,
 {
-    iter: DecodeUtf16<TIter>,
+    iter: DecodeUtf16<I>,
     code_point: Option<u32>,
     shift: u8,
 }
 
-impl<TIter> DecodeWide<TIter>
+impl<I> DecodeWide<I>
 where
-    TIter: Iterator<Item = u16>,
+    I: Iterator<Item = u16>,
 {
-    pub(in super::super) fn new<TString>(string: TString) -> Self
+    pub(in super::super) fn new<S>(string: S) -> Self
     where
-        TString: IntoIterator<IntoIter = TIter, Item = TIter::Item>,
+        S: IntoIterator<IntoIter = I, Item = I::Item>,
     {
         Self {
             iter: char::decode_utf16(string),
@@ -38,9 +38,9 @@ where
     }
 }
 
-impl<TIter> Iterator for DecodeWide<TIter>
+impl<I> Iterator for DecodeWide<I>
 where
-    TIter: Iterator<Item = u16>,
+    I: Iterator<Item = u16>,
 {
     type Item = u8;
 
@@ -80,21 +80,21 @@ where
     }
 }
 
-struct EncodeWide<TIter>
+struct EncodeWide<I>
 where
-    TIter: Iterator<Item = u8>,
+    I: Iterator<Item = u8>,
 {
-    iter: CodePoints<TIter>,
+    iter: CodePoints<I>,
     surrogate: Option<u16>,
 }
 
-impl<TIter> EncodeWide<TIter>
+impl<I> EncodeWide<I>
 where
-    TIter: Iterator<Item = u8>,
+    I: Iterator<Item = u8>,
 {
-    pub(in super::super) fn new<TString>(string: TString) -> Self
+    pub(in super::super) fn new<S>(string: S) -> Self
     where
-        TString: IntoIterator<IntoIter = TIter, Item = TIter::Item>,
+        S: IntoIterator<IntoIter = I, Item = I::Item>,
     {
         Self {
             iter: CodePoints::new(string),
@@ -103,9 +103,9 @@ where
     }
 }
 
-impl<TIter> Iterator for EncodeWide<TIter>
+impl<I> Iterator for EncodeWide<I>
 where
-    TIter: Iterator<Item = u8>,
+    I: Iterator<Item = u8>,
 {
     type Item = Result<u16>;
 
