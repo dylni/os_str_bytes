@@ -58,7 +58,7 @@ fn random_os_string(
 #[test]
 fn test_random_bytes() -> Result<(), getrandom::Error> {
     let os_string = random_os_string(LARGE_LENGTH)?;
-    let string = os_string.to_bytes();
+    let string = os_string.to_raw_bytes();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(Cow::Borrowed(&*os_string)), from_bytes(&string));
     Ok(())
@@ -67,7 +67,7 @@ fn test_random_bytes() -> Result<(), getrandom::Error> {
 #[test]
 fn test_random_vec() -> Result<(), getrandom::Error> {
     let os_string = random_os_string(LARGE_LENGTH)?;
-    let string = os_string.clone().into_vec();
+    let string = os_string.clone().into_raw_vec();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(os_string), from_vec(string));
     Ok(())
@@ -78,8 +78,8 @@ fn test_lossless() -> Result<(), getrandom::Error> {
     for _ in 0..ITERATIONS {
         let mut string = vec![0; SMALL_LENGTH];
         getrandom(&mut string)?;
-        if let Ok(os_string) = OsStr::from_bytes(&string) {
-            let encoded_string = os_string.to_bytes();
+        if let Ok(os_string) = OsStr::from_raw_bytes(&string) {
+            let encoded_string = os_string.to_raw_bytes();
             assert_eq!(string, &*encoded_string);
         }
     }
@@ -105,12 +105,12 @@ fn test_raw() -> Result<(), getrandom::Error> {
 
     for _ in 0..ITERATIONS {
         let mut string = random_os_string(SMALL_LENGTH)?;
-        let prefix = string.to_bytes().into_owned();
+        let prefix = string.to_raw_bytes().into_owned();
         let suffix = random_os_string(SMALL_LENGTH)?;
         string.push(&suffix);
 
-        let string = string.into_vec();
-        let suffix = suffix.into_vec();
+        let string = string.into_raw_vec();
+        let suffix = suffix.into_raw_vec();
 
         test!(true, ends_with(string, suffix));
         test!(true, starts_with(string, prefix));

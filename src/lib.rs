@@ -19,7 +19,7 @@
 //! - The encoding will be compatible with UTF-8. In particular, splitting an
 //!   encoded byte sequence by a UTF-8–encoded character always produces other
 //!   valid byte sequences. They can be re-encoded without error using
-//!   [`OsStrBytes::from_bytes`] and similar methods.
+//!   [`OsStrBytes::from_raw_bytes`] and similar methods.
 //!
 //! - All characters valid in platform strings are representable. [`OsStr`] and
 //!   [`OsString`] can always be losslessly reconstructed from extracted bytes.
@@ -77,8 +77,8 @@
 //!
 //! The time complexities of methods will vary based on what functionality is
 //! available for the platform. At worst, they will all be linear, but some can
-//! take constant time. For example, [`OsStringBytes::from_vec`] might be able
-//! to reuse the allocation for its argument.
+//! take constant time. For example, [`OsStringBytes::from_raw_vec`] might be
+//! able to reuse the allocation for its argument.
 //!
 //! # Examples
 //!
@@ -102,7 +102,7 @@
 //! # }
 //! #
 //! for file in env::args_os().skip(1) {
-//!     if file.to_bytes().first() != Some(&b'-') {
+//!     if file.to_raw_bytes().first() != Some(&b'-') {
 //!         let string = "Hello, world!";
 //!         fs::write(&file, string)?;
 //!         assert_eq!(string, fs::read_to_string(file)?);
@@ -223,12 +223,12 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// use os_str_bytes::OsStrBytes;
     ///
     /// let os_string = env::current_exe()?;
-    /// let os_bytes = os_string.to_bytes();
-    /// assert_eq!(os_string, OsStr::from_bytes(os_bytes).unwrap());
+    /// let os_bytes = os_string.to_raw_bytes();
+    /// assert_eq!(os_string, OsStr::from_raw_bytes(os_bytes).unwrap());
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    fn from_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
+    fn from_raw_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
     where
         TString: Into<Cow<'a, [u8]>>;
 
@@ -243,17 +243,17 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// use os_str_bytes::OsStrBytes;
     ///
     /// let os_string = env::current_exe()?;
-    /// println!("{:?}", os_string.to_bytes());
+    /// println!("{:?}", os_string.to_raw_bytes());
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
     #[must_use]
-    fn to_bytes(&self) -> Cow<'_, [u8]>;
+    fn to_raw_bytes(&self) -> Cow<'_, [u8]>;
 }
 
 impl OsStrBytes for OsStr {
     #[inline]
-    fn from_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
+    fn from_raw_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
     where
         TString: Into<Cow<'a, [u8]>>,
     {
@@ -262,32 +262,32 @@ impl OsStrBytes for OsStr {
                 imp::os_str_from_bytes(string).map_err(EncodingError)
             }
             Cow::Owned(string) => {
-                OsStringBytes::from_vec(string).map(Cow::Owned)
+                OsStringBytes::from_raw_vec(string).map(Cow::Owned)
             }
         }
     }
 
     #[inline]
-    fn to_bytes(&self) -> Cow<'_, [u8]> {
+    fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
         imp::os_str_to_bytes(self)
     }
 }
 
 impl OsStrBytes for Path {
     #[inline]
-    fn from_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
+    fn from_raw_bytes<'a, TString>(string: TString) -> Result<Cow<'a, Self>>
     where
         TString: Into<Cow<'a, [u8]>>,
     {
-        OsStr::from_bytes(string).map(|os_string| match os_string {
+        OsStr::from_raw_bytes(string).map(|os_string| match os_string {
             Cow::Borrowed(os_string) => Cow::Borrowed(Self::new(os_string)),
             Cow::Owned(os_string) => Cow::Owned(os_string.into()),
         })
     }
 
     #[inline]
-    fn to_bytes(&self) -> Cow<'_, [u8]> {
-        self.as_os_str().to_bytes()
+    fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
+        self.as_os_str().to_raw_bytes()
     }
 }
 
@@ -314,12 +314,12 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// use os_str_bytes::OsStringBytes;
     ///
     /// let os_string = env::current_exe()?;
-    /// let os_bytes = os_string.clone().into_vec();
-    /// assert_eq!(os_string, OsString::from_vec(os_bytes).unwrap());
+    /// let os_bytes = os_string.clone().into_raw_vec();
+    /// assert_eq!(os_string, OsString::from_raw_vec(os_bytes).unwrap());
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    fn from_vec(string: Vec<u8>) -> Result<Self>;
+    fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
 
     /// Converts a platform-native string into an equivalent byte vector.
     ///
@@ -332,35 +332,35 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// use os_str_bytes::OsStringBytes;
     ///
     /// let os_string = env::current_exe()?;
-    /// println!("{:?}", os_string.into_vec());
+    /// println!("{:?}", os_string.into_raw_vec());
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
     #[must_use]
-    fn into_vec(self) -> Vec<u8>;
+    fn into_raw_vec(self) -> Vec<u8>;
 }
 
 impl OsStringBytes for OsString {
     #[inline]
-    fn from_vec(string: Vec<u8>) -> Result<Self> {
+    fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
         imp::os_string_from_vec(string).map_err(EncodingError)
     }
 
     #[inline]
-    fn into_vec(self) -> Vec<u8> {
+    fn into_raw_vec(self) -> Vec<u8> {
         imp::os_string_into_vec(self)
     }
 }
 
 impl OsStringBytes for PathBuf {
     #[inline]
-    fn from_vec(string: Vec<u8>) -> Result<Self> {
-        OsString::from_vec(string).map(Into::into)
+    fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
+        OsString::from_raw_vec(string).map(Into::into)
     }
 
     #[inline]
-    fn into_vec(self) -> Vec<u8> {
-        self.into_os_string().into_vec()
+    fn into_raw_vec(self) -> Vec<u8> {
+        self.into_os_string().into_raw_vec()
     }
 }
 

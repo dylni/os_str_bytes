@@ -6,13 +6,13 @@
 //! advantage of internal assumptions.
 //!
 //! These functions should only be passed bytes that can be given to
-//! [`OsStrBytes::from_bytes`] without error. Only valid UTF-8 data or bytes
-//! extracted using this crate are acceptable. Other sequences will not cause
-//! safety issues, but they may result in panics or confusing results, so their
-//! use is unsupported.
+//! [`OsStrBytes::from_raw_bytes`] without error. Only valid UTF-8 data or
+//! bytes extracted using this crate are acceptable. Other sequences will not
+//! cause safety issues, but they may result in panics or confusing results, so
+//! their use is unsupported.
 //!
 //! [limited specification]: super#encoding
-//! [`OsStrBytes::from_bytes`]: super::OsStrBytes::from_bytes
+//! [`OsStrBytes::from_raw_bytes`]: super::OsStrBytes::from_raw_bytes
 
 #![cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw")))]
 
@@ -39,7 +39,7 @@ use super::imp::raw as imp;
 /// use os_str_bytes::raw;
 ///
 /// let os_string = OsStr::new("bar");
-/// let os_bytes = os_string.to_bytes();
+/// let os_bytes = os_string.to_raw_bytes();
 /// assert!(raw::ends_with("foobar", &os_bytes));
 /// ```
 #[inline]
@@ -73,7 +73,7 @@ where
 /// use os_str_bytes::raw;
 ///
 /// let os_string = OsStr::new("foo");
-/// let os_bytes = os_string.to_bytes();
+/// let os_bytes = os_string.to_raw_bytes();
 /// assert!(raw::starts_with("foobar", &os_bytes));
 /// ```
 #[inline]

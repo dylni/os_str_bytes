@@ -20,14 +20,14 @@ where
 {
     assert_eq!(
         result.as_ref().map(AsRef::as_ref),
-        T::from_bytes(string).as_ref().map(|x| (**x).as_ref()),
+        T::from_raw_bytes(string).as_ref().map(|x| (**x).as_ref()),
     );
 }
 
 pub(crate) fn from_bytes(
     string: &[u8],
 ) -> Result<Cow<'_, OsStr>, EncodingError> {
-    let os_string = OsStr::from_bytes(string);
+    let os_string = OsStr::from_raw_bytes(string);
 
     test_from_bytes::<Path, _, _>(&os_string, string);
 
@@ -35,10 +35,10 @@ pub(crate) fn from_bytes(
 }
 
 pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
-    let os_string = OsString::from_vec(string.clone());
+    let os_string = OsString::from_raw_vec(string.clone());
     test_from_bytes::<OsStr, _, _>(&os_string, string.clone());
 
-    let path = PathBuf::from_vec(string.clone());
+    let path = PathBuf::from_raw_vec(string.clone());
     test_from_bytes::<Path, _, _>(&path, string);
     assert_eq!(os_string, path.map(PathBuf::into_os_string));
 
@@ -48,14 +48,14 @@ pub(crate) fn from_vec(string: Vec<u8>) -> Result<OsString, EncodingError> {
 pub(crate) fn test_bytes(string: &[u8]) -> Result<(), EncodingError> {
     let os_string = from_bytes(string)?;
     assert_eq!(string.len(), os_string.len());
-    assert_eq!(string, &*os_string.to_bytes());
+    assert_eq!(string, &*os_string.to_raw_bytes());
     Ok(())
 }
 
 pub(crate) fn test_vec(string: &[u8]) -> Result<(), EncodingError> {
     let os_string = from_vec(string.to_vec())?;
     assert_eq!(string.len(), os_string.len());
-    assert_eq!(string, &*os_string.into_vec());
+    assert_eq!(string, &*os_string.into_raw_vec());
     Ok(())
 }
 
@@ -63,12 +63,12 @@ pub(crate) fn test_utf8_bytes(string: &str) {
     let os_string = OsStr::new(string);
     let string = string.as_bytes();
     assert_eq!(Ok(Cow::Borrowed(os_string)), from_bytes(string));
-    assert_eq!(string, &*os_string.to_bytes());
+    assert_eq!(string, &*os_string.to_raw_bytes());
 }
 
 pub(crate) fn test_utf8_vec(string: &str) {
     let os_string = string.to_owned().into();
     let string = string.as_bytes();
     assert_eq!(Ok(&os_string), from_vec(string.to_vec()).as_ref());
-    assert_eq!(string, &*os_string.into_vec());
+    assert_eq!(string, &*os_string.into_raw_vec());
 }

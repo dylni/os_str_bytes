@@ -146,7 +146,7 @@ mod tests {
 
             assert_eq!(
                 Err(error),
-                OsStr::from_bytes(string).map_err(|EncodingError(x)| x),
+                OsStr::from_raw_bytes(string).map_err(|EncodingError(x)| x),
             );
         }
     }
