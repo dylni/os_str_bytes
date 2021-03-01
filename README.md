@@ -19,7 +19,7 @@ Add the following lines to your "Cargo.toml" file:
 
 ```toml
 [dependencies]
-os_str_bytes = "2.4"
+os_str_bytes = "3.0"
 ```
 
 See the [documentation] for available functionality and examples.
