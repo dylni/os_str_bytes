@@ -4,6 +4,8 @@ use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::result;
 
+#[cfg(target_env = "sgx")]
+use std::os::fortanix_sgx as os;
 #[cfg(any(target_os = "hermit", target_os = "redox", unix))]
 use std::os::unix as os;
 #[cfg(any(target_env = "wasi", target_os = "wasi"))]
