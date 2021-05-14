@@ -28,14 +28,46 @@ See the [documentation] for available functionality and examples.
 
 The minimum supported Rust toolchain version depends on the platform:
 
-| `target_os` | Minimum Version |
-| --- | --- |
-| emscripten (wasm32) | 1.34.0 |
-| redox | 1.34.0 |
-| unix | 1.34.0 |
-| unknown (wasm32) | 1.34.0 |
-| wasi | 1.35.0 (all versions) |
-| windows | 1.34.0 |
+<table>
+    <tr>
+        <th>Target</th>
+        <th>Target Triple</th>
+        <th>Minimum Version</th>
+    </tr>
+    <tr>
+        <td>Fortanix</td>
+        <td><code>*-fortanix-*-sgx</code></td>
+        <td>nightly (<a href="https://doc.rust-lang.org/unstable-book/library-features/sgx-platform.html"><code>sgx_platform</code></a>)</td>
+    </tr>
+    <tr>
+        <td rowspan="2">JavaScript</td>
+        <td><code>wasm32-*-emscripten</code></td>
+        <td rowspan="2">1.34.0</td>
+    </tr>
+    <tr>
+        <td><code>wasm32-*-unknown</code></td>
+    </tr>
+    <tr>
+        <td>Redox</td>
+        <td><code>*-redox</code></td>
+        <td>1.34.0</td>
+    </tr>
+    <tr>
+        <td>Unix</td>
+        <td>Unix</td>
+        <td>1.34.0</td>
+    </tr>
+    <tr>
+        <td>WASI</td>
+        <td><code>*-wasi</code></td>
+        <td>1.35.0 (all versions)</td>
+    </tr>
+    <tr>
+        <td>Windows</td>
+        <td><code>*-windows-*</code></td>
+        <td>1.34.0</td>
+    </tr>
+</table>
 
 ## License
 

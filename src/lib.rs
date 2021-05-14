@@ -123,8 +123,11 @@
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 // https://github.com/dylni/os_str_bytes/issues/2
 #![cfg_attr(os_str_bytes_docs_rs, feature(doc_cfg))]
-// Nightly is also currently required for the SGX platform
-#![cfg_attr(target_env = "sgx", feature(sgx_platform))]
+// Nightly is also currently required for the SGX platform.
+#![cfg_attr(
+    all(target_vendor = "fortanix", target_env = "sgx"),
+    feature(sgx_platform)
+)]
 #![forbid(unsafe_code)]
 #![warn(unused_results)]
 
