@@ -26,9 +26,9 @@ fn test_ends_with() {
     test(false, b"\xED\xA0\xBDbar");
     test(false, b"\xED\xB2\xA9aar");
 
-    assert_eq!(true, raw::ends_with("", b""));
-    assert_eq!(false, raw::ends_with("", b"r"));
-    assert_eq!(false, raw::ends_with("", b"ar"));
+    assert!(raw::ends_with("", b""));
+    assert!(!raw::ends_with("", b"r"));
+    assert!(!raw::ends_with("", b"ar"));
 
     fn test(result: bool, suffix: &[u8]) {
         assert_eq!(result, raw::ends_with(WTF8_STRING, suffix));
@@ -56,9 +56,9 @@ fn test_starts_with() {
     test(false, b"foo\xED\xB2\xA9");
     test(false, b"fof\xED\xA0\xBD\xED\xA0\xBD");
 
-    assert_eq!(true, raw::starts_with("", b""));
-    assert_eq!(false, raw::starts_with("", b"f"));
-    assert_eq!(false, raw::starts_with("", b"fo"));
+    assert!(raw::starts_with("", b""));
+    assert!(!raw::starts_with("", b"f"));
+    assert!(!raw::starts_with("", b"fo"));
 
     fn test(result: bool, prefix: &[u8]) {
         assert_eq!(result, raw::starts_with(WTF8_STRING, prefix));
