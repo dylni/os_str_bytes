@@ -93,13 +93,16 @@ fn test_raw() -> Result<(), getrandom::Error> {
 
     macro_rules! test {
         ( $result:expr , $raw_fn:ident ( $string:expr , $substring:expr ) ) => {
-            assert_eq!(
-                $result,
-                raw::$raw_fn(&$string, &$substring),
-                concat!("raw::", stringify!($raw_fn), "({:?}, {:?})"),
-                $string,
-                $substring,
-            );
+            #[allow(clippy::bool_assert_comparison)]
+            {
+                assert_eq!(
+                    $result,
+                    raw::$raw_fn(&$string, &$substring),
+                    concat!("raw::", stringify!($raw_fn), "({:?}, {:?})"),
+                    $string,
+                    $substring,
+                );
+            }
         };
     }
 
