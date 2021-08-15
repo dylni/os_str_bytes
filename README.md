@@ -42,32 +42,37 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td rowspan="2">JavaScript</td>
         <td><code>wasm32-*-emscripten</code></td>
-        <td rowspan="2">1.34.0</td>
+        <td rowspan="2">1.51.0</td>
     </tr>
     <tr>
         <td><code>wasm32-*-unknown</code></td>
     </tr>
     <tr>
-        <td>Redox</td>
-        <td><code>*-redox</code></td>
-        <td>1.34.0</td>
-    </tr>
-    <tr>
         <td>Unix</td>
         <td>Unix</td>
-        <td>1.34.0</td>
+        <td>1.51.0</td>
     </tr>
     <tr>
         <td>WASI</td>
         <td><code>*-wasi</code></td>
-        <td>1.35.0 (all versions)</td>
+        <td>1.51.0</td>
     </tr>
     <tr>
         <td>Windows</td>
         <td><code>*-windows-*</code></td>
-        <td>1.34.0</td>
+        <td>1.51.0</td>
     </tr>
 </table>
+
+Minor version updates may increase these version requirements. However, the
+previous two Rust releases will always be supported. If the minimum Rust
+version must not be increased, use a tilde requirement to prevent updating this
+crate's minor version:
+
+```toml
+[dependencies]
+os_str_bytes = "~3.1"
+```
 
 ## License
 

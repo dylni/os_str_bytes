@@ -137,6 +137,5 @@ where
 pub(in super::super) fn encode_wide(
     string: &[u8],
 ) -> impl '_ + Iterator<Item = Result<u16>> {
-    #[allow(clippy::map_clone)]
-    EncodeWide::new(string.iter().map(|&x| x))
+    EncodeWide::new(string.iter().copied())
 }

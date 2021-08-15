@@ -31,16 +31,12 @@ pub(super) enum EncodingError {
 
 impl EncodingError {
     fn position(&self) -> Cow<'_, str> {
-        // Variants are not recognized on type aliases in older versions:
-        // https://github.com/rust-lang/rust/pull/61682
         match self {
-            EncodingError::Byte(byte) => {
-                Cow::Owned(format!("byte b'\\x{:02X}'", byte))
-            }
-            EncodingError::CodePoint(code_point) => {
+            Self::Byte(byte) => Cow::Owned(format!("byte b'\\x{:02X}'", byte)),
+            Self::CodePoint(code_point) => {
                 Cow::Owned(format!("code point U+{:04X}", code_point))
             }
-            EncodingError::End() => Cow::Borrowed("end of string"),
+            Self::End() => Cow::Borrowed("end of string"),
         }
     }
 }

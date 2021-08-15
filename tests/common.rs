@@ -15,6 +15,7 @@ pub(crate) type Result<T> = result::Result<T, EncodingError>;
 
 pub(crate) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
+#[track_caller]
 fn test_from_bytes<'a, T, U, S>(result: &Result<U>, string: S)
 where
     S: Into<Cow<'a, [u8]>>,
@@ -23,7 +24,7 @@ where
 {
     assert_eq!(
         result.as_ref().map(AsRef::as_ref),
-        T::from_raw_bytes(string).as_ref().map(|x| (**x).as_ref()),
+        T::from_raw_bytes(string).as_deref().map(AsRef::as_ref),
     );
 }
 
@@ -56,7 +57,7 @@ pub(crate) fn test_bytes(string: &[u8]) -> Result<()> {
 pub(crate) fn test_vec(string: &[u8]) -> Result<()> {
     let os_string = from_vec(string.to_vec())?;
     assert_eq!(string.len(), os_string.len());
-    assert_eq!(string, &*os_string.into_raw_vec());
+    assert_eq!(string, os_string.into_raw_vec());
     Ok(())
 }
 
@@ -71,5 +72,5 @@ pub(crate) fn test_utf8_vec(string: &str) {
     let os_string = string.to_owned().into();
     let string = string.as_bytes();
     assert_eq!(Ok(&os_string), from_vec(string.to_vec()).as_ref());
-    assert_eq!(string, &*os_string.into_raw_vec());
+    assert_eq!(string, os_string.into_raw_vec());
 }
