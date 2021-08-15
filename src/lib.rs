@@ -171,6 +171,9 @@ macro_rules! if_raw {
 )]
 mod imp;
 
+mod pattern;
+pub use pattern::Pattern;
+
 if_raw! {
     pub mod raw;
 }
@@ -376,8 +379,12 @@ mod private {
     use std::path::PathBuf;
 
     pub trait Sealed {}
+    impl Sealed for char {}
     impl Sealed for OsStr {}
     impl Sealed for OsString {}
     impl Sealed for Path {}
     impl Sealed for PathBuf {}
+    impl Sealed for &str {}
+    impl Sealed for &String {}
+    impl Sealed for u8 {}
 }
