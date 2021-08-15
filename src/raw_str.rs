@@ -13,6 +13,14 @@ use super::pattern::Pattern;
 use super::OsStrBytes;
 use super::OsStringBytes;
 
+#[cfg(feature = "print_bytes")]
+use print_bytes::Bytes;
+#[cfg(feature = "print_bytes")]
+use print_bytes::ToBytes;
+
+#[cfg(feature = "uniquote")]
+use uniquote::Quote;
+
 fn find_pattern(string: &[u8], pat: &[u8]) -> Option<usize> {
     for i in 0..=string.len().checked_sub(pat.len())? {
         if string[i..].starts_with(pat) {
@@ -702,6 +710,24 @@ impl<'a> From<&'a RawOsStr> for Cow<'a, RawOsStr> {
     }
 }
 
+#[cfg(feature = "uniquote")]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
+impl Quote for RawOsStr {
+    #[inline]
+    fn escape(&self, f: &mut uniquote::Formatter<'_>) -> uniquote::Result {
+        self.0.escape(f)
+    }
+}
+
+#[cfg(feature = "print_bytes")]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
+impl ToBytes for RawOsStr {
+    #[inline]
+    fn to_bytes(&self) -> Bytes<'_> {
+        self.0.to_bytes()
+    }
+}
+
 impl ToOwned for RawOsStr {
     type Owned = RawOsString;
 
@@ -868,6 +894,24 @@ impl From<RawOsString> for Cow<'_, RawOsStr> {
     #[inline]
     fn from(other: RawOsString) -> Self {
         Cow::Owned(other)
+    }
+}
+
+#[cfg(feature = "uniquote")]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
+impl Quote for RawOsString {
+    #[inline]
+    fn escape(&self, f: &mut uniquote::Formatter<'_>) -> uniquote::Result {
+        (**self).escape(f)
+    }
+}
+
+#[cfg(feature = "print_bytes")]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
+impl ToBytes for RawOsString {
+    #[inline]
+    fn to_bytes(&self) -> Bytes<'_> {
+        (**self).to_bytes()
     }
 }
 

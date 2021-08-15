@@ -31,7 +31,7 @@ jobs:
     - run: rustup default ${{ matrix.version }}
     - run: rustup component add clippy
     - run: rustup target add ${{ matrix.target }}
-    - run: cargo clippy --all-features --target ${{ matrix.target }} -- -Dwarnings
+    - run: cargo clippy --target ${{ matrix.target }} -- -Dwarnings
     timeout-minutes: 5
     strategy:
       matrix:
@@ -49,7 +49,7 @@ jobs:
     - run: rustup default nightly
     - run: rustup target add ${{ matrix.target }}
     # Clippy might not be packaged with the current nightly compiler.
-    - run: cargo rustc --all-features --target ${{ matrix.target }} -- -Dwarnings
+    - run: cargo rustc --target ${{ matrix.target }} -- -Dwarnings
     timeout-minutes: 5
     strategy:
       matrix:

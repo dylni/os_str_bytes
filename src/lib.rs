@@ -59,8 +59,16 @@
 //!
 //! ### Optional Features
 //!
+//! - **print_bytes** -
+//!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
+//!   [`RawOsString`].
+//!
 //! - **raw_os_str** -
 //!   Enables use of [`RawOsStr`] and [`RawOsString`].
+//!
+//! - **uniquote** -
+//!   Provides implementations of [`uniquote::Quote`] for [`RawOsStr`] and
+//!   [`RawOsString`].
 //!
 //! # Implementation
 //!
