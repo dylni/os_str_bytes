@@ -29,6 +29,14 @@ impl Encoder for &str {
     }
 }
 
+/// Allows a type to be used for searching by [`RawOsStr`] and [`RawOsString`].
+///
+/// This trait is very similar to [`str::pattern::Pattern`], but its methods
+/// are private and it is implemented for different types.
+///
+/// [`RawOsStr`]: super::RawOsStr
+/// [`RawOsString`]: super::RawOsString
+/// [`str::pattern::Pattern`]: ::std::str::pattern::Pattern
 pub trait Pattern: private::Sealed {
     #[doc(hidden)]
     type __Encoder: Encoder;

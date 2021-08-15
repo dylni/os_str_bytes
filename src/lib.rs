@@ -128,7 +128,6 @@
     all(target_vendor = "fortanix", target_env = "sgx"),
     feature(sgx_platform)
 )]
-#![forbid(unsafe_code)]
 #![warn(unused_results)]
 
 use std::borrow::Cow;
@@ -173,6 +172,10 @@ mod imp;
 
 mod pattern;
 pub use pattern::Pattern;
+
+mod raw_str;
+pub use raw_str::RawOsStr;
+pub use raw_str::RawOsString;
 
 if_raw! {
     pub mod raw;
