@@ -22,4 +22,5 @@ rustdoc-args = ["--cfg", "os_str_bytes_docs_rs"]
 getrandom = { version = "0.2", features = ["js"] }
 
 [features]
-raw = []
+default = ["raw_os_str"]
+raw_os_str = []

@@ -14,7 +14,7 @@ use std::os::windows::ffi::OsStringExt;
 use std::result;
 use std::str;
 
-if_raw! {
+if_raw_str! {
     pub(super) mod raw;
 }
 

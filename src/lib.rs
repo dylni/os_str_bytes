@@ -59,8 +59,8 @@
 //!
 //! ### Optional Features
 //!
-//! - **raw** -
-//!   Enables use of the [`raw`] module.
+//! - **raw_os_str** -
+//!   Enables use of [`RawOsStr`] and [`RawOsString`].
 //!
 //! # Implementation
 //!
@@ -128,6 +128,7 @@
     all(target_vendor = "fortanix", target_env = "sgx"),
     feature(sgx_platform)
 )]
+#![cfg_attr(not(feature = "raw_os_str"), forbid(unsafe_code))]
 #![warn(unused_results)]
 
 use std::borrow::Cow;
@@ -141,10 +142,10 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::result;
 
-macro_rules! if_raw {
+macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
         $(
-            #[cfg(feature = "raw")]
+            #[cfg(feature = "raw_os_str")]
             $item
         )+
     };
@@ -170,15 +171,13 @@ macro_rules! if_raw {
 )]
 mod imp;
 
-mod pattern;
-pub use pattern::Pattern;
+if_raw_str! {
+    mod pattern;
+    pub use pattern::Pattern;
 
-mod raw_str;
-pub use raw_str::RawOsStr;
-pub use raw_str::RawOsString;
-
-if_raw! {
-    pub mod raw;
+    mod raw_str;
+    pub use raw_str::RawOsStr;
+    pub use raw_str::RawOsString;
 }
 
 /// The error that occurs when a byte sequence is not representable in the

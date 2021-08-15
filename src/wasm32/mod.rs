@@ -9,7 +9,7 @@ use std::result;
 use std::str;
 use std::str::Utf8Error;
 
-if_raw! {
+if_raw_str! {
     pub(super) mod raw;
 }
 

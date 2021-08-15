@@ -7,14 +7,11 @@ use std::mem;
 use std::ops::Deref;
 use std::str;
 
+use super::imp::raw;
 use super::pattern::Encoder;
 use super::pattern::Pattern;
 use super::OsStrBytes;
 use super::OsStringBytes;
-
-if_raw! {
-    use super::raw;
-}
 
 fn find_pattern(string: &[u8], pat: &[u8]) -> Option<usize> {
     for i in 0..=string.len().checked_sub(pat.len())? {
@@ -82,6 +79,7 @@ macro_rules! impl_split_once {
 ///
 /// [unspecified encoding]: super#encoding
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 #[repr(transparent)]
 pub struct RawOsStr([u8]);
 
@@ -225,29 +223,25 @@ impl RawOsStr {
         self.0.ends_with(pat)
     }
 
-    if_raw! {
-        /// Equivalent to [`str::ends_with`] but accepts this type for the
-        /// pattern.
-        ///
-        /// # Panics
-        ///
-        /// Panics if the pattern is a byte outside of the ASCII range.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use os_str_bytes::RawOsStr;
-        ///
-        /// let raw = RawOsStr::from_str("foobar");
-        /// assert!(raw.ends_with_os(RawOsStr::from_str("bar")));
-        /// assert!(!raw.ends_with_os(RawOsStr::from_str("foo")));
-        /// ```
-        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw")))]
-        #[inline]
-        #[must_use]
-        pub fn ends_with_os(&self, pat: &Self) -> bool {
-            raw::ends_with(&self.0, &pat.0)
-        }
+    /// Equivalent to [`str::ends_with`] but accepts this type for the pattern.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pattern is a byte outside of the ASCII range.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::from_str("foobar");
+    /// assert!(raw.ends_with_os(RawOsStr::from_str("bar")));
+    /// assert!(!raw.ends_with_os(RawOsStr::from_str("foo")));
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn ends_with_os(&self, pat: &Self) -> bool {
+        raw::ends_with(&self.0, &pat.0)
     }
 
     /// Equivalent to [`str::find`].
@@ -479,29 +473,26 @@ impl RawOsStr {
         self.0.starts_with(pat)
     }
 
-    if_raw! {
-        /// Equivalent to [`str::starts_with`] but accepts this type for the
-        /// pattern.
-        ///
-        /// # Panics
-        ///
-        /// Panics if the pattern is a byte outside of the ASCII range.
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use os_str_bytes::RawOsStr;
-        ///
-        /// let raw = RawOsStr::from_str("foobar");
-        /// assert!(raw.starts_with_os(RawOsStr::from_str("foo")));
-        /// assert!(!raw.starts_with_os(RawOsStr::from_str("bar")));
-        /// ```
-        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw")))]
-        #[inline]
-        #[must_use]
-        pub fn starts_with_os(&self, pat: &Self) -> bool {
-            raw::starts_with(&self.0, &pat.0)
-        }
+    /// Equivalent to [`str::starts_with`] but accepts this type for the
+    /// pattern.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pattern is a byte outside of the ASCII range.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::from_str("foobar");
+    /// assert!(raw.starts_with_os(RawOsStr::from_str("foo")));
+    /// assert!(!raw.starts_with_os(RawOsStr::from_str("bar")));
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn starts_with_os(&self, pat: &Self) -> bool {
+        raw::starts_with(&self.0, &pat.0)
     }
 
     /// Equivalent to [`str::strip_prefix`].
@@ -728,6 +719,7 @@ impl ToOwned for RawOsStr {
 ///
 /// [unspecified encoding]: super#encoding
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub struct RawOsString(Vec<u8>);
 
 impl RawOsString {

@@ -86,19 +86,23 @@ fn test_lossless() -> Result<(), getrandom::Error> {
     Ok(())
 }
 
-#[cfg(feature = "raw")]
+#[cfg(feature = "raw_os_str")]
 #[test]
 fn test_raw() -> Result<(), getrandom::Error> {
-    use os_str_bytes::raw;
+    use os_str_bytes::RawOsStr;
+    use os_str_bytes::RawOsString;
 
     macro_rules! test {
-        ( $result:expr , $raw_fn:ident ( $string:expr , $substring:expr ) ) => {
+        (
+            $result:expr ,
+            $method:ident (& $string:ident , & $substring:ident )
+        ) => {
             #[allow(clippy::bool_assert_comparison)]
             {
                 assert_eq!(
                     $result,
-                    raw::$raw_fn(&$string, &$substring),
-                    concat!("raw::", stringify!($raw_fn), "({:?}, {:?})"),
+                    $string.$method(&$substring),
+                    concat!(stringify!($method), "({:?}, {:?})"),
                     $string,
                     $substring,
                 );
@@ -108,19 +112,19 @@ fn test_raw() -> Result<(), getrandom::Error> {
 
     for _ in 0..ITERATIONS {
         let mut string = random_os_string(SMALL_LENGTH)?;
-        let prefix = string.to_raw_bytes().into_owned();
+        let prefix = RawOsStr::new(&string).into_owned();
         let suffix = random_os_string(SMALL_LENGTH)?;
         string.push(&suffix);
 
-        let string = string.into_raw_vec();
-        let suffix = suffix.into_raw_vec();
+        let string = RawOsString::new(string);
+        let suffix = RawOsString::new(suffix);
 
-        test!(true, ends_with(string, suffix));
-        test!(true, starts_with(string, prefix));
+        test!(true, ends_with_os(&string, &suffix));
+        test!(true, starts_with_os(&string, &prefix));
 
         if prefix != suffix {
-            test!(false, ends_with(string, prefix));
-            test!(false, starts_with(string, suffix));
+            test!(false, ends_with_os(&string, &prefix));
+            test!(false, starts_with_os(&string, &suffix));
         }
     }
     Ok(())

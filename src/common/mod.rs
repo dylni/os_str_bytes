@@ -14,7 +14,7 @@ use std::os::wasi as os;
 use os::ffi::OsStrExt;
 use os::ffi::OsStringExt;
 
-if_raw! {
+if_raw_str! {
     pub(super) mod raw;
 }
 
