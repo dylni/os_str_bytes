@@ -295,60 +295,6 @@ impl RawOsStr {
         self.0.is_empty()
     }
 
-    /// Equivalent to [`str::starts_with`], with inverted parameters.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use os_str_bytes::RawOsStr;
-    ///
-    /// let raw = RawOsStr::from_str("foo");
-    /// assert!(raw.is_prefix_of("foobar"));
-    /// assert!(!raw.is_prefix_of("barfoo"));
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn is_prefix_of<P>(&self, pat: P) -> bool
-    where
-        P: Pattern,
-    {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
-
-        pat.starts_with(&self.0)
-    }
-
-    /// Equivalent to [`str::ends_with`], with inverted parameters.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use os_str_bytes::RawOsStr;
-    ///
-    /// let raw = RawOsStr::from_str("bar");
-    /// assert!(raw.is_suffix_of("foobar"));
-    /// assert!(!raw.is_suffix_of("barfoo"));
-    /// ```
-    #[inline]
-    #[must_use]
-    pub fn is_suffix_of<P>(&self, pat: P) -> bool
-    where
-        P: Pattern,
-    {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
-
-        pat.ends_with(&self.0)
-    }
-
     /// Returns the length of the byte string stored by this container.
     ///
     /// Only the following assumptions can be made about the result:

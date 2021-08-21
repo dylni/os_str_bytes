@@ -42,15 +42,30 @@ fn test_ends_with() {
     test(false, b"\xED\xA0\xBDbar");
     test(false, b"\xED\xB2\xA9aar");
 
-    assert!(RawOsStr::from_str("").is_suffix_of(""));
-    assert!(!RawOsStr::from_str("r").is_suffix_of(""));
-    assert!(!RawOsStr::from_str("ar").is_suffix_of(""));
-
     fn test(result: bool, suffix: &[u8]) {
         let wtf8_string = unsafe { from_bytes_unchecked(WTF8_STRING) };
         let suffix = from_bytes(suffix).unwrap();
         assert_eq!(result, wtf8_string.ends_with_os(suffix));
     }
+}
+
+#[test]
+fn test_empty_ends_with() {
+    macro_rules! test {
+        ( $result:expr , $string:expr , $substring:expr ) => {
+            #[allow(clippy::bool_assert_comparison)]
+            {
+                assert_eq!(
+                    $result,
+                    RawOsStr::from_str($string)
+                        .ends_with_os(RawOsStr::from_str($substring)),
+                );
+            }
+        };
+    }
+    test!(true, "", "");
+    test!(false, "", "r");
+    test!(false, "", "ar");
 }
 
 #[test]
@@ -74,13 +89,28 @@ fn test_starts_with() {
     test(false, b"foo\xED\xB2\xA9");
     test(false, b"fof\xED\xA0\xBD\xED\xA0\xBD");
 
-    assert!(RawOsStr::from_str("").is_prefix_of(""));
-    assert!(!RawOsStr::from_str("f").is_prefix_of(""));
-    assert!(!RawOsStr::from_str("fo").is_prefix_of(""));
-
     fn test(result: bool, prefix: &[u8]) {
         let wtf8_string = unsafe { from_bytes_unchecked(WTF8_STRING) };
         let prefix = from_bytes(prefix).unwrap();
         assert_eq!(result, wtf8_string.starts_with_os(prefix));
     }
+}
+
+#[test]
+fn test_empty_starts_with() {
+    macro_rules! test {
+        ( $result:expr , $string:expr , $substring:expr ) => {
+            #[allow(clippy::bool_assert_comparison)]
+            {
+                assert_eq!(
+                    $result,
+                    RawOsStr::from_str($string)
+                        .starts_with_os(RawOsStr::from_str($substring)),
+                );
+            }
+        };
+    }
+    test!(true, "", "");
+    test!(false, "", "f");
+    test!(false, "", "fo");
 }
