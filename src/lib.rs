@@ -9,6 +9,10 @@
 //! conversions directly between the platform encoding and raw bytes, even some
 //! strings invalid in UTF-8 can be converted.
 //!
+//! In most cases, [`RawOsStr`] and [`RawOsString`] should be used.
+//! [`OsStrBytes`] and [`OsStringBytes`] provide lower-level APIs that are
+//! easier to misuse.
+//!
 //! # Encoding
 //!
 //! The encoding of bytes returned or accepted by methods of this crate is
@@ -83,10 +87,11 @@
 //!
 //! # Complexity
 //!
-//! The time complexities of methods will vary based on what functionality is
-//! available for the platform. At worst, they will all be linear, but some can
-//! take constant time. For example, [`OsStringBytes::from_raw_vec`] might be
-//! able to reuse the allocation for its argument.
+//! The time complexities of trait methods will vary based on what
+//! functionality is available for the platform. At worst, they will all be
+//! linear, but some can take constant time. For example,
+//! [`OsStringBytes::from_raw_vec`] might be able to reuse the allocation for
+//! its argument.
 //!
 //! # Examples
 //!
@@ -227,6 +232,9 @@ type Result<T> = result::Result<T, EncodingError>;
 pub trait OsStrBytes: private::Sealed + ToOwned {
     /// Converts a byte slice into an equivalent platform-native string.
     ///
+    /// Provided byte strings should always be valid for the [unspecified
+    /// encoding] used by this crate.
+    ///
     /// # Errors
     ///
     /// See documentation for [`EncodingError`].
@@ -246,11 +254,15 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    ///
+    /// [unspecified encoding]: self#encoding
     fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
         S: Into<Cow<'a, [u8]>>;
 
     /// Converts a platform-native string into an equivalent byte slice.
+    ///
+    /// The returned bytes string will use an [unspecified encoding].
     ///
     /// # Examples
     ///
@@ -265,6 +277,8 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    ///
+    /// [unspecified encoding]: self#encoding
     #[must_use]
     fn to_raw_bytes(&self) -> Cow<'_, [u8]>;
 }
@@ -318,6 +332,9 @@ impl OsStrBytes for Path {
 pub trait OsStringBytes: private::Sealed + Sized {
     /// Converts a byte vector into an equivalent platform-native string.
     ///
+    /// Provided byte strings should always be valid for the [unspecified
+    /// encoding] used by this crate.
+    ///
     /// # Errors
     ///
     /// See documentation for [`EncodingError`].
@@ -337,9 +354,13 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    ///
+    /// [unspecified encoding]: self#encoding
     fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
 
     /// Converts a platform-native string into an equivalent byte vector.
+    ///
+    /// The returned byte string will use an [unspecified encoding].
     ///
     /// # Examples
     ///
@@ -354,6 +375,8 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    ///
+    /// [unspecified encoding]: self#encoding
     #[must_use]
     fn into_raw_vec(self) -> Vec<u8>;
 }
