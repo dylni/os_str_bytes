@@ -94,7 +94,6 @@ pub struct RawOsStr([u8]);
 impl RawOsStr {
     unsafe fn from_raw_bytes_unchecked(string: &[u8]) -> &Self {
         // SAFETY: This struct has a layout that makes this operation safe.
-        #[allow(clippy::transmute_ptr_to_ptr)]
         mem::transmute(string)
     }
 

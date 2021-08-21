@@ -12,7 +12,6 @@ use common::WTF8_STRING;
 
 unsafe fn from_bytes_unchecked(string: &[u8]) -> &RawOsStr {
     // SAFETY: This implementation detail can only be assumed by this crate.
-    #[allow(clippy::transmute_ptr_to_ptr)]
     mem::transmute(string)
 }
 
