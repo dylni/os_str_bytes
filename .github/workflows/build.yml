@@ -6,9 +6,6 @@ on:
   schedule:
   - cron: 0 0 * * FRI
 
-env:
-  cargo_hack_flags: --feature-powerset --optional-deps
-
 jobs:
   build:
     runs-on: ${{ matrix.platform }}
@@ -19,8 +16,8 @@ jobs:
       with:
         fetch-depth: 10
     - run: cargo install cargo-hack
-    - run: cargo hack clippy ${{ env.cargo_hack_flags }}
-    - run: cargo hack clippy ${{ env.cargo_hack_flags }} --tests
+    - run: cargo hack clippy --feature-powerset --optional-deps
+    - run: cargo hack clippy --feature-powerset --optional-deps --tests
     - run: cargo fmt -- --check
     timeout-minutes: 5
     strategy:
@@ -30,8 +27,8 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     env:
-      cargo_hack_flags: --feature-powerset --optional-deps --exclude-features 'print_bytes uniquote' --target ${{ matrix.target }}
       RUSTFLAGS: -Dwarnings
+      flags: --feature-powerset --optional-deps --exclude-features 'print_bytes uniquote' --target ${{ matrix.target }}
     steps:
     - uses: actions/checkout@v1
       with:
@@ -48,9 +45,9 @@ jobs:
     - run: rustup target add ${{ matrix.target }}
     - run: cargo install cargo-hack
     - if: matrix.version == 'stable'
-      run: cargo hack clippy ${{ env.cargo_hack_flags }}
+      run: cargo hack clippy ${{ env.flags }}
     - if: matrix.version != 'stable'
-      run: cargo hack rustc ${{ env.cargo_hack_flags }}
+      run: cargo hack rustc ${{ env.flags }}
     timeout-minutes: 5
     strategy:
       matrix:
@@ -70,9 +67,8 @@ jobs:
         fetch-depth: 10
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
-    - run: cargo install cargo-hack
-    - run: cargo hack test ${{ env.cargo_hack_flags }}
-    - run: cargo hack test ${{ env.cargo_hack_flags }} --release
+    - run: cargo test --all-features
+    - run: cargo test --all-features --release
     timeout-minutes: 10
     strategy:
       matrix:
