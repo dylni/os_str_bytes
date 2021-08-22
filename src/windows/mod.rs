@@ -72,19 +72,19 @@ fn to_bytes(os_string: &OsStr) -> Vec<u8> {
     DecodeWide::new(OsStrExt::encode_wide(os_string)).collect()
 }
 
-pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
+pub(super) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
     from_bytes(string).map(Cow::Owned)
 }
 
-pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
+pub(super) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
     Cow::Owned(to_bytes(os_string))
 }
 
-pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
+pub(super) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
     from_bytes(&string)
 }
 
-pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
+pub(super) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
     to_bytes(&os_string)
 }
 

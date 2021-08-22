@@ -311,8 +311,8 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
-    /// assert_eq!(6, raw.raw_len());
+    /// assert_eq!(6, RawOsStr::from_str("foobar").raw_len());
+    /// assert_eq!(0, RawOsStr::from_str("").raw_len());
     /// ```
     #[inline]
     #[must_use]
