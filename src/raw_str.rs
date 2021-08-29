@@ -62,7 +62,7 @@ macro_rules! impl_trim_matches {
         while let Some(substring) = string.$strip_method(pat) {
             string = substring;
         }
-        unsafe { Self::from_raw_bytes_unchecked(string) }
+        Self::from_raw_bytes_unchecked(string)
     }};
 }
 
@@ -73,12 +73,10 @@ macro_rules! impl_split_once_raw {
         let index = $find_fn(&$self.0, pat)?;
         let prefix = &$self.0[..index];
         let suffix = &$self.0[index + pat.len()..];
-        unsafe {
-            Some((
-                Self::from_raw_bytes_unchecked(prefix),
-                Self::from_raw_bytes_unchecked(suffix),
-            ))
-        }
+        Some((
+            Self::from_raw_bytes_unchecked(prefix),
+            Self::from_raw_bytes_unchecked(suffix),
+        ))
     }};
 }
 
@@ -112,9 +110,9 @@ macro_rules! impl_split_once_raw {
 pub struct RawOsStr([u8]);
 
 impl RawOsStr {
-    unsafe fn from_raw_bytes_unchecked(string: &[u8]) -> &Self {
+    fn from_raw_bytes_unchecked(string: &[u8]) -> &Self {
         // SAFETY: This struct has a layout that makes this operation safe.
-        mem::transmute(string)
+        unsafe { mem::transmute(string) }
     }
 
     /// Converts a platform-native string into a representation that can be
@@ -142,9 +140,9 @@ impl RawOsStr {
     #[must_use]
     pub fn new(string: &OsStr) -> Cow<'_, Self> {
         match string.to_raw_bytes() {
-            Cow::Borrowed(string) => unsafe {
+            Cow::Borrowed(string) => {
                 Cow::Borrowed(Self::from_raw_bytes_unchecked(string))
-            },
+            }
             Cow::Owned(string) => Cow::Owned(RawOsString(string)),
         }
     }
@@ -169,8 +167,7 @@ impl RawOsStr {
     #[inline]
     #[must_use]
     pub fn from_str(string: &str) -> &Self {
-        let string = string.as_bytes();
-        unsafe { Self::from_raw_bytes_unchecked(string) }
+        Self::from_raw_bytes_unchecked(string.as_bytes())
     }
 
     /// Returns the byte string stored by this container.
@@ -482,12 +479,10 @@ impl RawOsStr {
         self.check_bound(mid);
 
         let (prefix, suffix) = self.0.split_at(mid);
-        unsafe {
-            (
-                Self::from_raw_bytes_unchecked(prefix),
-                Self::from_raw_bytes_unchecked(suffix),
-            )
-        }
+        (
+            Self::from_raw_bytes_unchecked(prefix),
+            Self::from_raw_bytes_unchecked(suffix),
+        )
     }
 
     pub(super) fn split_once_raw<P>(&self, pat: &P) -> Option<(&Self, &Self)>
@@ -600,9 +595,7 @@ impl RawOsStr {
         let pat = pat.__encode();
         let pat = pat.__get();
 
-        self.0
-            .strip_prefix(pat)
-            .map(|x| unsafe { Self::from_raw_bytes_unchecked(x) })
+        self.0.strip_prefix(pat).map(Self::from_raw_bytes_unchecked)
     }
 
     /// Equivalent to [`str::strip_suffix`].
@@ -632,9 +625,7 @@ impl RawOsStr {
         let pat = pat.__encode();
         let pat = pat.__get();
 
-        self.0
-            .strip_suffix(pat)
-            .map(|x| unsafe { Self::from_raw_bytes_unchecked(x) })
+        self.0.strip_suffix(pat).map(Self::from_raw_bytes_unchecked)
     }
 
     /// Converts this representation back to a platform-native string.
@@ -803,10 +794,7 @@ macro_rules! r#impl {
                     $(self.check_bound($second_bound);)?
                 )?
 
-                // SAFETY: Boundaries were checked above.
-                unsafe {
-                    Self::from_raw_bytes_unchecked(&self.0[idx])
-                }
+                Self::from_raw_bytes_unchecked(&self.0[idx])
             }
         }
     };
@@ -987,7 +975,7 @@ impl Deref for RawOsString {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        unsafe { RawOsStr::from_raw_bytes_unchecked(&self.0) }
+        RawOsStr::from_raw_bytes_unchecked(&self.0)
     }
 }
 
