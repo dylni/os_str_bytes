@@ -1,4 +1,4 @@
-use crate::is_continuation;
+use crate::util::is_continuation;
 
 use super::encode_wide;
 

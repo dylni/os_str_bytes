@@ -1,9 +1,9 @@
 use std::char;
 use std::char::DecodeUtf16;
 
-use crate::BYTE_SHIFT;
-use crate::CONT_MASK;
-use crate::CONT_TAG;
+use crate::util::BYTE_SHIFT;
+use crate::util::CONT_MASK;
+use crate::util::CONT_TAG;
 
 use super::CodePoints;
 use super::Result;

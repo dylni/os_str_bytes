@@ -1,6 +1,6 @@
 use std::str;
 
-pub(crate) use crate::is_continuation;
+pub(crate) use crate::util::is_continuation;
 
 pub(crate) fn decode_code_point(string: &[u8]) -> u32 {
     let string = str::from_utf8(string).expect("invalid string");

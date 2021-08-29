@@ -15,10 +15,11 @@ use std::ops::RangeToInclusive;
 use std::str;
 
 use super::imp::raw;
-use super::pattern::Encoded;
-use super::pattern::Pattern;
+use super::iter::Split;
+use super::pattern::Encoded as EncodedPattern;
 use super::OsStrBytes;
 use super::OsStringBytes;
+use super::Pattern;
 
 #[cfg(feature = "print_bytes")]
 use print_bytes::Bytes;
@@ -65,10 +66,9 @@ macro_rules! impl_trim_matches {
     }};
 }
 
-macro_rules! impl_split_once {
+macro_rules! impl_split_once_raw {
     ( $self:ident , $pat:expr , $find_fn:expr ) => {{
-        let pat = $pat.__encode();
-        let pat = pat.__get();
+        let pat = $pat.__get();
 
         let index = $find_fn(&$self.0, pat)?;
         let prefix = &$self.0[..index];
@@ -367,6 +367,13 @@ impl RawOsStr {
         rfind_pattern(&self.0, pat)
     }
 
+    pub(super) fn rsplit_once_raw<P>(&self, pat: &P) -> Option<(&Self, &Self)>
+    where
+        P: EncodedPattern,
+    {
+        impl_split_once_raw!(self, pat, rfind_pattern)
+    }
+
     /// Equivalent to [`str::rsplit_once`].
     ///
     /// # Panics
@@ -385,12 +392,13 @@ impl RawOsStr {
     /// );
     /// assert_eq!(None, raw.rsplit_once("of"));
     /// ```
+    #[inline]
     #[must_use]
     pub fn rsplit_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
     where
         P: Pattern,
     {
-        impl_split_once!(self, pat, rfind_pattern)
+        self.rsplit_once_raw(&pat.__encode())
     }
 
     // https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libcore/str/mod.rs#L2184-L2221
@@ -426,6 +434,29 @@ impl RawOsStr {
         }
     }
 
+    /// Equivalent to [`str::split`], but empty patterns are not accepted.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pattern is a byte outside of the ASCII range or empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::from_str("foobar");
+    /// assert_eq!(["f", "", "bar"], *raw.split("o").collect::<Vec<_>>());
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn split<P>(&self, pat: P) -> Split<'_, P>
+    where
+        P: Pattern,
+    {
+        Split::new(self, pat)
+    }
+
     /// Equivalent to [`str::split_at`].
     ///
     /// # Panics
@@ -459,6 +490,13 @@ impl RawOsStr {
         }
     }
 
+    pub(super) fn split_once_raw<P>(&self, pat: &P) -> Option<(&Self, &Self)>
+    where
+        P: EncodedPattern,
+    {
+        impl_split_once_raw!(self, pat, find_pattern)
+    }
+
     /// Equivalent to [`str::split_once`].
     ///
     /// # Panics
@@ -477,12 +515,13 @@ impl RawOsStr {
     /// );
     /// assert_eq!(None, raw.split_once("of"));
     /// ```
+    #[inline]
     #[must_use]
     pub fn split_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
     where
         P: Pattern,
     {
-        impl_split_once!(self, pat, find_pattern)
+        self.split_once_raw(&pat.__encode())
     }
 
     /// Equivalent to [`str::starts_with`].
@@ -734,6 +773,13 @@ impl AsRef<RawOsStr> for String {
     }
 }
 
+impl Default for &RawOsStr {
+    #[inline]
+    fn default() -> Self {
+        RawOsStr::from_str("")
+    }
+}
+
 impl<'a> From<&'a RawOsStr> for Cow<'a, RawOsStr> {
     #[inline]
     fn from(other: &'a RawOsStr) -> Self {
@@ -806,7 +852,7 @@ impl ToOwned for RawOsStr {
 /// For more information, see [`RawOsStr`].
 ///
 /// [unspecified encoding]: super#encoding
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub struct RawOsString(Vec<u8>);
 

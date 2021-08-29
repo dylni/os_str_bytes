@@ -4,6 +4,7 @@ pub trait Encoded {
     fn __get(&self) -> &[u8];
 }
 
+#[derive(Clone)]
 pub struct EncodedByte([u8; 1]);
 
 impl Encoded for EncodedByte {
@@ -13,6 +14,7 @@ impl Encoded for EncodedByte {
     }
 }
 
+#[derive(Clone)]
 pub struct EncodedChar {
     buffer: [u8; 4],
     length: usize,
@@ -43,7 +45,7 @@ impl Encoded for &str {
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub trait Pattern: private::Sealed {
     #[doc(hidden)]
-    type __Encoded: Encoded;
+    type __Encoded: Clone + Encoded;
 
     #[doc(hidden)]
     fn __encode(self) -> Self::__Encoded;

@@ -1,9 +1,9 @@
 use std::iter::Peekable;
 use std::mem;
 
-use crate::is_continuation;
-use crate::BYTE_SHIFT;
-use crate::CONT_MASK;
+use crate::util::is_continuation;
+use crate::util::BYTE_SHIFT;
+use crate::util::CONT_MASK;
 
 use super::EncodingError;
 use super::Result;

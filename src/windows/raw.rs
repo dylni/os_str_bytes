@@ -1,4 +1,4 @@
-pub(crate) use crate::is_continuation;
+pub(crate) use crate::util::is_continuation;
 
 use super::wtf8;
 use super::wtf8::CodePoints;
