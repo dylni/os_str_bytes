@@ -3,6 +3,8 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
+#[cfg(feature = "raw_os_str")]
+use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
 use std::result;
@@ -10,10 +12,17 @@ use std::result;
 use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
+#[cfg(feature = "raw_os_str")]
+use os_str_bytes::RawOsStr;
 
 pub(crate) type Result<T> = result::Result<T, EncodingError>;
 
 pub(crate) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
+
+// SAFETY: This implementation detail can only be assumed by this crate.
+#[cfg(all(any(unix, windows), feature = "raw_os_str"))]
+pub(crate) const RAW_WTF8_STRING: &RawOsStr =
+    unsafe { mem::transmute::<&[u8], _>(WTF8_STRING) };
 
 #[track_caller]
 fn test_from_bytes<'a, T, U, S>(result: &Result<U>, string: S)

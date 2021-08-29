@@ -1,3 +1,15 @@
+use std::str;
+
+pub(crate) use crate::is_continuation;
+
+pub(crate) fn decode_code_point(string: &[u8]) -> u32 {
+    let string = str::from_utf8(string).expect("invalid string");
+    let mut chs = string.chars();
+    let ch = chs.next().expect("cannot parse code point from empty string");
+    assert_eq!(None, chs.next(), "multiple code points found");
+    ch.into()
+}
+
 pub(crate) fn ends_with(string: &[u8], suffix: &[u8]) -> bool {
     string.ends_with(suffix)
 }

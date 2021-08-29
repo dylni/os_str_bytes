@@ -5,6 +5,13 @@ use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::mem;
 use std::ops::Deref;
+use std::ops::Index;
+use std::ops::Range;
+use std::ops::RangeFrom;
+use std::ops::RangeFull;
+use std::ops::RangeInclusive;
+use std::ops::RangeTo;
+use std::ops::RangeToInclusive;
 use std::str;
 
 use super::imp::raw;
@@ -59,7 +66,7 @@ macro_rules! impl_trim_matches {
 }
 
 macro_rules! impl_split_once {
-    ( $self:ident , $pat:expr , $find_fn:ident ) => {{
+    ( $self:ident , $pat:expr , $find_fn:expr ) => {{
         let mut encoder = $pat.__into_encoder();
         let pat = encoder.__encode();
 
@@ -84,6 +91,19 @@ macro_rules! impl_split_once {
 /// Although this type is annotated with `#[repr(transparent)]`, the inner
 /// representation is not stable. Transmuting between this type and any other
 /// causes immediate undefined behavior.
+///
+/// # Indices
+///
+/// Methods of this struct that accept indices require that the index lie on a
+/// UTF-8 boundary. Although it is possible to manipulate platform strings
+/// based on other indices, this crate currently does not support them for
+/// slicing methods. They would add significant complication to the
+/// implementation and are generally not necessary. However, all indices
+/// returned by this struct can be used for slicing.
+///
+/// On Unix, all indices are permitted, to avoid false positives. However,
+/// relying on this implementation detail is discouraged. Platform-specific
+/// indices are error-prone.
 ///
 /// [unspecified encoding]: super#encoding
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -373,6 +393,72 @@ impl RawOsStr {
         impl_split_once!(self, pat, rfind_pattern)
     }
 
+    // https://github.com/rust-lang/rust/blob/49c68bd53f90e375bfb3cbba8c1c67a9e0adb9c0/src/libcore/str/mod.rs#L2184-L2221
+    #[cold]
+    #[inline(never)]
+    #[track_caller]
+    fn index_boundary_error(&self, index: usize) -> ! {
+        debug_assert!(raw::is_continuation(self.0[index]));
+
+        let start = self.0[..index]
+            .iter()
+            .rposition(|&x| !raw::is_continuation(x))
+            .expect("invalid raw bytes");
+        let mut end = index + 1;
+        end += self.0[end..]
+            .iter()
+            .position(|&x| !raw::is_continuation(x))
+            .unwrap_or_else(|| self.raw_len());
+        let code_point = raw::decode_code_point(&self.0[start..end]);
+        panic!(
+            "byte index {} is not a valid boundary; it is inside U+{:04X} \
+            (bytes {}..{})",
+            index, code_point, start, end,
+        );
+    }
+
+    #[track_caller]
+    fn check_bound(&self, index: usize) {
+        if let Some(&byte) = self.0.get(index) {
+            if raw::is_continuation(byte) {
+                self.index_boundary_error(index);
+            }
+        }
+    }
+
+    /// Equivalent to [`str::split_at`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not a [valid boundary].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::from_str("foobar");
+    /// assert_eq!(
+    ///     ((RawOsStr::from_str("fo"), RawOsStr::from_str("obar"))),
+    ///     raw.split_at(2),
+    /// );
+    /// ```
+    ///
+    /// [valid boundary]: #indices
+    #[inline]
+    #[must_use]
+    pub fn split_at(&self, mid: usize) -> (&Self, &Self) {
+        self.check_bound(mid);
+
+        let (prefix, suffix) = self.0.split_at(mid);
+        unsafe {
+            (
+                Self::from_raw_bytes_unchecked(prefix),
+                Self::from_raw_bytes_unchecked(suffix),
+            )
+        }
+    }
+
     /// Equivalent to [`str::split_once`].
     ///
     /// # Panics
@@ -655,6 +741,39 @@ impl<'a> From<&'a RawOsStr> for Cow<'a, RawOsStr> {
     }
 }
 
+macro_rules! r#impl {
+    (
+        $index_type:ty
+        $(, $index_var:ident , $first_bound:expr $(, $second_bound:expr)?)?
+    ) => {
+        impl Index<$index_type> for RawOsStr {
+            type Output = Self;
+
+            #[inline]
+            fn index(&self, idx: $index_type) -> &Self::Output {
+                $(
+                    let $index_var = &idx;
+                    self.check_bound($first_bound);
+                    $(self.check_bound($second_bound);)?
+                )?
+
+                // SAFETY: Boundaries were checked above.
+                unsafe {
+                    Self::from_raw_bytes_unchecked(&self.0[idx])
+                }
+            }
+        }
+    };
+}
+r#impl!(Range<usize>, x, x.start, x.end);
+r#impl!(RangeFrom<usize>, x, x.start);
+r#impl!(RangeFull);
+// [usize::MAX] will always be a valid inclusive end index.
+#[rustfmt::skip]
+r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
+r#impl!(RangeTo<usize>, x, x.end);
+r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
+
 #[cfg(feature = "uniquote")]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
 impl Quote for RawOsStr {
@@ -684,9 +803,7 @@ impl ToOwned for RawOsStr {
 
 /// A container for the byte strings converted by [`OsStringBytes`].
 ///
-/// This wrapper is intended to prevent violating the invariants of the
-/// [unspecified encoding] used by this crate and minimize encoding
-/// conversions.
+/// For more information, see [`RawOsStr`].
 ///
 /// [unspecified encoding]: super#encoding
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -841,6 +958,25 @@ impl From<RawOsString> for Cow<'_, RawOsStr> {
         Cow::Owned(other)
     }
 }
+
+macro_rules! r#impl {
+    ( $index_type:ty ) => {
+        impl Index<$index_type> for RawOsString {
+            type Output = RawOsStr;
+
+            #[inline]
+            fn index(&self, idx: $index_type) -> &Self::Output {
+                &(**self)[idx]
+            }
+        }
+    };
+}
+r#impl!(Range<usize>);
+r#impl!(RangeFrom<usize>);
+r#impl!(RangeFull);
+r#impl!(RangeInclusive<usize>);
+r#impl!(RangeTo<usize>);
+r#impl!(RangeToInclusive<usize>);
 
 #[cfg(feature = "uniquote")]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]

@@ -1,5 +1,6 @@
+use crate::is_continuation;
+
 use super::encode_wide;
-use super::is_continuation;
 
 const SURROGATE_LENGTH: usize = 3;
 

@@ -1,11 +1,12 @@
 use std::char;
 use std::char::DecodeUtf16;
 
+use crate::BYTE_SHIFT;
+use crate::CONT_MASK;
+use crate::CONT_TAG;
+
 use super::CodePoints;
 use super::Result;
-use super::BYTE_SHIFT;
-use super::CONT_MASK;
-use super::CONT_TAG;
 
 const MIN_HIGH_SURROGATE: u16 = 0xD800;
 

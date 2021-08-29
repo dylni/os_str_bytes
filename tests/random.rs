@@ -20,11 +20,6 @@ const ITERATIONS: usize = 1024;
 fn random_os_string(
     buffer_length: usize,
 ) -> Result<OsString, getrandom::Error> {
-    #[cfg_attr(
-        not(any(unix, windows)),
-        allow(unused_mut),
-        allow(unused_variables)
-    )]
     let mut buffer = vec![0; buffer_length];
     #[cfg(unix)]
     {
