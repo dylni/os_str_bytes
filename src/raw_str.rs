@@ -413,7 +413,7 @@ impl RawOsStr {
         end += self.0[end..]
             .iter()
             .position(|&x| !raw::is_continuation(x))
-            .unwrap_or_else(|| self.raw_len());
+            .unwrap_or_else(|| self.raw_len() - end);
         let code_point = raw::decode_code_point(&self.0[start..end]);
         panic!(
             "byte index {} is not a valid boundary; it is inside U+{:04X} \
