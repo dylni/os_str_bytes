@@ -12,7 +12,7 @@ const MIN_HIGH_SURROGATE: u16 = 0xD800;
 
 const MIN_LOW_SURROGATE: u16 = 0xDC00;
 
-const MIN_SURROGATE_CODE: u32 = (u16::max_value() as u32) + 1;
+const MIN_SURROGATE_CODE: u32 = (u16::MAX as u32) + 1;
 
 pub(in super::super) struct DecodeWide<I>
 where

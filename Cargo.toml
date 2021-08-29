@@ -5,7 +5,7 @@ authors = ["dylni"]
 edition = "2018"
 exclude = [".*", "/rustfmt.toml", "/tests"]
 description = """
-Traits for converting between byte sequences and platform-native strings
+Utilities for converting between byte sequences and platform-native strings
 """
 repository = "https://github.com/dylni/os_str_bytes"
 readme = "README.md"

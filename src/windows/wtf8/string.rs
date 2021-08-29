@@ -8,25 +8,23 @@ pub(in super::super) fn ends_with(
     string: &[u8],
     mut suffix: &[u8],
 ) -> Option<bool> {
-    if suffix.is_empty() {
-        return Some(true);
-    }
-
     let index = string.len().checked_sub(suffix.len())?;
-    if is_continuation(string[index]) {
-        let index = index.checked_sub(1)?;
-        let mut wide_suffix = encode_wide(suffix.get(..SURROGATE_LENGTH)?);
-        let suffix_wchar = wide_suffix
-            .next()
-            .expect("failed decoding non-empty suffix");
+    if let Some(&byte) = string.get(index) {
+        if is_continuation(byte) {
+            let index = index.checked_sub(1)?;
+            let mut wide_suffix = encode_wide(suffix.get(..SURROGATE_LENGTH)?);
+            let suffix_wchar = wide_suffix
+                .next()
+                .expect("failed decoding non-empty suffix");
 
-        if suffix_wchar.is_err()
-            || wide_suffix.next().is_some()
-            || suffix_wchar != encode_wide(&string[index..]).nth(1)?
-        {
-            return None;
+            if suffix_wchar.is_err()
+                || wide_suffix.next().is_some()
+                || suffix_wchar != encode_wide(&string[index..]).nth(1)?
+            {
+                return None;
+            }
+            suffix = &suffix[SURROGATE_LENGTH..];
         }
-        suffix = &suffix[SURROGATE_LENGTH..];
     }
     Some(string.ends_with(suffix))
 }

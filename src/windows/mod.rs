@@ -138,11 +138,9 @@ mod tests {
         test_error(CodePoint(0x3C_6143), b"\xFF\x86\x85\x83");
 
         fn test_error(error: EncodingError, string: &[u8]) {
-            use crate::EncodingError;
-
             assert_eq!(
                 Err(error),
-                OsStr::from_raw_bytes(string).map_err(|EncodingError(x)| x),
+                OsStr::from_raw_bytes(string).map_err(|x| x.0),
             );
         }
     }
