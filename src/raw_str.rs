@@ -15,7 +15,7 @@ use std::ops::RangeToInclusive;
 use std::str;
 
 use super::imp::raw;
-use super::pattern::Encoder;
+use super::pattern::Encoded;
 use super::pattern::Pattern;
 use super::OsStrBytes;
 use super::OsStringBytes;
@@ -48,8 +48,8 @@ fn rfind_pattern(string: &[u8], pat: &[u8]) -> Option<usize> {
 
 macro_rules! impl_trim_matches {
     ( $self:ident , $pat:expr , $strip_method:ident ) => {{
-        let mut encoder = $pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = $pat.__encode();
+        let pat = pat.__get();
         if pat.is_empty() {
             return $self;
         }
@@ -67,8 +67,8 @@ macro_rules! impl_trim_matches {
 
 macro_rules! impl_split_once {
     ( $self:ident , $pat:expr , $find_fn:expr ) => {{
-        let mut encoder = $pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = $pat.__encode();
+        let pat = pat.__get();
 
         let index = $find_fn(&$self.0, pat)?;
         let prefix = &$self.0[..index];
@@ -244,8 +244,8 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = pat.__encode();
+        let pat = pat.__get();
 
         self.0.ends_with(pat)
     }
@@ -292,8 +292,8 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = pat.__encode();
+        let pat = pat.__get();
 
         find_pattern(&self.0, pat)
     }
@@ -361,8 +361,8 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = pat.__encode();
+        let pat = pat.__get();
 
         rfind_pattern(&self.0, pat)
     }
@@ -506,8 +506,8 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = pat.__encode();
+        let pat = pat.__get();
 
         self.0.starts_with(pat)
     }
@@ -558,8 +558,8 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = pat.__encode();
+        let pat = pat.__get();
 
         self.0
             .strip_prefix(pat)
@@ -590,8 +590,8 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        let mut encoder = pat.__into_encoder();
-        let pat = encoder.__encode();
+        let pat = pat.__encode();
+        let pat = pat.__get();
 
         self.0
             .strip_suffix(pat)
