@@ -1,7 +1,7 @@
-//! This crate allows interacting with the data stored internally by [`OsStr`]
-//! and [`OsString`], without resorting to panics or corruption for invalid
-//! UTF-8. Thus, methods can be used that are already defined on
-//! [`[u8]`][slice] and [`Vec<u8>`].
+//! This crate allows interacting with the data stored by [`OsStr`] and
+//! [`OsString`], without resorting to panics or corruption for invalid UTF-8.
+//! Thus, methods can be used that are already defined on [`[u8]`][slice] and
+//! [`Vec<u8>`].
 //!
 //! Typically, the only way to losslessly construct [`OsStr`] or [`OsString`]
 //! from a byte sequence is to use `OsStr::new(str::from_utf8(bytes)?)`, which
@@ -36,9 +36,12 @@
 //! Additionally, concatenation may yield unexpected results without a UTF-8
 //! separator. If two platform strings need to be concatenated, the only safe
 //! way to do so is using [`OsString::push`]. This limitation also makes it
-//! undesirable to use the bytes in interchange unless absolutely necessary. If
-//! the strings need to be written as output, crate [print\_bytes] can do so
-//! more safely than directly writing the bytes.
+//! undesirable to use the bytes in interchange.
+//!
+//! Since this encoding can change between versions and platforms, it should
+//! not be used for storage. The standard library provides implementations of
+//! [`OsStrExt`] and [`OsStringExt`] for various platforms, which should be
+//! preferred for that use case.
 //!
 //! # User Input
 //!
@@ -138,6 +141,8 @@
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
 //! [memchr complexity]: RawOsStr#complexity
 //! [memchr]: https://crates.io/crates/memchr
+//! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
+//! [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [print\_bytes]: https://crates.io/crates/print_bytes
 

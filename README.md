@@ -1,6 +1,6 @@
 # OsStr Bytes
 
-This crate allows interacting with the data stored internally by [`OsStr`] and
+This crate allows interacting with the data stored by [`OsStr`] and
 [`OsString`], without resorting to panics or corruption for invalid UTF-8.
 Thus, methods can be used that are already defined on [`[u8]`][slice] and
 [`Vec<u8>`].
