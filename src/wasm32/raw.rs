@@ -26,3 +26,14 @@ pub(crate) fn debug(string: &[u8], _: &mut Formatter<'_>) -> fmt::Result {
     assert!(string.is_empty());
     Ok(())
 }
+
+#[cfg(feature = "uniquote")]
+pub(crate) mod uniquote {
+    use uniquote::Formatter;
+    use uniquote::Quote;
+    use uniquote::Result;
+
+    pub(crate) fn escape(string: &[u8], f: &mut Formatter<'_>) -> Result {
+        string.escape(f)
+    }
+}

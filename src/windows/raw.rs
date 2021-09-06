@@ -6,6 +6,10 @@ pub(crate) use crate::util::is_continuation;
 use super::wtf8;
 use super::wtf8::CodePoints;
 
+fn encode_wide_unchecked(string: &[u8]) -> impl '_ + Iterator<Item = u16> {
+    wtf8::encode_wide(string).map(|x| x.expect("invalid string"))
+}
+
 pub(crate) fn decode_code_point(string: &[u8]) -> u32 {
     let mut code_points = CodePoints::new(string.iter().copied());
     let code_point = code_points
@@ -25,8 +29,18 @@ pub(crate) fn starts_with(string: &[u8], prefix: &[u8]) -> bool {
 }
 
 pub(crate) fn debug(string: &[u8], f: &mut Formatter<'_>) -> fmt::Result {
-    for wchar in wtf8::encode_wide(string) {
-        write!(f, "\\u{{{:X}}}", wchar.expect("invalid string"))?;
+    for wchar in encode_wide_unchecked(string) {
+        write!(f, "\\u{{{:X}}}", wchar)?;
     }
     Ok(())
+}
+
+#[cfg(feature = "uniquote")]
+pub(crate) mod uniquote {
+    use uniquote::Formatter;
+    use uniquote::Result;
+
+    pub(crate) fn escape(string: &[u8], f: &mut Formatter<'_>) -> Result {
+        f.escape_utf16(super::encode_wide_unchecked(string))
+    }
 }

@@ -1117,13 +1117,15 @@ mod uniquote {
     use uniquote::Quote;
     use uniquote::Result;
 
+    use crate::imp::raw;
+
     use super::RawOsStr;
     use super::RawOsString;
 
     impl Quote for RawOsStr {
         #[inline]
         fn escape(&self, f: &mut Formatter<'_>) -> Result {
-            self.0.escape(f)
+            raw::uniquote::escape(&self.0, f)
         }
     }
 
