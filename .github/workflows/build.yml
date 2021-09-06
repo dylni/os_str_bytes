@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: -Dwarnings
-      flags: --feature-powerset --optional-deps --exclude-features 'print_bytes uniquote' --target ${{ matrix.target }}
+      flags: --feature-powerset --optional-deps --exclude-features 'print_bytes' --target ${{ matrix.target }}
     steps:
     - uses: actions/checkout@v1
       with:

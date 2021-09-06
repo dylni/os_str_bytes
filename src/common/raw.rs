@@ -25,3 +25,14 @@ pub(crate) fn debug(string: &[u8], f: &mut Formatter<'_>) -> fmt::Result {
     }
     Ok(())
 }
+
+#[cfg(feature = "uniquote")]
+pub(crate) mod uniquote {
+    use uniquote::Formatter;
+    use uniquote::Quote;
+    use uniquote::Result;
+
+    pub(crate) fn escape(string: &[u8], f: &mut Formatter<'_>) -> Result {
+        string.escape(f)
+    }
+}
