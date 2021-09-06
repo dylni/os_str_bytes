@@ -3,6 +3,10 @@ use std::borrow::Cow;
 use std::borrow::ToOwned;
 use std::ffi::OsStr;
 use std::ffi::OsString;
+use std::fmt;
+use std::fmt::Debug;
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::mem;
 use std::ops::Deref;
 use std::ops::Index;
@@ -104,7 +108,7 @@ macro_rules! impl_split_once_raw {
 /// indices are error-prone.
 ///
 /// [unspecified encoding]: super#encoding
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 #[repr(transparent)]
 pub struct RawOsStr([u8]);
@@ -840,7 +844,7 @@ impl ToOwned for RawOsStr {
 /// For more information, see [`RawOsStr`].
 ///
 /// [unspecified encoding]: super#encoding
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub struct RawOsString(Vec<u8>);
 
@@ -1029,6 +1033,63 @@ impl ToBytes for RawOsString {
         (**self).to_bytes()
     }
 }
+
+struct Buffer<'a>(&'a [u8]);
+
+impl Debug for Buffer<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str("\"")?;
+
+        let mut string = self.0;
+        let mut invalid_length = 0;
+        while !string.is_empty() {
+            let (invalid, substring) = string.split_at(invalid_length);
+
+            let valid = match str::from_utf8(substring) {
+                Ok(valid) => {
+                    string = &[];
+                    valid
+                }
+                Err(error) => {
+                    let (valid, substring) =
+                        substring.split_at(error.valid_up_to());
+
+                    let invalid_char_length =
+                        error.error_len().unwrap_or_else(|| substring.len());
+                    if valid.is_empty() {
+                        invalid_length += invalid_char_length;
+                        continue;
+                    }
+                    string = substring;
+                    invalid_length = invalid_char_length;
+
+                    // SAFETY: This slice was validated to be UTF-8.
+                    unsafe { str::from_utf8_unchecked(valid) }
+                }
+            };
+
+            raw::debug(invalid, f)?;
+            Display::fmt(&valid.escape_debug(), f)?;
+        }
+
+        f.write_str("\"")
+    }
+}
+
+macro_rules! r#impl {
+    ( $type:ty ) => {
+        impl Debug for $type {
+            #[inline]
+            fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                f.debug_tuple(stringify!($type))
+                    .field(&Buffer(&self.0))
+                    .finish()
+            }
+        }
+    };
+}
+r#impl!(RawOsStr);
+r#impl!(RawOsString);
 
 macro_rules! r#impl {
     ( $type:ty , $other_type:ty ) => {

@@ -1,3 +1,6 @@
+use std::fmt;
+use std::fmt::Formatter;
+
 pub(crate) use crate::util::is_continuation;
 
 use super::wtf8;
@@ -19,4 +22,11 @@ pub(crate) fn ends_with(string: &[u8], suffix: &[u8]) -> bool {
 
 pub(crate) fn starts_with(string: &[u8], prefix: &[u8]) -> bool {
     wtf8::starts_with(string, prefix).unwrap_or(false)
+}
+
+pub(crate) fn debug(string: &[u8], f: &mut Formatter<'_>) -> fmt::Result {
+    for wchar in wtf8::encode_wide(string) {
+        write!(f, "\\u{{{:X}}}", wchar.expect("invalid string"))?;
+    }
+    Ok(())
 }
