@@ -126,6 +126,7 @@ mod tests {
         test_error(End(), b"\xF1\x80");
         test_error(End(), b"\xF1\x80\x80");
         test_error(Byte(b'\xF1'), b"\xF1\x80\x80\xF1");
+        test_error(CodePoint(0x11_09CC), b"\xF4\x90\xA7\x8C");
         test_error(CodePoint(0x15_EC46), b"\xF5\x9E\xB1\x86");
         test_error(End(), b"\xFB");
         test_error(End(), b"\xFB\x80");

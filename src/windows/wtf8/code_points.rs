@@ -80,7 +80,7 @@ where
                 r#continue!();
 
                 if byte >= 0xF0 {
-                    if code_point.wrapping_sub(0x10) > 0x100 {
+                    if code_point.wrapping_sub(0x10) >= 0x100 {
                         invalid = true;
                     }
                     r#continue!();
