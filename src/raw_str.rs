@@ -25,6 +25,11 @@ use super::OsStrBytes;
 use super::OsStringBytes;
 use super::Pattern;
 
+#[cfg(feature = "memchr")]
+use memchr::memmem::find;
+#[cfg(feature = "memchr")]
+use memchr::memmem::rfind;
+
 #[cfg(feature = "print_bytes")]
 use print_bytes::Bytes;
 #[cfg(feature = "print_bytes")]
@@ -33,7 +38,8 @@ use print_bytes::ToBytes;
 #[cfg(feature = "uniquote")]
 use uniquote::Quote;
 
-fn find_pattern(string: &[u8], pat: &[u8]) -> Option<usize> {
+#[cfg(not(feature = "memchr"))]
+fn find(string: &[u8], pat: &[u8]) -> Option<usize> {
     for i in 0..=string.len().checked_sub(pat.len())? {
         if string[i..].starts_with(pat) {
             return Some(i);
@@ -42,7 +48,8 @@ fn find_pattern(string: &[u8], pat: &[u8]) -> Option<usize> {
     None
 }
 
-fn rfind_pattern(string: &[u8], pat: &[u8]) -> Option<usize> {
+#[cfg(not(feature = "memchr"))]
+fn rfind(string: &[u8], pat: &[u8]) -> Option<usize> {
     for i in (pat.len()..=string.len()).rev() {
         if string[..i].ends_with(pat) {
             return Some(i - pat.len());
@@ -106,6 +113,13 @@ macro_rules! impl_split_once_raw {
 /// On Unix, all indices are permitted, to avoid false positives. However,
 /// relying on this implementation detail is discouraged. Platform-specific
 /// indices are error-prone.
+///
+/// # Complexity
+///
+/// All searching methods have worst-case multiplicative time complexity (i.e.,
+/// `O(self.raw_len() * pat.len())`). Enabling the "memchr" feature allows
+/// these methods to instead run in linear time in the worst case (documented
+/// for [`memchr::memmem::find`]).
 ///
 /// [unspecified encoding]: super#encoding
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -296,7 +310,7 @@ impl RawOsStr {
         let pat = pat.__encode();
         let pat = pat.__get();
 
-        find_pattern(&self.0, pat)
+        find(&self.0, pat)
     }
 
     /// Equivalent to [`str::is_empty`].
@@ -365,14 +379,14 @@ impl RawOsStr {
         let pat = pat.__encode();
         let pat = pat.__get();
 
-        rfind_pattern(&self.0, pat)
+        rfind(&self.0, pat)
     }
 
     pub(super) fn rsplit_once_raw<P>(&self, pat: &P) -> Option<(&Self, &Self)>
     where
         P: EncodedPattern,
     {
-        impl_split_once_raw!(self, pat, rfind_pattern)
+        impl_split_once_raw!(self, pat, rfind)
     }
 
     /// Equivalent to [`str::rsplit_once`].
@@ -493,7 +507,7 @@ impl RawOsStr {
     where
         P: EncodedPattern,
     {
-        impl_split_once_raw!(self, pat, find_pattern)
+        impl_split_once_raw!(self, pat, find)
     }
 
     /// Equivalent to [`str::split_once`].

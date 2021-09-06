@@ -67,6 +67,8 @@ jobs:
         fetch-depth: 10
     - run: rustup install ${{ matrix.version }}
     - run: rustup default ${{ matrix.version }}
+    - run: cargo test --no-default-features
+    - run: cargo test --no-default-features --features raw_os_str
     - run: cargo test --all-features
     - run: cargo test --all-features --release
     timeout-minutes: 10

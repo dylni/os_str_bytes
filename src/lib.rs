@@ -61,14 +61,22 @@
 //! These features are optional and can be enabled or disabled in a
 //! "Cargo.toml" file.
 //!
+//! ### Default Features
+//!
+//! - **memchr** -
+//!   Changes the implementation to use crate [memchr] for better performance.
+//!   This feature is useless when "raw_os_str" is disabled.
+//!
+//!   For more information, see [`RawOsStr`][memchr complexity].
+//!
+//! - **raw_os_str** -
+//!   Enables use of [`RawOsStr`] and [`RawOsString`].
+//!
 //! ### Optional Features
 //!
 //! - **print_bytes** -
 //!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
 //!   [`RawOsString`].
-//!
-//! - **raw_os_str** -
-//!   Enables use of [`RawOsStr`] and [`RawOsString`].
 //!
 //! - **uniquote** -
 //!   Provides implementations of [`uniquote::Quote`] for [`RawOsStr`] and
@@ -128,6 +136,8 @@
 //! [bstr]: https://crates.io/crates/bstr
 //! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
+//! [memchr complexity]: RawOsStr#complexity
+//! [memchr]: https://crates.io/crates/memchr
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [print\_bytes]: https://crates.io/crates/print_bytes
 

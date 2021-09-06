@@ -12,6 +12,10 @@ use super::pattern::Encoded;
 use super::Pattern;
 use super::RawOsStr;
 
+// [memchr::memmem::FindIter] is not currently used, since this struct would
+// become self-referential. Additionally, that iterator does not implement
+// [DoubleEndedIterator], and its implementation would likely require
+// significant changes to implement that trait.
 /// The iterator returned by [`RawOsStr::split`].
 pub struct Split<'a, P>
 where
