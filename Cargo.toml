@@ -28,4 +28,5 @@ getrandom = { version = "0.2", features = ["js"] }
 
 [features]
 default = ["memchr", "raw_os_str"]
+
 raw_os_str = []

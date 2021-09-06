@@ -40,11 +40,6 @@ The minimum supported Rust toolchain version depends on the platform:
         <td>nightly (<a href="https://doc.rust-lang.org/unstable-book/library-features/sgx-platform.html"><code>sgx_platform</code></a>)</td>
     </tr>
     <tr>
-        <td>WebAssembly</td>
-        <td><code>wasm32-*-unknown</code></td>
-        <td>1.51.0</td>
-    </tr>
-    <tr>
         <td>Unix</td>
         <td>Unix</td>
         <td>1.51.0</td>
@@ -52,6 +47,11 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td>WASI</td>
         <td><code>*-wasi</code></td>
+        <td>1.51.0</td>
+    </tr>
+    <tr>
+        <td>WebAssembly</td>
+        <td><code>wasm32-*-unknown</code></td>
         <td>1.51.0</td>
     </tr>
     <tr>
