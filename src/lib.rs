@@ -68,16 +68,16 @@
 //!
 //! - **memchr** -
 //!   Changes the implementation to use crate [memchr] for better performance.
-//!   This feature is useless when "raw_os_str" is disabled.
+//!   This feature is useless when "raw\_os\_str" is disabled.
 //!
 //!   For more information, see [`RawOsStr`][memchr complexity].
 //!
-//! - **raw_os_str** -
+//! - **raw\_os\_str** -
 //!   Enables use of [`RawOsStr`] and [`RawOsString`].
 //!
 //! ### Optional Features
 //!
-//! - **print_bytes** -
+//! - **print\_bytes** -
 //!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
 //!   [`RawOsString`].
 //!

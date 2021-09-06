@@ -18,25 +18,17 @@ use std::ops::RangeTo;
 use std::ops::RangeToInclusive;
 use std::str;
 
+#[cfg(feature = "memchr")]
+use memchr::memmem::find;
+#[cfg(feature = "memchr")]
+use memchr::memmem::rfind;
+
 use super::imp::raw;
 use super::iter::Split;
 use super::pattern::Encoded as EncodedPattern;
 use super::OsStrBytes;
 use super::OsStringBytes;
 use super::Pattern;
-
-#[cfg(feature = "memchr")]
-use memchr::memmem::find;
-#[cfg(feature = "memchr")]
-use memchr::memmem::rfind;
-
-#[cfg(feature = "print_bytes")]
-use print_bytes::Bytes;
-#[cfg(feature = "print_bytes")]
-use print_bytes::ToBytes;
-
-#[cfg(feature = "uniquote")]
-use uniquote::Quote;
 
 #[cfg(not(feature = "memchr"))]
 fn find(string: &[u8], pat: &[u8]) -> Option<usize> {
@@ -67,9 +59,6 @@ macro_rules! impl_trim_matches {
         }
 
         let mut string = &$self.0;
-        #[allow(unused_mut)]
-        #[allow(unused_variables)]
-        let mut matches = 0;
         while let Some(substring) = string.$strip_method(pat) {
             string = substring;
         }
@@ -826,24 +815,6 @@ r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
 r#impl!(RangeTo<usize>, x, x.end);
 r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
 
-#[cfg(feature = "uniquote")]
-#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
-impl Quote for RawOsStr {
-    #[inline]
-    fn escape(&self, f: &mut uniquote::Formatter<'_>) -> uniquote::Result {
-        self.0.escape(f)
-    }
-}
-
-#[cfg(feature = "print_bytes")]
-#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
-impl ToBytes for RawOsStr {
-    #[inline]
-    fn to_bytes(&self) -> Bytes<'_> {
-        self.0.to_bytes()
-    }
-}
-
 impl ToOwned for RawOsStr {
     type Owned = RawOsString;
 
@@ -1030,24 +1001,6 @@ r#impl!(RangeInclusive<usize>);
 r#impl!(RangeTo<usize>);
 r#impl!(RangeToInclusive<usize>);
 
-#[cfg(feature = "uniquote")]
-#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
-impl Quote for RawOsString {
-    #[inline]
-    fn escape(&self, f: &mut uniquote::Formatter<'_>) -> uniquote::Result {
-        (**self).escape(f)
-    }
-}
-
-#[cfg(feature = "print_bytes")]
-#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
-impl ToBytes for RawOsString {
-    #[inline]
-    fn to_bytes(&self) -> Bytes<'_> {
-        (**self).to_bytes()
-    }
-}
-
 struct Buffer<'a>(&'a [u8]);
 
 impl Debug for Buffer<'_> {
@@ -1132,3 +1085,52 @@ r#impl!(&RawOsStr, String);
 r#impl!(RawOsString, str);
 r#impl!(RawOsString, &str);
 r#impl!(RawOsString, String);
+
+#[cfg(feature = "print_bytes")]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
+mod print_bytes {
+    use print_bytes::Bytes;
+    use print_bytes::ToBytes;
+
+    use super::RawOsStr;
+    use super::RawOsString;
+
+    impl ToBytes for RawOsStr {
+        #[inline]
+        fn to_bytes(&self) -> Bytes<'_> {
+            self.0.to_bytes()
+        }
+    }
+
+    impl ToBytes for RawOsString {
+        #[inline]
+        fn to_bytes(&self) -> Bytes<'_> {
+            (**self).to_bytes()
+        }
+    }
+}
+
+#[cfg(feature = "uniquote")]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
+mod uniquote {
+    use uniquote::Formatter;
+    use uniquote::Quote;
+    use uniquote::Result;
+
+    use super::RawOsStr;
+    use super::RawOsString;
+
+    impl Quote for RawOsStr {
+        #[inline]
+        fn escape(&self, f: &mut Formatter<'_>) -> Result {
+            self.0.escape(f)
+        }
+    }
+
+    impl Quote for RawOsString {
+        #[inline]
+        fn escape(&self, f: &mut Formatter<'_>) -> Result {
+            (**self).escape(f)
+        }
+    }
+}
