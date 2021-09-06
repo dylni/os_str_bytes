@@ -42,8 +42,6 @@ where
     }
 }
 
-// https://github.com/rust-lang/rust/issues/88453
-#[doc(hidden)]
 macro_rules! impl_next {
     ( $self:ident , $split_method:ident , $swap_fn:expr ) => {{
         $self

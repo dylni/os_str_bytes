@@ -170,8 +170,6 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::result;
 
-// https://github.com/rust-lang/rust/issues/88453
-#[doc(hidden)]
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
         $(
