@@ -177,21 +177,12 @@ macro_rules! if_raw_str {
 }
 
 #[cfg_attr(
-    all(
-        target_arch = "wasm32",
-        any(target_os = "emscripten", target_os = "unknown"),
-    ),
+    all(target_arch = "wasm32", target_os = "unknown"),
     path = "wasm32/mod.rs"
 )]
 #[cfg_attr(windows, path = "windows/mod.rs")]
 #[cfg_attr(
-    not(any(
-        all(
-            target_arch = "wasm32",
-            any(target_os = "emscripten", target_os = "unknown"),
-        ),
-        windows,
-    )),
+    not(any(all(target_arch = "wasm32", target_os = "unknown"), windows)),
     path = "common/mod.rs"
 )]
 mod imp;

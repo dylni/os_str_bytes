@@ -40,12 +40,9 @@ The minimum supported Rust toolchain version depends on the platform:
         <td>nightly (<a href="https://doc.rust-lang.org/unstable-book/library-features/sgx-platform.html"><code>sgx_platform</code></a>)</td>
     </tr>
     <tr>
-        <td rowspan="2">JavaScript</td>
-        <td><code>wasm32-*-emscripten</code></td>
-        <td rowspan="2">1.51.0</td>
-    </tr>
-    <tr>
+        <td>WebAssembly</td>
         <td><code>wasm32-*-unknown</code></td>
+        <td>1.51.0</td>
     </tr>
     <tr>
         <td>Unix</td>
