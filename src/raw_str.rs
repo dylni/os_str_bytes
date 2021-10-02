@@ -1089,23 +1089,40 @@ r#impl!(RawOsString, String);
 #[cfg(feature = "print_bytes")]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
 mod print_bytes {
-    use print_bytes::Bytes;
+    use print_bytes::ByteStr;
     use print_bytes::ToBytes;
+    #[cfg(any(windows))]
+    use print_bytes::WideStr;
+
+    #[cfg(windows)]
+    use crate::imp::raw;
 
     use super::RawOsStr;
     use super::RawOsString;
 
     impl ToBytes for RawOsStr {
         #[inline]
-        fn to_bytes(&self) -> Bytes<'_> {
+        fn to_bytes(&self) -> ByteStr<'_> {
             self.0.to_bytes()
+        }
+
+        #[cfg(any(windows))]
+        #[inline]
+        fn to_wide(&self) -> Option<WideStr> {
+            Some(WideStr::new(raw::encode_wide_unchecked(&self.0).collect()))
         }
     }
 
     impl ToBytes for RawOsString {
         #[inline]
-        fn to_bytes(&self) -> Bytes<'_> {
+        fn to_bytes(&self) -> ByteStr<'_> {
             (**self).to_bytes()
+        }
+
+        #[cfg(any(windows))]
+        #[inline]
+        fn to_wide(&self) -> Option<WideStr> {
+            (**self).to_wide()
         }
     }
 }

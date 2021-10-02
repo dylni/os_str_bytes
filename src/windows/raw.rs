@@ -6,7 +6,9 @@ pub(crate) use crate::util::is_continuation;
 use super::wtf8;
 use super::wtf8::CodePoints;
 
-fn encode_wide_unchecked(string: &[u8]) -> impl '_ + Iterator<Item = u16> {
+pub(crate) fn encode_wide_unchecked(
+    string: &[u8],
+) -> impl '_ + Iterator<Item = u16> {
     wtf8::encode_wide(string).map(|x| x.expect("invalid string"))
 }
 
