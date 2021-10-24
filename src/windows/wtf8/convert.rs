@@ -1,7 +1,6 @@
 use std::char;
 use std::char::DecodeUtf16;
 use std::num::NonZeroU16;
-use std::num::NonZeroU32;
 
 use crate::util::BYTE_SHIFT;
 use crate::util::CONT_MASK;
@@ -27,7 +26,7 @@ where
     I: Iterator<Item = u16>,
 {
     iter: DecodeUtf16<I>,
-    code_point: Option<NonZeroU32>,
+    code_point: u32,
     shift: u8,
 }
 
@@ -41,7 +40,7 @@ where
     {
         Self {
             iter: char::decode_utf16(string),
-            code_point: None,
+            code_point: 0,
             shift: 0,
         }
     }
@@ -54,32 +53,27 @@ where
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(code_point) = self.code_point {
-            if let Some(shift) = self.shift.checked_sub(BYTE_SHIFT) {
-                self.shift = shift;
-                return Some(
-                    ((code_point.get() >> self.shift) as u8 & CONT_MASK)
-                        | CONT_TAG,
-                );
-            }
+        if let Some(shift) = self.shift.checked_sub(BYTE_SHIFT) {
+            self.shift = shift;
+            return Some(
+                ((self.code_point >> self.shift) as u8 & CONT_MASK) | CONT_TAG,
+            );
         }
-        debug_assert_eq!(0, self.shift);
 
-        let code_point = self
+        self.code_point = self
             .iter
             .next()?
             .map(Into::into)
             .unwrap_or_else(|x| x.unpaired_surrogate().into());
-        self.code_point = NonZeroU32::new(code_point);
 
         macro_rules! decode {
             ( $tag:expr ) => {
-                Some((code_point >> self.shift) as u8 | $tag)
+                Some((self.code_point >> self.shift) as u8 | $tag)
             };
         }
         macro_rules! try_decode {
             ( $tag:expr , $upper_bound:expr ) => {
-                if code_point < $upper_bound {
+                if self.code_point < $upper_bound {
                     return decode!($tag);
                 }
                 self.shift += BYTE_SHIFT;
