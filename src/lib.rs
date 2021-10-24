@@ -77,6 +77,11 @@
 //!
 //! ### Optional Features
 //!
+//! - **deprecated-byte-patterns** -
+//!   Provides an implementation of [`Pattern`] for [`u8`] that panics when it
+//!   is not an ASCII character. *This feature is deprecated and was only added
+//!   to ease removal of this pattern type.*
+//!
 //! - **print\_bytes** -
 //!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
 //!   [`RawOsString`].
@@ -428,5 +433,6 @@ mod private {
     impl Sealed for PathBuf {}
     impl Sealed for &str {}
     impl Sealed for &String {}
+    #[cfg(feature = "deprecated-byte-patterns")]
     impl Sealed for u8 {}
 }
