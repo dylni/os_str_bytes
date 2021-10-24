@@ -1,5 +1,7 @@
 use std::char;
 use std::char::DecodeUtf16;
+use std::num::NonZeroU16;
+use std::num::NonZeroU32;
 
 use crate::util::BYTE_SHIFT;
 use crate::util::CONT_MASK;
@@ -14,12 +16,18 @@ const MIN_LOW_SURROGATE: u16 = 0xDC00;
 
 const MIN_SURROGATE_CODE: u32 = (u16::MAX as u32) + 1;
 
+macro_rules! static_assert {
+    ( $condition:expr ) => {
+        const _: () = [()][if $condition { 0 } else { 1 }];
+    };
+}
+
 pub(in super::super) struct DecodeWide<I>
 where
     I: Iterator<Item = u16>,
 {
     iter: DecodeUtf16<I>,
-    code_point: Option<u32>,
+    code_point: Option<NonZeroU32>,
     shift: u8,
 }
 
@@ -50,7 +58,8 @@ where
             if let Some(shift) = self.shift.checked_sub(BYTE_SHIFT) {
                 self.shift = shift;
                 return Some(
-                    ((code_point >> self.shift) as u8 & CONT_MASK) | CONT_TAG,
+                    ((code_point.get() >> self.shift) as u8 & CONT_MASK)
+                        | CONT_TAG,
                 );
             }
         }
@@ -61,7 +70,7 @@ where
             .next()?
             .map(Into::into)
             .unwrap_or_else(|x| x.unpaired_surrogate().into());
-        self.code_point = Some(code_point);
+        self.code_point = NonZeroU32::new(code_point);
 
         macro_rules! try_decode {
             ( $tag:expr ) => {
@@ -86,7 +95,7 @@ where
     I: Iterator<Item = u8>,
 {
     iter: CodePoints<I>,
-    surrogate: Option<u16>,
+    surrogate: Option<NonZeroU16>,
 }
 
 impl<I> EncodeWide<I>
@@ -112,7 +121,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(surrogate) = self.surrogate.take() {
-            return Some(Ok(surrogate));
+            return Some(Ok(surrogate.get()));
         }
 
         self.iter.next().map(|code_point| {
@@ -120,8 +129,13 @@ where
                 code_point
                     .checked_sub(MIN_SURROGATE_CODE)
                     .map(|offset| {
-                        self.surrogate =
-                            Some((offset & 0x3FF) as u16 | MIN_LOW_SURROGATE);
+                        static_assert!(MIN_LOW_SURROGATE != 0);
+
+                        self.surrogate = Some(unsafe {
+                            NonZeroU16::new_unchecked(
+                                (offset & 0x3FF) as u16 | MIN_LOW_SURROGATE,
+                            )
+                        });
                         (offset >> 10) as u16 | MIN_HIGH_SURROGATE
                     })
                     .unwrap_or(code_point as u16)

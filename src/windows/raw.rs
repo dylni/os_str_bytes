@@ -4,6 +4,8 @@ use std::fmt::Formatter;
 pub(crate) use crate::util::is_continuation;
 
 use super::wtf8;
+pub(crate) use super::wtf8::ends_with;
+pub(crate) use super::wtf8::starts_with;
 use super::wtf8::CodePoints;
 
 pub(crate) fn encode_wide_unchecked(
@@ -20,14 +22,6 @@ pub(crate) fn decode_code_point(string: &[u8]) -> u32 {
         .expect("invalid string");
     assert_eq!(None, code_points.next(), "multiple code points found");
     code_point
-}
-
-pub(crate) fn ends_with(string: &[u8], suffix: &[u8]) -> bool {
-    wtf8::ends_with(string, suffix).unwrap_or(false)
-}
-
-pub(crate) fn starts_with(string: &[u8], prefix: &[u8]) -> bool {
-    wtf8::starts_with(string, prefix).unwrap_or(false)
 }
 
 pub(crate) fn debug(string: &[u8], f: &mut Formatter<'_>) -> fmt::Result {

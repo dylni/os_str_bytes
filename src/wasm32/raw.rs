@@ -6,11 +6,11 @@ pub(crate) use crate::util::is_continuation;
 
 pub(crate) fn decode_code_point(string: &[u8]) -> u32 {
     let string = str::from_utf8(string).expect("invalid string");
-    let mut chs = string.chars();
-    let ch = chs
+    let mut chars = string.chars();
+    let ch = chars
         .next()
         .expect("cannot parse code point from empty string");
-    assert_eq!(None, chs.next(), "multiple code points found");
+    assert_eq!(None, chars.next(), "multiple code points found");
     ch.into()
 }
 

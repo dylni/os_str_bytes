@@ -64,7 +64,7 @@ pub(crate) fn test_bytes(string: &[u8]) -> Result<()> {
 }
 
 pub(crate) fn test_vec(string: &[u8]) -> Result<()> {
-    let os_string = from_vec(string.to_vec())?;
+    let os_string = from_vec(string.to_owned())?;
     assert_eq!(string.len(), os_string.len());
     assert_eq!(string, os_string.into_raw_vec());
     Ok(())
@@ -80,6 +80,6 @@ pub(crate) fn test_utf8_bytes(string: &str) {
 pub(crate) fn test_utf8_vec(string: &str) {
     let os_string = string.to_owned().into();
     let string = string.as_bytes();
-    assert_eq!(Ok(&os_string), from_vec(string.to_vec()).as_ref());
+    assert_eq!(Ok(&os_string), from_vec(string.to_owned()).as_ref());
     assert_eq!(string, os_string.into_raw_vec());
 }

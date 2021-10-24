@@ -156,7 +156,6 @@
     all(target_vendor = "fortanix", target_env = "sgx"),
     feature(sgx_platform)
 )]
-#![cfg_attr(not(feature = "raw_os_str"), forbid(unsafe_code))]
 #![warn(unused_results)]
 
 use std::borrow::Cow;

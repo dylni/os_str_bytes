@@ -13,6 +13,6 @@ pub(super) use convert::DecodeWide;
 
 if_raw_str! {
     mod string;
-    pub(super) use string::ends_with;
-    pub(super) use string::starts_with;
+    pub(crate) use string::ends_with;
+    pub(crate) use string::starts_with;
 }
