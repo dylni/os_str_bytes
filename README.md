@@ -19,7 +19,7 @@ Add the following lines to your "Cargo.toml" file:
 
 ```toml
 [dependencies]
-os_str_bytes = "4.2"
+os_str_bytes = "5.0"
 ```
 
 See the [documentation] for available functionality and examples.
@@ -68,7 +68,7 @@ crate's minor version:
 
 ```toml
 [dependencies]
-os_str_bytes = "~4.2"
+os_str_bytes = "~5.0"
 ```
 
 ## License
