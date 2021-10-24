@@ -69,7 +69,11 @@ fn from_bytes(string: &[u8]) -> Result<OsString> {
 }
 
 fn to_bytes(os_string: &OsStr) -> Vec<u8> {
-    DecodeWide::new(OsStrExt::encode_wide(os_string)).collect()
+    let encoder = OsStrExt::encode_wide(os_string);
+
+    let mut string = Vec::with_capacity(encoder.size_hint().0);
+    string.extend(DecodeWide::new(encoder));
+    string
 }
 
 pub(super) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
