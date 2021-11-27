@@ -45,8 +45,8 @@ impl Display for EncodingError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
-            "os_str_bytes: byte sequence is not representable in the platform \
-            encoding; error at {}",
+            "byte sequence is not representable in the platform encoding; \
+            error at {}",
             self.position(),
         )
     }
