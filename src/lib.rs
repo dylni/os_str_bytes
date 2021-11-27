@@ -156,6 +156,7 @@
     all(target_vendor = "fortanix", target_env = "sgx"),
     feature(sgx_platform)
 )]
+#![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(unused_results)]
 
 use std::borrow::Cow;
