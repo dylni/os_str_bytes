@@ -30,5 +30,4 @@ getrandom = "0.2"
 [features]
 default = ["memchr", "raw_os_str"]
 
-deprecated-byte-patterns = []
 raw_os_str = []

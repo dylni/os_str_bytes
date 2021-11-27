@@ -4,18 +4,6 @@ pub trait Encoded {
     fn __get(&self) -> &[u8];
 }
 
-#[cfg(feature = "deprecated-byte-patterns")]
-#[derive(Clone)]
-pub struct EncodedByte([u8; 1]);
-
-#[cfg(feature = "deprecated-byte-patterns")]
-impl Encoded for EncodedByte {
-    #[inline]
-    fn __get(&self) -> &[u8] {
-        &self.0
-    }
-}
-
 #[derive(Clone)]
 pub struct EncodedChar {
     buffer: [u8; 4],
@@ -85,22 +73,5 @@ impl<'a> Pattern for &'a String {
     #[doc(hidden)]
     fn __encode(self) -> Self::__Encoded {
         (**self).__encode()
-    }
-}
-
-#[cfg(feature = "deprecated-byte-patterns")]
-#[cfg_attr(
-    os_str_bytes_docs_rs,
-    doc(cfg(feature = "deprecated-byte-patterns"))
-)]
-impl Pattern for u8 {
-    #[doc(hidden)]
-    type __Encoded = EncodedByte;
-
-    #[doc(hidden)]
-    fn __encode(self) -> Self::__Encoded {
-        assert!(self.is_ascii(), "byte pattern is not ASCII");
-
-        EncodedByte([self])
     }
 }
