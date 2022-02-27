@@ -11,46 +11,21 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.platform }}
-    env:
-      RUSTFLAGS: -Dwarnings
     steps:
-    - uses: actions/checkout@v1
-      with:
-        fetch-depth: 10
-    - run: cargo install cargo-hack
-    - run: cargo hack clippy --feature-powerset --optional-deps
-    - run: cargo hack clippy --feature-powerset --optional-deps --tests
-    - run: cargo fmt -- --check
-    timeout-minutes: 5
+    - uses: dylni/build-actions/build@master
+    timeout-minutes: 10
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest]
   build-other:
     needs: [build]
     runs-on: ubuntu-latest
-    env:
-      RUSTFLAGS: -Dwarnings
-      flags: --feature-powerset --optional-deps --target ${{ matrix.target }}
     steps:
-    - uses: actions/checkout@v1
+    - uses: dylni/build-actions/build-other@master
       with:
-        fetch-depth: 10
-    - run: rustup install ${{ matrix.version }}
-    - run: rustup default ${{ matrix.version }}
-    # Clippy might not be packaged with the current nightly compiler or might
-    # include broken lints on the nightly channel.
-    #
-    # Running Clippy on older versions prevents taking advantage of
-    # improvements to its lints.
-    - if: matrix.version == 'stable'
-      run: rustup component add clippy
-    - run: rustup target add ${{ matrix.target }}
-    - run: cargo install cargo-hack
-    - if: matrix.version == 'stable'
-      run: cargo hack clippy ${{ env.flags }}
-    - if: matrix.version != 'stable'
-      run: cargo hack rustc ${{ env.flags }}
-    timeout-minutes: 5
+        target: ${{ matrix.target }}
+        version: ${{ matrix.version }}
+    timeout-minutes: 10
     strategy:
       matrix:
         target: [wasm32-unknown-unknown, wasm32-wasi, x86_64-unknown-redox]
@@ -61,18 +36,11 @@ jobs:
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}
-    env:
-      RUSTFLAGS: -Dwarnings
     steps:
-    - uses: actions/checkout@v1
+    - uses: dylni/build-actions/test@master
       with:
-        fetch-depth: 10
-    - run: rustup install ${{ matrix.version }}
-    - run: rustup default ${{ matrix.version }}
-    - run: cargo test --no-default-features
+        version: ${{ matrix.version }}
     - run: cargo test --no-default-features --features raw_os_str
-    - run: cargo test --all-features
-    - run: cargo test --all-features --release
     timeout-minutes: 10
     strategy:
       matrix:
