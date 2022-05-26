@@ -40,6 +40,11 @@ The minimum supported Rust toolchain version depends on the platform:
         <td>nightly (<a href="https://doc.rust-lang.org/unstable-book/library-features/sgx-platform.html"><code>sgx_platform</code></a>)</td>
     </tr>
     <tr>
+        <td>SOLID</td>
+        <td><code>*-kmc-solid_*</code></td>
+        <td>1.57.0</td>
+    </tr>
+    <tr>
         <td>Unix</td>
         <td>Unix</td>
         <td>1.52.0</td>
