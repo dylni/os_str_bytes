@@ -41,7 +41,7 @@ The minimum supported Rust toolchain version depends on the platform:
     </tr>
     <tr>
         <td>SOLID</td>
-        <td><code>*-kmc-solid_*</code></td>
+        <td><code>*-*-solid_asp3(-*)</code></td>
         <td>1.57.0</td>
     </tr>
     <tr>
@@ -61,7 +61,7 @@ The minimum supported Rust toolchain version depends on the platform:
     </tr>
     <tr>
         <td>Windows</td>
-        <td><code>*-windows-*</code></td>
+        <td><code>*-*-windows-*</code></td>
         <td>1.52.0</td>
     </tr>
 </table>
