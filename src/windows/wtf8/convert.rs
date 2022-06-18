@@ -17,7 +17,7 @@ const MIN_SURROGATE_CODE: u32 = (u16::MAX as u32) + 1;
 
 macro_rules! static_assert {
     ( $condition:expr ) => {
-        const _: () = [()][if $condition { 0 } else { 1 }];
+        const _: () = assert!($condition, "static assertion failed");
     };
 }
 

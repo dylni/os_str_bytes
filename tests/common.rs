@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![warn(unsafe_op_in_unsafe_fn)]
 
 use std::borrow::Cow;
 use std::ffi::OsStr;
@@ -19,10 +20,18 @@ pub(crate) type Result<T> = result::Result<T, EncodingError>;
 
 pub(crate) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
-// SAFETY: This implementation detail can only be assumed by this crate.
+// SAFETY: This string is valid in WTF-8.
 #[cfg(all(any(unix, windows), feature = "raw_os_str"))]
 pub(crate) const RAW_WTF8_STRING: &RawOsStr =
-    unsafe { mem::transmute::<&[u8], _>(WTF8_STRING) };
+    unsafe { from_raw_bytes_unchecked(WTF8_STRING) };
+
+#[cfg(feature = "raw_os_str")]
+pub(crate) const unsafe fn from_raw_bytes_unchecked(
+    string: &[u8],
+) -> &RawOsStr {
+    // SAFETY: This implementation detail can only be assumed by this crate.
+    unsafe { mem::transmute(string) }
+}
 
 #[track_caller]
 fn test_from_bytes<'a, T, U, S>(result: &Result<U>, string: S)

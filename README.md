@@ -42,7 +42,7 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td>HermitCore</td>
         <td><code>*-*-hermit</code></td>
-        <td>1.52.0</td>
+        <td>1.57.0</td>
     </tr>
     <tr>
         <td>SOLID</td>
@@ -52,22 +52,22 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td>Unix</td>
         <td>Unix</td>
-        <td>1.52.0</td>
+        <td>1.57.0</td>
     </tr>
     <tr>
         <td>WASI</td>
         <td><code>*-wasi</code></td>
-        <td>1.52.0</td>
+        <td>1.57.0</td>
     </tr>
     <tr>
         <td>WebAssembly</td>
         <td><code>wasm32-*-unknown</code></td>
-        <td>1.52.0</td>
+        <td>1.57.0</td>
     </tr>
     <tr>
         <td>Windows</td>
         <td><code>*-*-windows-*</code></td>
-        <td>1.52.0</td>
+        <td>1.57.0</td>
     </tr>
 </table>
 
