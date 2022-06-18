@@ -2,8 +2,8 @@
 name = "os_str_bytes"
 version = "6.1.0"
 authors = ["dylni"]
-edition = "2018"
-rust-version = "1.52.0"
+edition = "2021"
+rust-version = "1.57.0"
 description = """
 Utilities for converting between byte sequences and platform-native strings
 """

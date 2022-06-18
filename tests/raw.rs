@@ -1,7 +1,6 @@
 #![cfg(feature = "raw_os_str")]
 
 use std::ffi::OsStr;
-use std::mem;
 
 use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
@@ -10,9 +9,10 @@ use os_str_bytes::RawOsStr;
 mod common;
 use common::RAW_WTF8_STRING;
 
-fn from_bytes(string: &[u8]) -> Result<&RawOsStr, EncodingError> {
-    // SAFETY: This implementation detail can only be assumed by this crate.
-    OsStr::from_raw_bytes(string).map(|_| unsafe { mem::transmute(string) })
+fn from_raw_bytes(string: &[u8]) -> Result<&RawOsStr, EncodingError> {
+    // SAFETY: The string is validated before conversion.
+    OsStr::from_raw_bytes(string)
+        .map(|_| unsafe { common::from_raw_bytes_unchecked(string) })
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn test_ends_with() {
     test(false, b"\xED\xB2\xA9aar");
 
     fn test(result: bool, suffix: &[u8]) {
-        let suffix = from_bytes(suffix).unwrap();
+        let suffix = from_raw_bytes(suffix).unwrap();
         assert_eq!(result, RAW_WTF8_STRING.ends_with_os(suffix));
     }
 }
@@ -83,7 +83,7 @@ fn test_starts_with() {
     test(false, b"fof\xED\xA0\xBD\xED\xA0\xBD");
 
     fn test(result: bool, prefix: &[u8]) {
-        let prefix = from_bytes(prefix).unwrap();
+        let prefix = from_raw_bytes(prefix).unwrap();
         assert_eq!(result, RAW_WTF8_STRING.starts_with_os(prefix));
     }
 }
