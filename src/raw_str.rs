@@ -178,10 +178,6 @@ impl RawOsStr {
 
     /// Equivalent to [`str::contains`].
     ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
     /// # Examples
     ///
     /// ```
@@ -201,10 +197,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::ends_with`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
@@ -229,10 +221,6 @@ impl RawOsStr {
 
     /// Equivalent to [`str::ends_with`] but accepts this type for the pattern.
     ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
     /// # Examples
     ///
     /// ```
@@ -249,10 +237,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::find`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
@@ -319,10 +303,6 @@ impl RawOsStr {
 
     /// Equivalent to [`str::rfind`].
     ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
     /// # Examples
     ///
     /// ```
@@ -372,10 +352,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::rsplit_once`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
@@ -434,7 +410,7 @@ impl RawOsStr {
     ///
     /// # Panics
     ///
-    /// Panics if the pattern is a byte outside of the ASCII range or empty.
+    /// Panics if the pattern is empty.
     ///
     /// # Examples
     ///
@@ -493,10 +469,6 @@ impl RawOsStr {
 
     /// Equivalent to [`str::split_once`].
     ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
     /// # Examples
     ///
     /// ```
@@ -519,10 +491,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::starts_with`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
@@ -548,10 +516,6 @@ impl RawOsStr {
     /// Equivalent to [`str::starts_with`] but accepts this type for the
     /// pattern.
     ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
     /// # Examples
     ///
     /// ```
@@ -568,10 +532,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::strip_prefix`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
@@ -598,10 +558,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::strip_suffix`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
@@ -714,10 +670,6 @@ impl RawOsStr {
 
     /// Equivalent to [`str::trim_end_matches`].
     ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
-    ///
     /// # Examples
     ///
     /// ```
@@ -737,10 +689,6 @@ impl RawOsStr {
     }
 
     /// Equivalent to [`str::trim_start_matches`].
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is a byte outside of the ASCII range.
     ///
     /// # Examples
     ///
