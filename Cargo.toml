@@ -5,14 +5,14 @@ authors = ["dylni"]
 edition = "2021"
 rust-version = "1.57.0"
 description = """
-Utilities for converting between byte sequences and platform-native strings
+Convert between byte sequences and platform-native strings
 """
 readme = "README.md"
 repository = "https://github.com/dylni/os_str_bytes"
 license = "MIT OR Apache-2.0"
 keywords = ["bytes", "osstr", "osstring", "path", "windows"]
 categories = ["command-line-interface", "development-tools::ffi", "encoding", "os", "rust-patterns"]
-exclude = [".*", "/rustfmt.toml", "/tests"]
+exclude = [".*", "tests.rs", "/rustfmt.toml", "/src/bin", "/tests"]
 
 [package.metadata.docs.rs]
 all-features = true

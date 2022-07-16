@@ -14,12 +14,12 @@ fn test(result: &str, string: &RawOsStr) {
 }
 
 #[test]
-fn test_debug_empty() {
+fn test_empty() {
     test("\"\"", RawOsStr::from_str(""));
 }
 
 #[test]
-fn test_debug_wft8() {
+fn test_wft8() {
     let wchar = if cfg!(unix) {
         "\\xED\\xA0\\xBD"
     } else {
@@ -29,6 +29,6 @@ fn test_debug_wft8() {
 }
 
 #[test]
-fn test_debug_quote() {
+fn test_quote() {
     test("\"foo\\\"bar\"", RawOsStr::from_str("foo\"bar"));
 }

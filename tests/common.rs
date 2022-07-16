@@ -4,8 +4,6 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::ffi::OsString;
-#[cfg(feature = "raw_os_str")]
-use std::mem;
 use std::path::Path;
 use std::path::PathBuf;
 use std::result;
@@ -13,24 +11,39 @@ use std::result;
 use os_str_bytes::EncodingError;
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
-#[cfg(feature = "raw_os_str")]
-use os_str_bytes::RawOsStr;
+
+macro_rules! if_raw_str {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(feature = "raw_os_str")]
+            $item
+        )+
+    };
+}
+
+if_raw_str! {
+    use std::mem;
+
+    use os_str_bytes::RawOsStr;
+}
 
 pub(crate) type Result<T> = result::Result<T, EncodingError>;
 
 pub(crate) const WTF8_STRING: &[u8] = b"foo\xED\xA0\xBD\xF0\x9F\x92\xA9bar";
 
-// SAFETY: This string is valid in WTF-8.
-#[cfg(all(any(unix, windows), feature = "raw_os_str"))]
-pub(crate) const RAW_WTF8_STRING: &RawOsStr =
-    unsafe { from_raw_bytes_unchecked(WTF8_STRING) };
+if_raw_str! {
+    // SAFETY: This string is valid in WTF-8.
+    #[cfg(any(unix, windows))]
+    pub(crate) const RAW_WTF8_STRING: &RawOsStr =
+        unsafe { from_raw_bytes_unchecked(WTF8_STRING) };
 
-#[cfg(feature = "raw_os_str")]
-pub(crate) const unsafe fn from_raw_bytes_unchecked(
-    string: &[u8],
-) -> &RawOsStr {
-    // SAFETY: This implementation detail can only be assumed by this crate.
-    unsafe { mem::transmute(string) }
+    pub(crate) const unsafe fn from_raw_bytes_unchecked(
+        string: &[u8],
+    ) -> &RawOsStr {
+        // SAFETY: This implementation detail can only be assumed by this
+        // crate.
+        unsafe { mem::transmute(string) }
+    }
 }
 
 #[track_caller]

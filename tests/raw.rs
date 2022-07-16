@@ -17,6 +17,12 @@ fn from_raw_bytes(string: &[u8]) -> Result<&RawOsStr, EncodingError> {
 
 #[test]
 fn test_ends_with() {
+    #[track_caller]
+    fn test(result: bool, suffix: &[u8]) {
+        let suffix = from_raw_bytes(suffix).unwrap();
+        assert_eq!(result, RAW_WTF8_STRING.ends_with_os(suffix));
+    }
+
     test(true, b"");
     test(true, b"r");
     test(true, b"ar");
@@ -35,34 +41,31 @@ fn test_ends_with() {
 
     test(false, b"\xED\xA0\xBDbar");
     test(false, b"\xED\xB2\xA9aar");
-
-    fn test(result: bool, suffix: &[u8]) {
-        let suffix = from_raw_bytes(suffix).unwrap();
-        assert_eq!(result, RAW_WTF8_STRING.ends_with_os(suffix));
-    }
 }
 
 #[test]
 fn test_empty_ends_with() {
-    macro_rules! test {
-        ( $result:expr , $string:expr , $substring:expr ) => {
-            #[allow(clippy::bool_assert_comparison)]
-            {
-                assert_eq!(
-                    $result,
-                    RawOsStr::from_str($string)
-                        .ends_with_os(RawOsStr::from_str($substring)),
-                );
-            }
-        };
+    #[track_caller]
+    fn test(result: bool, suffix: &str) {
+        assert_eq!(
+            result,
+            RawOsStr::from_str("").ends_with_os(RawOsStr::from_str(suffix)),
+        );
     }
-    test!(true, "", "");
-    test!(false, "", "r");
-    test!(false, "", "ar");
+
+    test(true, "");
+    test(false, "r");
+    test(false, "ar");
 }
 
 #[test]
 fn test_starts_with() {
+    #[track_caller]
+    fn test(result: bool, prefix: &[u8]) {
+        let prefix = from_raw_bytes(prefix).unwrap();
+        assert_eq!(result, RAW_WTF8_STRING.starts_with_os(prefix));
+    }
+
     test(true, b"");
     test(true, b"f");
     test(true, b"fo");
@@ -81,28 +84,19 @@ fn test_starts_with() {
 
     test(false, b"foo\xED\xB2\xA9");
     test(false, b"fof\xED\xA0\xBD\xED\xA0\xBD");
-
-    fn test(result: bool, prefix: &[u8]) {
-        let prefix = from_raw_bytes(prefix).unwrap();
-        assert_eq!(result, RAW_WTF8_STRING.starts_with_os(prefix));
-    }
 }
 
 #[test]
 fn test_empty_starts_with() {
-    macro_rules! test {
-        ( $result:expr , $string:expr , $substring:expr ) => {
-            #[allow(clippy::bool_assert_comparison)]
-            {
-                assert_eq!(
-                    $result,
-                    RawOsStr::from_str($string)
-                        .starts_with_os(RawOsStr::from_str($substring)),
-                );
-            }
-        };
+    #[track_caller]
+    fn test(result: bool, prefix: &str) {
+        assert_eq!(
+            result,
+            RawOsStr::from_str("").starts_with_os(RawOsStr::from_str(prefix)),
+        );
     }
-    test!(true, "", "");
-    test!(false, "", "f");
-    test!(false, "", "fo");
+
+    test(true, "");
+    test(false, "f");
+    test(false, "fo");
 }

@@ -10,7 +10,12 @@ mod common;
 use common::RAW_WTF8_STRING;
 
 #[test]
-fn test_valid_indices() {
+fn test_valid() {
+    #[track_caller]
+    fn test(index: usize) {
+        let _ = RAW_WTF8_STRING.index(index..);
+    }
+
     test(0);
     test(1);
     test(2);
@@ -20,11 +25,6 @@ fn test_valid_indices() {
     test(11);
     test(12);
     test(13);
-
-    #[track_caller]
-    fn test(index: usize) {
-        let _ = RAW_WTF8_STRING.index(index..);
-    }
 }
 
 macro_rules! test {
@@ -55,18 +55,26 @@ macro_rules! test {
     };
 }
 
-test!(test_index_4, 4, "U+D83D (bytes 3..6)");
+test!(test_4, 4, "U+D83D (bytes 3..6)");
 
-test!(test_index_5, 5, "U+D83D (bytes 3..6)");
+test!(test_5, 5, "U+D83D (bytes 3..6)");
 
-test!(test_index_7, 7, "U+1F4A9 (bytes 6..10)");
+test!(test_7, 7, "U+1F4A9 (bytes 6..10)");
 
-test!(test_index_8, 8, "U+1F4A9 (bytes 6..10)");
+test!(test_8, 8, "U+1F4A9 (bytes 6..10)");
 
-test!(test_index_9, 9, "U+1F4A9 (bytes 6..10)");
+test!(test_9, 9, "U+1F4A9 (bytes 6..10)");
 
 #[test]
-fn test_index_panics() {
+fn test_panics() {
+    #[track_caller]
+    fn test<F, R>(f: F)
+    where
+        F: FnOnce() -> R + UnwindSafe,
+    {
+        assert_eq!(!cfg!(unix), panic::catch_unwind(f).is_err());
+    }
+
     let string = RawOsStr::from_str("\u{F6}");
     test(|| string.index(1..2));
     test(|| string.index(0..1));
@@ -75,12 +83,4 @@ fn test_index_panics() {
     test(|| string.index(..1));
     test(|| string.index(..=0));
     test(|| string.split_at(1));
-
-    #[track_caller]
-    fn test<F, R>(f: F)
-    where
-        F: FnOnce() -> R + UnwindSafe,
-    {
-        assert_eq!(!cfg!(unix), panic::catch_unwind(f).is_err());
-    }
 }
