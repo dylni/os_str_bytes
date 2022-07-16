@@ -49,6 +49,23 @@ fn rfind(string: &[u8], pat: &[u8]) -> Option<usize> {
     None
 }
 
+#[allow(clippy::missing_safety_doc)]
+unsafe trait TransmuteBox {
+    fn transmute_box<R>(self: Box<Self>) -> Box<R>
+    where
+        R: ?Sized + TransmuteBox,
+    {
+        let value = Box::into_raw(self);
+        // SAFETY: This trait is only implemented for types that can be
+        // transmuted.
+        unsafe { Box::from_raw(mem::transmute_copy(&value)) }
+    }
+}
+
+// SAFETY: This struct has a layout that makes this operation safe.
+unsafe impl TransmuteBox for RawOsStr {}
+unsafe impl TransmuteBox for [u8] {}
+
 /// A container for borrowed byte strings converted by this crate.
 ///
 /// This wrapper is intended to prevent violating the invariants of the
@@ -739,8 +756,15 @@ impl Default for &RawOsStr {
 
 impl<'a> From<&'a RawOsStr> for Cow<'a, RawOsStr> {
     #[inline]
-    fn from(other: &'a RawOsStr) -> Self {
-        Cow::Borrowed(other)
+    fn from(value: &'a RawOsStr) -> Self {
+        Cow::Borrowed(value)
+    }
+}
+
+impl From<Box<str>> for Box<RawOsStr> {
+    #[inline]
+    fn from(value: Box<str>) -> Self {
+        value.into_boxed_bytes().transmute_box()
     }
 }
 
@@ -833,6 +857,23 @@ impl RawOsString {
         Self(string.into_bytes())
     }
 
+    /// Equivalent to [`String::into_boxed_str`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let string = "foobar".to_owned();
+    /// let raw = RawOsString::from_string(string.clone());
+    /// assert_eq!(string, *raw.into_box());
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn into_box(self) -> Box<RawOsStr> {
+        self.0.into_boxed_slice().transmute_box()
+    }
+
     /// Converts this representation back to a platform-native string.
     ///
     /// # Examples
@@ -922,17 +963,31 @@ impl Deref for RawOsString {
     }
 }
 
-impl From<String> for RawOsString {
+impl From<RawOsString> for Box<RawOsStr> {
     #[inline]
-    fn from(other: String) -> Self {
-        Self::from_string(other)
+    fn from(value: RawOsString) -> Self {
+        value.into_box()
+    }
+}
+
+impl From<Box<RawOsStr>> for RawOsString {
+    #[inline]
+    fn from(value: Box<RawOsStr>) -> Self {
+        Self(value.transmute_box::<[_]>().into_vec())
     }
 }
 
 impl From<RawOsString> for Cow<'_, RawOsStr> {
     #[inline]
-    fn from(other: RawOsString) -> Self {
-        Cow::Owned(other)
+    fn from(value: RawOsString) -> Self {
+        Cow::Owned(value)
+    }
+}
+
+impl From<String> for RawOsString {
+    #[inline]
+    fn from(value: String) -> Self {
+        Self::from_string(value)
     }
 }
 
