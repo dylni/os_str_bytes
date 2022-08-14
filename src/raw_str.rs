@@ -27,6 +27,7 @@ use super::imp;
 use super::imp::raw;
 use super::iter::Split;
 use super::pattern::Encoded as EncodedPattern;
+use super::private;
 use super::Pattern;
 
 #[cfg(not(feature = "memchr"))]
@@ -106,7 +107,7 @@ unsafe impl TransmuteBox for [u8] {}
 pub struct RawOsStr([u8]);
 
 impl RawOsStr {
-    fn from_raw_bytes_unchecked(string: &[u8]) -> &Self {
+    const fn from_inner(string: &[u8]) -> &Self {
         // SAFETY: This struct has a layout that makes this operation safe.
         unsafe { mem::transmute(string) }
     }
@@ -136,9 +137,7 @@ impl RawOsStr {
     #[must_use]
     pub fn new(string: &OsStr) -> Cow<'_, Self> {
         match imp::os_str_to_bytes(string) {
-            Cow::Borrowed(string) => {
-                Cow::Borrowed(Self::from_raw_bytes_unchecked(string))
-            }
+            Cow::Borrowed(string) => Cow::Borrowed(Self::from_inner(string)),
             Cow::Owned(string) => Cow::Owned(RawOsString(string)),
         }
     }
@@ -163,7 +162,76 @@ impl RawOsStr {
     #[inline]
     #[must_use]
     pub fn from_str(string: &str) -> &Self {
-        Self::from_raw_bytes_unchecked(string.as_bytes())
+        Self::from_inner(string.as_bytes())
+    }
+
+    /// Wraps a byte string, without copying or encoding conversion.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the string is not valid for the [unspecified encoding] used
+    /// by this crate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let raw = RawOsStr::new(&os_string);
+    /// let raw_bytes = raw.as_raw_bytes();
+    /// assert_eq!(&*raw, RawOsStr::assert_from_raw_bytes(raw_bytes));
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [unspecified encoding]: super#encoding
+    #[inline]
+    #[must_use = "method should not be used for validation"]
+    #[track_caller]
+    pub fn assert_from_raw_bytes(string: &[u8]) -> &Self {
+        expect_encoded!(raw::validate_bytes(string));
+
+        Self::from_inner(string)
+    }
+
+    /// Wraps a byte string, without copying or encoding conversion.
+    ///
+    /// # Safety
+    ///
+    /// The string must be valid for the [unspecified encoding] used by this
+    /// crate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let raw = RawOsStr::new(&os_string);
+    /// let raw_bytes = raw.as_raw_bytes();
+    /// assert_eq!(&*raw, unsafe {
+    ///     RawOsStr::from_raw_bytes_unchecked(raw_bytes)
+    /// });
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [unspecified encoding]: super#encoding
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub unsafe fn from_raw_bytes_unchecked(string: &[u8]) -> &Self {
+        #[cfg(debug_assertions)]
+        expect_encoded!(raw::validate_bytes(string));
+
+        Self::from_inner(string)
     }
 
     /// Returns the byte string stored by this container.
@@ -349,10 +417,7 @@ impl RawOsStr {
         let index = find_fn(&self.0, pat)?;
         let prefix = &self.0[..index];
         let suffix = &self.0[index + pat.len()..];
-        Some((
-            Self::from_raw_bytes_unchecked(prefix),
-            Self::from_raw_bytes_unchecked(suffix),
-        ))
+        Some((Self::from_inner(prefix), Self::from_inner(suffix)))
     }
 
     pub(super) fn rsplit_once_raw<P>(&self, pat: &P) -> Option<(&Self, &Self)>
@@ -467,10 +532,7 @@ impl RawOsStr {
         self.check_bound(mid);
 
         let (prefix, suffix) = self.0.split_at(mid);
-        (
-            Self::from_raw_bytes_unchecked(prefix),
-            Self::from_raw_bytes_unchecked(suffix),
-        )
+        (Self::from_inner(prefix), Self::from_inner(suffix))
     }
 
     pub(super) fn split_once_raw<P>(&self, pat: &P) -> Option<(&Self, &Self)>
@@ -567,7 +629,7 @@ impl RawOsStr {
         let pat = pat.__encode();
         let pat = pat.__get();
 
-        self.0.strip_prefix(pat).map(Self::from_raw_bytes_unchecked)
+        self.0.strip_prefix(pat).map(Self::from_inner)
     }
 
     /// Equivalent to [`str::strip_suffix`].
@@ -593,10 +655,13 @@ impl RawOsStr {
         let pat = pat.__encode();
         let pat = pat.__get();
 
-        self.0.strip_suffix(pat).map(Self::from_raw_bytes_unchecked)
+        self.0.strip_suffix(pat).map(Self::from_inner)
     }
 
     /// Converts this representation back to a platform-native string.
+    ///
+    /// When possible, use [`RawOsStrCow::into_os_str`] for a more efficient
+    /// conversion on some platforms.
     ///
     /// # Examples
     ///
@@ -678,7 +743,14 @@ impl RawOsStr {
         while let Some(substring) = strip_fn(string, pat) {
             string = substring;
         }
-        Self::from_raw_bytes_unchecked(string)
+        Self::from_inner(string)
+    }
+
+    fn trim_end_matches_raw<P>(&self, pat: &P) -> &Self
+    where
+        P: EncodedPattern,
+    {
+        self.trim_matches_raw_with(pat, <[_]>::strip_suffix)
     }
 
     /// Equivalent to [`str::trim_end_matches`].
@@ -698,7 +770,35 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        self.trim_matches_raw_with(&pat.__encode(), <[_]>::strip_suffix)
+        self.trim_end_matches_raw(&pat.__encode())
+    }
+
+    /// Equivalent to [`str::trim_matches`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::from_str("111foo1bar111");
+    /// assert_eq!("foo1bar", raw.trim_matches("1"));
+    /// assert_eq!("111foo1bar111", raw.trim_matches("o"));
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn trim_matches<P>(&self, pat: P) -> &Self
+    where
+        P: Pattern,
+    {
+        let pat = pat.__encode();
+        self.trim_start_matches_raw(&pat).trim_end_matches_raw(&pat)
+    }
+
+    fn trim_start_matches_raw<P>(&self, pat: &P) -> &Self
+    where
+        P: EncodedPattern,
+    {
+        self.trim_matches_raw_with(pat, <[_]>::strip_prefix)
     }
 
     /// Equivalent to [`str::trim_start_matches`].
@@ -718,7 +818,7 @@ impl RawOsStr {
     where
         P: Pattern,
     {
-        self.trim_matches_raw_with(&pat.__encode(), <[_]>::strip_prefix)
+        self.trim_start_matches_raw(&pat.__encode())
     }
 }
 
@@ -770,6 +870,71 @@ impl ToOwned for RawOsStr {
     #[inline]
     fn to_owned(&self) -> Self::Owned {
         RawOsString(self.0.to_owned())
+    }
+}
+
+/// Extensions to [`Cow<RawOsStr>`] for additional conversions.
+///
+/// [`Cow<RawOsStr>`]: Cow
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
+pub trait RawOsStrCow<'a>: private::Sealed {
+    /// Converts this representation back to a platform-native string.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsStr;
+    /// use os_str_bytes::RawOsStrCow;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let raw = RawOsStr::new(&os_string);
+    /// assert_eq!(os_string, raw.into_os_str());
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    #[must_use]
+    fn into_os_str(self) -> Cow<'a, OsStr>;
+
+    /// Returns the byte string stored by this container.
+    ///
+    /// The returned string will use an [unspecified encoding].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::borrow::Cow;
+    ///
+    /// use os_str_bytes::RawOsStr;
+    /// use os_str_bytes::RawOsStrCow;
+    ///
+    /// let string = "foobar";
+    /// let raw = Cow::Borrowed(RawOsStr::from_str(string));
+    /// assert_eq!(string.as_bytes(), &*raw.into_raw_bytes());
+    /// ```
+    ///
+    /// [unspecified encoding]: super#encoding
+    #[must_use]
+    fn into_raw_bytes(self) -> Cow<'a, [u8]>;
+}
+
+impl<'a> RawOsStrCow<'a> for Cow<'a, RawOsStr> {
+    #[inline]
+    fn into_os_str(self) -> Cow<'a, OsStr> {
+        match self {
+            Cow::Borrowed(string) => string.to_os_str(),
+            Cow::Owned(string) => Cow::Owned(string.into_os_string()),
+        }
+    }
+
+    #[inline]
+    fn into_raw_bytes(self) -> Cow<'a, [u8]> {
+        match self {
+            Cow::Borrowed(string) => Cow::Borrowed(&string.0),
+            Cow::Owned(string) => Cow::Owned(string.0),
+        }
     }
 }
 
@@ -825,6 +990,97 @@ impl RawOsString {
     #[must_use]
     pub fn from_string(string: String) -> Self {
         Self(string.into_bytes())
+    }
+
+    /// Wraps a byte string, without copying or encoding conversion.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the string is not valid for the [unspecified encoding] used
+    /// by this crate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let raw = RawOsString::new(os_string);
+    /// let raw_bytes = raw.clone().into_raw_vec();
+    /// assert_eq!(raw, RawOsString::assert_from_raw_vec(raw_bytes));
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [unspecified encoding]: super#encoding
+    #[inline]
+    #[must_use = "method should not be used for validation"]
+    #[track_caller]
+    pub fn assert_from_raw_vec(string: Vec<u8>) -> Self {
+        expect_encoded!(raw::validate_bytes(&string));
+
+        Self(string)
+    }
+
+    /// Wraps a byte string, without copying or encoding conversion.
+    ///
+    /// # Safety
+    ///
+    /// The string must be valid for the [unspecified encoding] used by this
+    /// crate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let raw = RawOsString::new(os_string);
+    /// let raw_bytes = raw.clone().into_raw_vec();
+    /// assert_eq!(raw, unsafe {
+    ///     RawOsString::from_raw_vec_unchecked(raw_bytes)
+    /// });
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [unspecified encoding]: super#encoding
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub unsafe fn from_raw_vec_unchecked(string: Vec<u8>) -> Self {
+        #[cfg(debug_assertions)]
+        expect_encoded!(raw::validate_bytes(&string));
+
+        Self(string)
+    }
+
+    /// Equivalent to [`String::clear`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let mut raw = RawOsString::new(os_string);
+    /// raw.clear();
+    /// assert!(raw.is_empty());
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    #[inline]
+    pub fn clear(&mut self) {
+        self.0.clear();
     }
 
     /// Equivalent to [`String::into_boxed_str`].
@@ -902,6 +1158,74 @@ impl RawOsString {
     pub fn into_string(self) -> Result<String, Self> {
         String::from_utf8(self.0).map_err(|x| Self(x.into_bytes()))
     }
+
+    /// Equivalent to [`String::shrink_to_fit`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let string = "foobar".to_owned();
+    /// let mut raw = RawOsString::from_string(string.clone());
+    /// raw.shrink_to_fit();
+    /// assert_eq!(string, raw);
+    /// ```
+    #[inline]
+    pub fn shrink_to_fit(&mut self) {
+        self.0.shrink_to_fit();
+    }
+
+    /// Equivalent to [`String::split_off`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not a [valid boundary].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let mut raw = RawOsString::from_string("foobar".to_owned());
+    /// assert_eq!("bar", raw.split_off(3));
+    /// assert_eq!("foo", raw);
+    /// ```
+    ///
+    /// [valid boundary]: RawOsStr#indices
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn split_off(&mut self, at: usize) -> Self {
+        self.check_bound(at);
+
+        Self(self.0.split_off(at))
+    }
+
+    /// Equivalent to [`String::truncate`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not a [valid boundary].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsString;
+    ///
+    /// let mut raw = RawOsString::from_string("foobar".to_owned());
+    /// raw.truncate(3);
+    /// assert_eq!("foo", raw);
+    /// ```
+    ///
+    /// [valid boundary]: RawOsStr#indices
+    #[inline]
+    #[track_caller]
+    pub fn truncate(&mut self, new_len: usize) {
+        self.check_bound(new_len);
+
+        self.0.truncate(new_len);
+    }
 }
 
 impl AsRef<RawOsStr> for RawOsString {
@@ -923,7 +1247,7 @@ impl Deref for RawOsString {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
-        RawOsStr::from_raw_bytes_unchecked(&self.0)
+        RawOsStr::from_inner(&self.0)
     }
 }
 
@@ -1024,7 +1348,7 @@ macro_rules! r#impl {
                     $(self.check_bound($bound);)+
                 )?
 
-                Self::from_raw_bytes_unchecked(&self.0[idx])
+                Self::from_inner(&self.0[idx])
             }
         }
 

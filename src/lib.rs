@@ -187,12 +187,10 @@ macro_rules! if_raw_str {
     };
 }
 
-if_raw_str! {
-    macro_rules! expect_encoded {
-        ( $result:expr ) => {
-            $result.expect("invalid raw bytes")
-        };
-    }
+macro_rules! expect_encoded {
+    ( $result:expr ) => {
+        $result.expect("invalid raw bytes")
+    };
 }
 
 #[cfg_attr(
@@ -224,6 +222,7 @@ if_raw_str! {
 
     mod raw_str;
     pub use raw_str::RawOsStr;
+    pub use raw_str::RawOsStrCow;
     pub use raw_str::RawOsString;
 }
 
@@ -266,6 +265,43 @@ type Result<T> = result::Result<T, EncodingError>;
 pub trait OsStrBytes: private::Sealed + ToOwned {
     /// Converts a byte string into an equivalent platform-native string.
     ///
+    /// # Panics
+    ///
+    /// Panics if the string is not valid for the [unspecified encoding] used
+    /// by this crate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// use std::ffi::OsStr;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::OsStrBytes;
+    ///
+    /// let os_string = env::current_exe()?;
+    /// let os_bytes = os_string.to_raw_bytes();
+    /// assert_eq!(os_string, OsStr::assert_from_raw_bytes(os_bytes));
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [unspecified encoding]: self#encoding
+    #[inline]
+    #[must_use = "method should not be used for validation"]
+    #[track_caller]
+    fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
+    where
+        S: Into<Cow<'a, [u8]>>,
+    {
+        expect_encoded!(Self::from_raw_bytes(string))
+    }
+
+    /// Converts a byte string into an equivalent platform-native string.
+    ///
+    /// [`assert_from_raw_bytes`] should almost always be used instead. For
+    /// more information, see [`EncodingError`].
+    ///
     /// # Errors
     ///
     /// See documentation for [`EncodingError`].
@@ -286,6 +322,7 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
+    /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
     fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
         S: Into<Cow<'a, [u8]>>;
@@ -360,6 +397,40 @@ impl OsStrBytes for Path {
 pub trait OsStringBytes: private::Sealed + Sized {
     /// Converts a byte string into an equivalent platform-native string.
     ///
+    /// # Panics
+    ///
+    /// Panics if the string is not valid for the [unspecified encoding] used
+    /// by this crate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// use std::ffi::OsString;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::OsStringBytes;
+    ///
+    /// let os_string = env::current_exe()?;
+    /// let os_bytes = os_string.clone().into_raw_vec();
+    /// assert_eq!(os_string, OsString::assert_from_raw_vec(os_bytes));
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    ///
+    /// [unspecified encoding]: self#encoding
+    #[inline]
+    #[must_use = "method should not be used for validation"]
+    #[track_caller]
+    fn assert_from_raw_vec(string: Vec<u8>) -> Self {
+        expect_encoded!(Self::from_raw_vec(string))
+    }
+
+    /// Converts a byte string into an equivalent platform-native string.
+    ///
+    /// [`assert_from_raw_vec`] should almost always be used instead. For more
+    /// information, see [`EncodingError`].
+    ///
     /// # Errors
     ///
     /// See documentation for [`EncodingError`].
@@ -380,6 +451,7 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
+    /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
     fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
 
     /// Converts a platform-native string into an equivalent byte string.
@@ -433,7 +505,14 @@ mod private {
     use std::path::Path;
     use std::path::PathBuf;
 
+    if_raw_str! {
+        use std::borrow::Cow;
+
+        use super::RawOsStr;
+    }
+
     pub trait Sealed {}
+
     impl Sealed for char {}
     impl Sealed for OsStr {}
     impl Sealed for OsString {}
@@ -441,4 +520,8 @@ mod private {
     impl Sealed for PathBuf {}
     impl Sealed for &str {}
     impl Sealed for &String {}
+
+    if_raw_str! {
+        impl Sealed for Cow<'_, RawOsStr> {}
+    }
 }

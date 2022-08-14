@@ -1,25 +1,15 @@
 #![cfg(feature = "raw_os_str")]
 
-use std::ffi::OsStr;
-
-use os_str_bytes::EncodingError;
-use os_str_bytes::OsStrBytes;
 use os_str_bytes::RawOsStr;
 
 mod common;
 use common::RAW_WTF8_STRING;
 
-fn from_raw_bytes(string: &[u8]) -> Result<&RawOsStr, EncodingError> {
-    // SAFETY: The string is validated before conversion.
-    OsStr::from_raw_bytes(string)
-        .map(|_| unsafe { common::from_raw_bytes_unchecked(string) })
-}
-
 #[test]
 fn test_ends_with() {
     #[track_caller]
     fn test(result: bool, suffix: &[u8]) {
-        let suffix = from_raw_bytes(suffix).unwrap();
+        let suffix = RawOsStr::assert_from_raw_bytes(suffix);
         assert_eq!(result, RAW_WTF8_STRING.ends_with_os(suffix));
     }
 
@@ -62,7 +52,7 @@ fn test_empty_ends_with() {
 fn test_starts_with() {
     #[track_caller]
     fn test(result: bool, prefix: &[u8]) {
-        let prefix = from_raw_bytes(prefix).unwrap();
+        let prefix = RawOsStr::assert_from_raw_bytes(prefix);
         assert_eq!(result, RAW_WTF8_STRING.starts_with_os(prefix));
     }
 
