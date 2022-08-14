@@ -23,7 +23,7 @@
 //! - The encoding will be compatible with UTF-8. In particular, splitting an
 //!   encoded byte sequence by a UTF-8–encoded character always produces other
 //!   valid byte sequences. They can be re-encoded without error using
-//!   [`OsStrBytes::from_raw_bytes`] and similar methods.
+//!   [`RawOsString::into_os_string`] and similar methods.
 //!
 //! - All characters valid in platform strings are representable. [`OsStr`] and
 //!   [`OsString`] can always be losslessly reconstructed from extracted bytes.
@@ -73,7 +73,12 @@
 //!   For more information, see [`RawOsStr`][memchr complexity].
 //!
 //! - **raw\_os\_str** -
-//!   Provides [`RawOsStr`] and [`RawOsString`].
+//!   Provides:
+//!   - [`iter`]
+//!   - [`Pattern`]
+//!   - [`RawOsStr`]
+//!   - [`RawOsStrCow`]
+//!   - [`RawOsString`]
 //!
 //! ### Optional Features
 //!
@@ -98,11 +103,10 @@
 //!
 //! # Complexity
 //!
-//! The time complexities of trait methods will vary based on what
-//! functionality is available for the platform. At worst, they will all be
-//! linear, but some can take constant time. For example,
-//! [`OsStringBytes::from_raw_vec`] might be able to reuse the allocation for
-//! its argument.
+//! Conversion method complexities will vary based on what functionality is
+//! available for the platform. At worst, they will all be linear, but some can
+//! take constant time. For example, [`RawOsString::into_os_string`] might be
+//! able to reuse its allocation.
 //!
 //! # Examples
 //!
@@ -260,10 +264,7 @@ type Result<T> = result::Result<T, EncodingError>;
 /// [module]: self
 /// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
 pub trait OsStrBytes: private::Sealed + ToOwned {
-    /// Converts a byte slice into an equivalent platform-native string.
-    ///
-    /// Provided byte strings should always be valid for the [unspecified
-    /// encoding] used by this crate.
+    /// Converts a byte string into an equivalent platform-native string.
     ///
     /// # Errors
     ///
@@ -285,27 +286,24 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
-    /// [unspecified encoding]: self#encoding
     fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
         S: Into<Cow<'a, [u8]>>;
 
-    /// Converts a platform-native string into an equivalent byte slice.
+    /// Converts a platform-native string into an equivalent byte string.
     ///
-    /// The returned byte string will use an [unspecified encoding].
+    /// The returned string will use an [unspecified encoding].
     ///
     /// # Examples
     ///
     /// ```
-    /// use std::env;
-    /// # use std::io;
+    /// use std::ffi::OsStr;
     ///
     /// use os_str_bytes::OsStrBytes;
     ///
-    /// let os_string = env::current_exe()?;
-    /// println!("{:?}", os_string.to_raw_bytes());
-    /// #
-    /// # Ok::<_, io::Error>(())
+    /// let string = "foobar";
+    /// let os_string = OsStr::new(string);
+    /// assert_eq!(string.as_bytes(), &*os_string.to_raw_bytes());
     /// ```
     ///
     /// [unspecified encoding]: self#encoding
@@ -360,10 +358,7 @@ impl OsStrBytes for Path {
 /// [module]: self
 /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
 pub trait OsStringBytes: private::Sealed + Sized {
-    /// Converts a byte vector into an equivalent platform-native string.
-    ///
-    /// Provided byte strings should always be valid for the [unspecified
-    /// encoding] used by this crate.
+    /// Converts a byte string into an equivalent platform-native string.
     ///
     /// # Errors
     ///
@@ -385,25 +380,22 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
-    /// [unspecified encoding]: self#encoding
     fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
 
-    /// Converts a platform-native string into an equivalent byte vector.
+    /// Converts a platform-native string into an equivalent byte string.
     ///
-    /// The returned byte string will use an [unspecified encoding].
+    /// The returned string will use an [unspecified encoding].
     ///
     /// # Examples
     ///
     /// ```
-    /// use std::env;
-    /// # use std::io;
+    /// use std::ffi::OsString;
     ///
     /// use os_str_bytes::OsStringBytes;
     ///
-    /// let os_string = env::current_exe()?;
-    /// println!("{:?}", os_string.into_raw_vec());
-    /// #
-    /// # Ok::<_, io::Error>(())
+    /// let string = "foobar".to_owned();
+    /// let os_string: OsString = string.clone().into();
+    /// assert_eq!(string.into_bytes(), os_string.into_raw_vec());
     /// ```
     ///
     /// [unspecified encoding]: self#encoding

@@ -50,8 +50,6 @@ fn random_os_string(
         getrandom(as_mut_bytes(&mut buffer))?;
         Ok(OsStringExt::from_wide(&buffer))
     }
-    #[cfg(not(any(unix, windows)))]
-    Err(getrandom::Error::UNSUPPORTED)
 }
 
 #[test]
@@ -78,8 +76,7 @@ fn test_lossless() -> Result<(), getrandom::Error> {
         let mut string = vec![0; SMALL_LENGTH];
         getrandom(&mut string)?;
         if let Ok(os_string) = OsStr::from_raw_bytes(&string) {
-            let encoded_string = os_string.to_raw_bytes();
-            assert_eq!(string, &*encoded_string);
+            assert_eq!(string, &*os_string.to_raw_bytes());
         }
     }
     Ok(())

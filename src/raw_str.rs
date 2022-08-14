@@ -173,17 +173,11 @@ impl RawOsStr {
     /// # Examples
     ///
     /// ```
-    /// use std::env;
-    /// # use std::io;
-    ///
-    /// use os_str_bytes::OsStrBytes;
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let os_string = env::current_exe()?.into_os_string();
-    /// let raw = RawOsStr::new(&os_string);
-    /// assert_eq!(os_string.to_raw_bytes(), raw.as_raw_bytes());
-    /// #
-    /// # Ok::<_, io::Error>(())
+    /// let string = "foobar";
+    /// let raw = RawOsStr::from_str(string);
+    /// assert_eq!(string.as_bytes(), raw.as_raw_bytes());
     /// ```
     ///
     /// [unspecified encoding]: super#encoding
@@ -439,6 +433,7 @@ impl RawOsStr {
     /// ```
     #[inline]
     #[must_use]
+    #[track_caller]
     pub fn split<P>(&self, pat: P) -> Split<'_, P>
     where
         P: Pattern,
@@ -467,6 +462,7 @@ impl RawOsStr {
     /// [valid boundary]: #indices
     #[inline]
     #[must_use]
+    #[track_caller]
     pub fn split_at(&self, mid: usize) -> (&Self, &Self) {
         self.check_bound(mid);
 
@@ -768,32 +764,6 @@ impl From<Box<str>> for Box<RawOsStr> {
     }
 }
 
-macro_rules! r#impl {
-    ( $index_type:ty $(, $index_var:ident , $($bound:expr),+)? ) => {
-        impl Index<$index_type> for RawOsStr {
-            type Output = Self;
-
-            #[inline]
-            fn index(&self, idx: $index_type) -> &Self::Output {
-                $(
-                    let $index_var = &idx;
-                    $(self.check_bound($bound);)+
-                )?
-
-                Self::from_raw_bytes_unchecked(&self.0[idx])
-            }
-        }
-    };
-}
-r#impl!(Range<usize>, x, x.start, x.end);
-r#impl!(RangeFrom<usize>, x, x.start);
-r#impl!(RangeFull);
-// [usize::MAX] will always be a valid inclusive end index.
-#[rustfmt::skip]
-r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
-r#impl!(RangeTo<usize>, x, x.end);
-r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
-
 impl ToOwned for RawOsStr {
     type Owned = RawOsString;
 
@@ -903,17 +873,11 @@ impl RawOsString {
     /// # Examples
     ///
     /// ```
-    /// use std::env;
-    /// # use std::io;
-    ///
-    /// use os_str_bytes::OsStringBytes;
     /// use os_str_bytes::RawOsString;
     ///
-    /// let os_string = env::current_exe()?.into_os_string();
-    /// let raw = RawOsString::new(os_string.clone());
-    /// assert_eq!(os_string.into_raw_vec(), raw.into_raw_vec());
-    /// #
-    /// # Ok::<_, io::Error>(())
+    /// let string = "foobar".to_owned();
+    /// let raw = RawOsString::from_string(string.clone());
+    /// assert_eq!(string.into_bytes(), raw.into_raw_vec());
     /// ```
     ///
     /// [unspecified encoding]: super#encoding
@@ -991,25 +955,6 @@ impl From<String> for RawOsString {
     }
 }
 
-macro_rules! r#impl {
-    ( $index_type:ty ) => {
-        impl Index<$index_type> for RawOsString {
-            type Output = RawOsStr;
-
-            #[inline]
-            fn index(&self, idx: $index_type) -> &Self::Output {
-                &(**self)[idx]
-            }
-        }
-    };
-}
-r#impl!(Range<usize>);
-r#impl!(RangeFrom<usize>);
-r#impl!(RangeFull);
-r#impl!(RangeInclusive<usize>);
-r#impl!(RangeTo<usize>);
-r#impl!(RangeToInclusive<usize>);
-
 struct DebugBuffer<'a>(&'a [u8]);
 
 impl Debug for DebugBuffer<'_> {
@@ -1066,6 +1011,42 @@ macro_rules! r#impl {
 }
 r#impl!(RawOsStr);
 r#impl!(RawOsString);
+
+macro_rules! r#impl {
+    ( $index_type:ty $(, $index_var:ident , $($bound:expr),+)? ) => {
+        impl Index<$index_type> for RawOsStr {
+            type Output = Self;
+
+            #[inline]
+            fn index(&self, idx: $index_type) -> &Self::Output {
+                $(
+                    let $index_var = &idx;
+                    $(self.check_bound($bound);)+
+                )?
+
+                Self::from_raw_bytes_unchecked(&self.0[idx])
+            }
+        }
+
+        impl Index<$index_type> for RawOsString {
+            type Output = RawOsStr;
+
+            #[allow(clippy::indexing_slicing)]
+            #[inline]
+            fn index(&self, idx: $index_type) -> &Self::Output {
+                &(**self)[idx]
+            }
+        }
+    };
+}
+r#impl!(Range<usize>, x, x.start, x.end);
+r#impl!(RangeFrom<usize>, x, x.start);
+r#impl!(RangeFull);
+// [usize::MAX] will always be a valid inclusive end index.
+#[rustfmt::skip]
+r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
+r#impl!(RangeTo<usize>, x, x.end);
+r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
 
 macro_rules! r#impl {
     ( $type:ty , $other_type:ty ) => {
