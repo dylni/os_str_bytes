@@ -2,8 +2,8 @@
 
 use os_str_bytes::RawOsStr;
 
-mod common;
-use common::RAW_WTF8_STRING;
+mod raw_common;
+use raw_common::RAW_WTF8_STRING;
 
 fn test(result: &str, string: &RawOsStr) {
     assert_eq!(format!("RawOsStr({})", result), format!("{:?}", string));

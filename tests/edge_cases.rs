@@ -1,3 +1,5 @@
+#![cfg(feature = "checked_conversions")]
+
 mod common;
 
 #[test]

@@ -1,15 +1,10 @@
+#![cfg(feature = "checked_conversions")]
+
 use std::str;
 
-#[macro_use]
 mod common;
 use common::Result;
 use common::WTF8_STRING;
-
-if_raw_str! {
-    use os_str_bytes::RawOsStr;
-
-    use common::RAW_WTF8_STRING;
-}
 
 const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
 
@@ -75,18 +70,4 @@ fn test_wtf8_bytes() {
 #[test]
 fn test_wtf8_vec() {
     assert_eq!(Ok(()), common::test_vec(WTF8_STRING));
-}
-
-if_raw_str! {
-    #[should_panic = "cannot split using an empty pattern"]
-    #[test]
-    fn test_split_by_empty() {
-        let _ = RAW_WTF8_STRING.split("");
-    }
-
-    #[should_panic = "cannot split using an empty pattern"]
-    #[test]
-    fn test_split_empty_by_empty() {
-        let _ = RawOsStr::from_str("").split("");
-    }
 }

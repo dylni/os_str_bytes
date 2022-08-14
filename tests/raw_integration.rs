@@ -2,8 +2,8 @@
 
 use os_str_bytes::RawOsStr;
 
-mod common;
-use common::RAW_WTF8_STRING;
+mod raw_common;
+use raw_common::RAW_WTF8_STRING;
 
 #[test]
 fn test_ends_with() {
@@ -89,4 +89,16 @@ fn test_empty_starts_with() {
     test(true, "");
     test(false, "f");
     test(false, "fo");
+}
+
+#[should_panic = "cannot split using an empty pattern"]
+#[test]
+fn test_split_by_empty() {
+    let _ = RAW_WTF8_STRING.split("");
+}
+
+#[should_panic = "cannot split using an empty pattern"]
+#[test]
+fn test_split_empty_by_empty() {
+    let _ = RawOsStr::from_str("").split("");
 }
