@@ -16,6 +16,7 @@ use std::ops::RangeFull;
 use std::ops::RangeInclusive;
 use std::ops::RangeTo;
 use std::ops::RangeToInclusive;
+use std::result;
 use std::str;
 
 #[cfg(feature = "memchr")]
@@ -29,6 +30,11 @@ use super::iter::Split;
 use super::pattern::Encoded as EncodedPattern;
 use super::private;
 use super::Pattern;
+
+if_checked_conversions! {
+    use super::EncodingError;
+    use super::Result;
+}
 
 #[cfg(not(feature = "memchr"))]
 fn find(string: &[u8], pat: &[u8]) -> Option<usize> {
@@ -196,6 +202,44 @@ impl RawOsStr {
         expect_encoded!(raw::validate_bytes(string));
 
         Self::from_inner(string)
+    }
+
+    if_checked_conversions! {
+        /// Wraps a byte string, without copying or encoding conversion.
+        ///
+        /// [`assert_from_raw_bytes`] should almost always be used instead. For
+        /// more information, see [`EncodingError`].
+        ///
+        /// # Errors
+        ///
+        /// See documentation for [`EncodingError`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::env;
+        /// # use std::io;
+        ///
+        /// use os_str_bytes::RawOsStr;
+        ///
+        /// let os_string = env::current_exe()?.into_os_string();
+        /// let raw = RawOsStr::new(&os_string);
+        /// assert_eq!(Ok(&*raw), RawOsStr::from_raw_bytes(raw.as_raw_bytes()));
+        /// #
+        /// # Ok::<_, io::Error>(())
+        /// ```
+        ///
+        /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
+        #[cfg_attr(
+            os_str_bytes_docs_rs,
+            doc(cfg(feature = "checked_conversions"))
+        )]
+        #[inline]
+        pub fn from_raw_bytes(string: &[u8]) -> Result<&Self> {
+            raw::validate_bytes(string)
+                .map(|()| Self::from_inner(string))
+                .map_err(EncodingError)
+        }
     }
 
     /// Wraps a byte string, without copying or encoding conversion.
@@ -1025,6 +1069,45 @@ impl RawOsString {
         Self(string)
     }
 
+    if_checked_conversions! {
+        /// Wraps a byte string, without copying or encoding conversion.
+        ///
+        /// [`assert_from_raw_vec`] should almost always be used instead. For
+        /// more information, see [`EncodingError`].
+        ///
+        /// # Errors
+        ///
+        /// See documentation for [`EncodingError`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::env;
+        /// # use std::io;
+        ///
+        /// use os_str_bytes::RawOsString;
+        ///
+        /// let os_string = env::current_exe()?.into_os_string();
+        /// let raw = RawOsString::new(os_string);
+        /// let raw_clone = raw.clone();
+        /// assert_eq!(Ok(raw), RawOsString::from_raw_vec(raw_clone.into_raw_vec()));
+        /// #
+        /// # Ok::<_, io::Error>(())
+        /// ```
+        ///
+        /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
+        #[cfg_attr(
+            os_str_bytes_docs_rs,
+            doc(cfg(feature = "checked_conversions"))
+        )]
+        #[inline]
+        pub fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
+            raw::validate_bytes(&string)
+                .map(|()| Self(string))
+                .map_err(EncodingError)
+        }
+    }
+
     /// Wraps a byte string, without copying or encoding conversion.
     ///
     /// # Safety
@@ -1155,7 +1238,7 @@ impl RawOsString {
     /// assert_eq!(Ok(string), raw.into_string());
     /// ```
     #[inline]
-    pub fn into_string(self) -> Result<String, Self> {
+    pub fn into_string(self) -> result::Result<String, Self> {
         String::from_utf8(self.0).map_err(|x| Self(x.into_bytes()))
     }
 

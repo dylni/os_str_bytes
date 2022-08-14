@@ -1,5 +1,8 @@
 name: build
 
+env:
+  OS_STR_BYTES_CHECKED_CONVERSIONS: 1
+
 on:
   pull_request:
   push:

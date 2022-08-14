@@ -82,6 +82,18 @@
 //!
 //! ### Optional Features
 //!
+//! - **checked\_conversions** -
+//!   Provides:
+//!   - [`EncodingError`]
+//!   - [`OsStrBytes::from_raw_bytes`]
+//!   - [`OsStringBytes::from_raw_vec`]
+//!   - [`RawOsStr::from_raw_bytes`]
+//!   - [`RawOsString::from_raw_vec`]
+//!
+//!   Because this feature should not be used in libraries, the
+//!   "OS_STR_BYTES_CHECKED_CONVERSIONS" environment variable must be defined
+//!   during compilation.
+//!
 //! - **print\_bytes** -
 //!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
 //!   [`RawOsString`].
@@ -178,18 +190,36 @@ use std::path::Path;
 use std::path::PathBuf;
 use std::result;
 
+macro_rules! if_checked_conversions {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(feature = "checked_conversions")]
+            $item
+        )+
+    };
+}
+
+#[cfg(not(os_str_bytes_docs_rs))]
+if_checked_conversions! {
+    const _: &str = env!(
+        "OS_STR_BYTES_CHECKED_CONVERSIONS",
+        "The 'OS_STR_BYTES_CHECKED_CONVERSIONS' environment variable must be \
+         defined to use the 'checked_conversions' feature.",
+    );
+}
+
+macro_rules! expect_encoded {
+    ( $result:expr ) => {
+        $result.expect("invalid raw bytes")
+    };
+}
+
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
         $(
             #[cfg(feature = "raw_os_str")]
             $item
         )+
-    };
-}
-
-macro_rules! expect_encoded {
-    ( $result:expr ) => {
-        $result.expect("invalid raw bytes")
     };
 }
 
@@ -243,6 +273,7 @@ if_raw_str! {
 /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
 /// [`Result::unwrap`]: ::std::result::Result::unwrap
 #[derive(Debug, Eq, PartialEq)]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "checked_conversions")))]
 pub struct EncodingError(imp::EncodingError);
 
 impl Display for EncodingError {
@@ -323,6 +354,10 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
     /// ```
     ///
     /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
+    #[cfg_attr(
+        os_str_bytes_docs_rs,
+        doc(cfg(feature = "checked_conversions"))
+    )]
     fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
     where
         S: Into<Cow<'a, [u8]>>;
@@ -452,6 +487,10 @@ pub trait OsStringBytes: private::Sealed + Sized {
     /// ```
     ///
     /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
+    #[cfg_attr(
+        os_str_bytes_docs_rs,
+        doc(cfg(feature = "checked_conversions"))
+    )]
     fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
 
     /// Converts a platform-native string into an equivalent byte string.
