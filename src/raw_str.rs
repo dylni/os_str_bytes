@@ -38,22 +38,15 @@ if_checked_conversions! {
 
 #[cfg(not(feature = "memchr"))]
 fn find(string: &[u8], pat: &[u8]) -> Option<usize> {
-    for i in 0..=string.len().checked_sub(pat.len())? {
-        if string[i..].starts_with(pat) {
-            return Some(i);
-        }
-    }
-    None
+    (0..=string.len().checked_sub(pat.len())?)
+        .find(|&x| string[x..].starts_with(pat))
 }
 
 #[cfg(not(feature = "memchr"))]
 fn rfind(string: &[u8], pat: &[u8]) -> Option<usize> {
-    for i in (pat.len()..=string.len()).rev() {
-        if string[..i].ends_with(pat) {
-            return Some(i - pat.len());
-        }
-    }
-    None
+    (pat.len()..=string.len())
+        .rfind(|&x| string[..x].ends_with(pat))
+        .map(|x| x - pat.len())
 }
 
 #[allow(clippy::missing_safety_doc)]
