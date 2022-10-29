@@ -79,17 +79,29 @@ fn to_bytes(os_string: &OsStr) -> Vec<u8> {
 }
 
 pub(super) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
-    from_bytes(string).map(Cow::Owned)
+    match str::from_utf8(string) {
+        Ok(s) => Ok(Cow::Borrowed(s.as_ref())),
+        Err(_) => from_bytes(string).map(Cow::Owned),
+    }
 }
 
 pub(super) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Owned(to_bytes(os_string))
+    match os_string.to_str() {
+        Some(s) => Cow::Borrowed(s.as_bytes()),
+        None => Cow::Owned(to_bytes(os_string)),
+    }
 }
 
 pub(super) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
-    from_bytes(&string)
+    match String::from_utf8(string) {
+        Ok(s) => Ok(s.into()),
+        Err(e) => from_bytes(e.as_bytes()),
+    }
 }
 
 pub(super) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
-    to_bytes(&os_string)
+    match os_string.into_string() {
+        Ok(s) => s.into_bytes(),
+        Err(s) => to_bytes(&s),
+    }
 }
