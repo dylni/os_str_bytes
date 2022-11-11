@@ -15,6 +15,7 @@ where
 {
     iter: Peekable<I>,
     surrogate: bool,
+    utf8: bool,
 }
 
 impl<I> CodePoints<I>
@@ -28,7 +29,12 @@ where
         Self {
             iter: string.into_iter().peekable(),
             surrogate: false,
+            utf8: true,
         }
+    }
+
+    pub(super) fn is_still_utf8(&self) -> bool {
+        self.utf8
     }
 
     fn consume_next(&mut self, code_point: &mut u32) -> Result<()> {
@@ -101,6 +107,7 @@ where
                 } else if code_point & 0xFE0 == 0x360 {
                     if code_point & 0x10 == 0 {
                         self.surrogate = true;
+                        self.utf8 = false;
                     } else if prev_surrogate {
                         // Decoding a broken surrogate pair would be lossy.
                         invalid = true;
