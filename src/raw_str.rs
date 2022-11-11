@@ -265,8 +265,9 @@ impl RawOsStr {
     #[must_use]
     #[track_caller]
     pub unsafe fn from_raw_bytes_unchecked(string: &[u8]) -> &Self {
-        #[cfg(debug_assertions)]
-        expect_encoded!(raw::validate_bytes(string));
+        if cfg!(debug_assertions) {
+            expect_encoded!(raw::validate_bytes(string));
+        }
 
         Self::from_inner(string)
     }
@@ -1131,8 +1132,9 @@ impl RawOsString {
     #[must_use]
     #[track_caller]
     pub unsafe fn from_raw_vec_unchecked(string: Vec<u8>) -> Self {
-        #[cfg(debug_assertions)]
-        expect_encoded!(raw::validate_bytes(&string));
+        if cfg!(debug_assertions) {
+            expect_encoded!(raw::validate_bytes(&string));
+        }
 
         Self(string)
     }

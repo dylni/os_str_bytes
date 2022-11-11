@@ -23,7 +23,7 @@ where
 {
     pub(in super::super) fn new<S>(string: S) -> Self
     where
-        S: IntoIterator<IntoIter = I, Item = I::Item>,
+        S: IntoIterator<IntoIter = I>,
     {
         Self {
             iter: string.into_iter().peekable(),
