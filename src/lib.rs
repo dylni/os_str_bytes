@@ -21,8 +21,8 @@
 //! However, the following invariants will always be upheld:
 //!
 //! - The encoding will be compatible with UTF-8. In particular, splitting an
-//!   encoded byte sequence by a UTF-8–encoded character always produces other
-//!   valid byte sequences. They can be re-encoded without error using
+//!   encoded byte sequence by a UTF-8&ndash;encoded character always produces
+//!   other valid byte sequences. They can be re-encoded without error using
 //!   [`RawOsString::into_os_string`] and similar methods.
 //!
 //! - All characters valid in platform strings are representable. [`OsStr`] and
