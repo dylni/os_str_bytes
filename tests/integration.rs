@@ -6,15 +6,11 @@ mod common;
 use common::Result;
 use common::WTF8_STRING;
 
-const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
-
-const UTF8_STRING: &str = "string";
-
-fn test_string_is_invalid_utf8(string: &[u8]) {
+fn assert_string_is_invalid_utf8(string: &[u8]) {
     assert!(str::from_utf8(string).is_err());
 }
 
-fn test_invalid_result(result: &Result<()>) {
+fn assert_invalid_result(result: &Result<()>) {
     if cfg!(windows) {
         assert!(result.is_err());
     } else {
@@ -23,51 +19,37 @@ fn test_invalid_result(result: &Result<()>) {
 }
 
 #[test]
-fn test_empty_bytes() {
+fn test_empty() {
     common::test_utf8_bytes("");
-}
-
-#[test]
-fn test_empty_vec() {
     common::test_utf8_vec("");
 }
 
 #[test]
-fn test_nonempty_utf8_bytes() {
-    common::test_utf8_bytes(UTF8_STRING);
-}
+fn test_nonempty_utf8() {
+    const UTF8_STRING: &str = "string";
 
-#[test]
-fn test_nonempty_utf8_vec() {
+    common::test_utf8_bytes(UTF8_STRING);
     common::test_utf8_vec(UTF8_STRING);
 }
 
 #[test]
-fn test_invalid_string_is_invalid_utf8() {
-    test_string_is_invalid_utf8(INVALID_STRING);
+fn test_invalid() {
+    const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
+    assert_string_is_invalid_utf8(INVALID_STRING);
+
+    assert_invalid_result(&common::test_bytes(INVALID_STRING));
+    assert_invalid_result(&common::test_vec(INVALID_STRING));
 }
 
 #[test]
-fn test_invalid_bytes() {
-    test_invalid_result(&common::test_bytes(INVALID_STRING));
-}
+fn test_wtf8() {
+    const HIGH_SURROGATE: &[u8] = b"\xED\xA0\x80";
+    const LOW_SURROGATE: &[u8] = b"\xED\xB0\x80";
 
-#[test]
-fn test_invalid_vec() {
-    test_invalid_result(&common::test_vec(INVALID_STRING));
-}
+    for string in [WTF8_STRING, HIGH_SURROGATE, LOW_SURROGATE] {
+        assert_string_is_invalid_utf8(string);
 
-#[test]
-fn test_wtf8_string_is_invalid_utf8() {
-    test_string_is_invalid_utf8(WTF8_STRING);
-}
-
-#[test]
-fn test_wtf8_bytes() {
-    assert_eq!(Ok(()), common::test_bytes(WTF8_STRING));
-}
-
-#[test]
-fn test_wtf8_vec() {
-    assert_eq!(Ok(()), common::test_vec(WTF8_STRING));
+        assert_eq!(Ok(()), common::test_bytes(string));
+        assert_eq!(Ok(()), common::test_vec(string));
+    }
 }

@@ -105,9 +105,9 @@ where
 
                 // This condition is optimized to detect surrogate code points.
                 } else if code_point & 0xFE0 == 0x360 {
+                    self.still_utf8 = false;
                     if code_point & 0x10 == 0 {
                         self.surrogate = true;
-                        self.still_utf8 = false;
                     } else if prev_surrogate {
                         // Decoding a broken surrogate pair would be lossy.
                         invalid = true;
