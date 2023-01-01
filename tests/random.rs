@@ -3,8 +3,6 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 
-use getrandom::getrandom;
-
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
 
@@ -17,31 +15,28 @@ use random_common::SMALL_LENGTH;
 const LARGE_LENGTH: usize = 1024;
 
 #[test]
-fn test_bytes() -> Result<(), getrandom::Error> {
-    let os_string = random_common::random_os_string(LARGE_LENGTH)?;
+fn test_bytes() {
+    let os_string = random_common::fastrand_os_string(LARGE_LENGTH);
     let string = os_string.to_raw_bytes();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(Cow::Borrowed(&*os_string)), common::from_bytes(&string));
-    Ok(())
 }
 
 #[test]
-fn test_vec() -> Result<(), getrandom::Error> {
-    let os_string = random_common::random_os_string(LARGE_LENGTH)?;
+fn test_vec() {
+    let os_string = random_common::fastrand_os_string(LARGE_LENGTH);
     let string = os_string.clone().into_raw_vec();
     assert_eq!(os_string.len(), string.len());
     assert_eq!(Ok(os_string), common::from_vec(string));
-    Ok(())
 }
 
 #[test]
-fn test_lossless() -> Result<(), getrandom::Error> {
+fn test_lossless() {
     for _ in 0..ITERATIONS {
         let mut string = vec![0; SMALL_LENGTH];
-        getrandom(&mut string)?;
+        random_common::fastrand_fill(&mut string);
         if let Ok(os_string) = OsStr::from_raw_bytes(&string) {
             assert_eq!(string, &*os_string.to_raw_bytes());
         }
     }
-    Ok(())
 }

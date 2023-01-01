@@ -8,20 +8,22 @@ use std::os::windows::ffi::OsStringExt;
 #[cfg(windows)]
 use std::slice;
 
-use getrandom::getrandom;
-
 pub(crate) const SMALL_LENGTH: usize = 16;
 
 pub(crate) const ITERATIONS: usize = 1024;
 
-pub(crate) fn random_os_string(
-    buffer_length: usize,
-) -> Result<OsString, getrandom::Error> {
+pub(crate) fn fastrand_fill(slice: &mut [u8]) {
+    for byte in slice {
+        *byte = fastrand::u8(..);
+    }
+}
+
+pub(crate) fn fastrand_os_string(buffer_length: usize) -> OsString {
     let mut buffer = vec![0; buffer_length];
     #[cfg(unix)]
     {
-        getrandom(&mut buffer)?;
-        Ok(OsStringExt::from_vec(buffer))
+        fastrand_fill(&mut buffer);
+        OsStringExt::from_vec(buffer)
     }
     #[cfg(windows)]
     {
@@ -35,7 +37,7 @@ pub(crate) fn random_os_string(
             }
         }
 
-        getrandom(as_mut_bytes(&mut buffer))?;
-        Ok(OsStringExt::from_wide(&buffer))
+        fastrand_fill(as_mut_bytes(&mut buffer));
+        OsStringExt::from_wide(&buffer)
     }
 }

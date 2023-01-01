@@ -8,7 +8,7 @@ use random_common::ITERATIONS;
 use random_common::SMALL_LENGTH;
 
 #[test]
-fn test_complex() -> Result<(), getrandom::Error> {
+fn test_complex() {
     macro_rules! test {
         ( $result:expr , $method:ident ( $(& $arg:ident),+) ) => {
             assert_eq!(
@@ -21,9 +21,9 @@ fn test_complex() -> Result<(), getrandom::Error> {
     }
 
     for _ in 0..ITERATIONS {
-        let mut string = random_common::random_os_string(SMALL_LENGTH)?;
+        let mut string = random_common::fastrand_os_string(SMALL_LENGTH);
         let prefix = RawOsStr::new(&string).into_owned();
-        let suffix = random_common::random_os_string(SMALL_LENGTH)?;
+        let suffix = random_common::fastrand_os_string(SMALL_LENGTH);
         string.push(&suffix);
 
         let string = RawOsString::new(string);
@@ -37,5 +37,4 @@ fn test_complex() -> Result<(), getrandom::Error> {
             test!(false, starts_with_os(&string, &suffix));
         }
     }
-    Ok(())
 }
