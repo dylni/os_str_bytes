@@ -26,7 +26,7 @@ jobs:
     steps:
     - uses: dylni/build-actions/build-other@master
       with:
-        nightly-features: 'print_bytes'
+        nightly-features: 'print_bytes uniquote'
         target: ${{ matrix.target }}
         version: ${{ matrix.version }}
     timeout-minutes: 10
@@ -43,7 +43,7 @@ jobs:
     steps:
     - uses: dylni/build-actions/test@master
       with:
-        nightly-features: 'print_bytes'
+        nightly-features: 'print_bytes uniquote'
         version: ${{ matrix.version }}
     - run: cargo test --no-default-features --features raw_os_str
     timeout-minutes: 10
