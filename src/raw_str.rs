@@ -532,7 +532,7 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let raw = RawOsStr::from_str("foobar");
-    /// assert_eq!(["f", "", "bar"], *raw.split("o").collect::<Vec<_>>());
+    /// assert!(raw.split("o").eq(["f", "", "bar"]));
     /// ```
     #[inline]
     #[must_use]

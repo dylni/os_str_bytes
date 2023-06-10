@@ -26,19 +26,19 @@ fn test_empty() {
 
 #[test]
 fn test_nonempty_utf8() {
-    const UTF8_STRING: &str = "string";
+    const STRING: &str = "string";
 
-    common::test_utf8_bytes(UTF8_STRING);
-    common::test_utf8_vec(UTF8_STRING);
+    common::test_utf8_bytes(STRING);
+    common::test_utf8_vec(STRING);
 }
 
 #[test]
 fn test_invalid() {
-    const INVALID_STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
-    assert_string_is_invalid_utf8(INVALID_STRING);
+    const STRING: &[u8] = b"\xF1foo\xF1\x80bar\xF1\x80\x80baz";
+    assert_string_is_invalid_utf8(STRING);
 
-    assert_invalid_result(&common::test_bytes(INVALID_STRING));
-    assert_invalid_result(&common::test_vec(INVALID_STRING));
+    assert_invalid_result(&common::test_bytes(STRING));
+    assert_invalid_result(&common::test_vec(STRING));
 }
 
 #[test]
