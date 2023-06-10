@@ -15,7 +15,7 @@ pub(crate) const SMALL_LENGTH: usize = 16;
 pub(crate) const ITERATIONS: usize = 1024;
 
 pub(crate) fn fastrand_os_string(buffer_length: usize) -> OsString {
-    let rng = Rng::new();
+    let mut rng = Rng::new();
     let mut buffer = vec![0; buffer_length];
     #[cfg(unix)]
     {
