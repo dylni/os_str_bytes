@@ -34,7 +34,7 @@ fn test_vec() {
 
 #[test]
 fn test_lossless() {
-    let rng = Rng::new();
+    let mut rng = Rng::new();
     for _ in 0..ITERATIONS {
         let mut string = vec![0; SMALL_LENGTH];
         rng.fill(&mut string);
