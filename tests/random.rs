@@ -3,6 +3,8 @@
 use std::borrow::Cow;
 use std::ffi::OsStr;
 
+use fastrand::Rng;
+
 use os_str_bytes::OsStrBytes;
 use os_str_bytes::OsStringBytes;
 
@@ -32,9 +34,10 @@ fn test_vec() {
 
 #[test]
 fn test_lossless() {
+    let rng = Rng::new();
     for _ in 0..ITERATIONS {
         let mut string = vec![0; SMALL_LENGTH];
-        random_common::fastrand_fill(&mut string);
+        rng.fill(&mut string);
         if let Ok(os_string) = OsStr::from_raw_bytes(&string) {
             assert_eq!(string, &*os_string.to_raw_bytes());
         }
