@@ -18,10 +18,6 @@ if_not_nightly! {
     use super::Result;
 }
 
-if_raw_str! {
-    pub(crate) use crate::util::is_boundary;
-}
-
 if_not_nightly! {
     pub(crate) fn validate_bytes(string: &[u8]) -> Result<()> {
         wtf8::encode_wide(string).try_for_each(|x| x.map(drop))

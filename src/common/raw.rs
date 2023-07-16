@@ -10,15 +10,8 @@ if_not_nightly! {
 if_not_nightly! {
     #[inline(always)]
     pub(crate) const fn is_continuation(_: u8) -> bool {
-        unreachable!();
+        false
     }
-}
-
-#[cfg_attr(not(debug_assertions), inline(always))]
-pub(crate) fn is_boundary(bytes: &[u8]) -> bool {
-    debug_assert!(!bytes.is_empty());
-
-    true
 }
 
 if_not_nightly! {

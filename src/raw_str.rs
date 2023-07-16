@@ -38,6 +38,10 @@ if_checked_conversions! {
     use super::Result;
 }
 
+if_nightly! {
+    use super::util;
+}
+
 #[cfg(not(feature = "memchr"))]
 fn find(string: &[u8], pat: &[u8]) -> Option<usize> {
     (0..=string.len().checked_sub(pat.len())?)
@@ -762,11 +766,54 @@ impl RawOsStr {
         self.rsplit_once_raw(&pat.__encode())
     }
 
+    fn is_boundary(&self, index: usize) -> bool {
+        debug_assert!(index < self.0.len());
+
+        if_nightly_return! {
+            {
+                const MAX_LENGTH: usize = 4;
+
+                if index == 0 {
+                    return true;
+                }
+                let byte = self.0[index];
+                if byte.is_ascii() {
+                    return true;
+                }
+
+                if !util::is_continuation(byte) {
+                    let bytes = &self.0[index..];
+                    let valid =
+                        str::from_utf8(&bytes[..bytes.len().min(MAX_LENGTH)])
+                            .err()
+                            .map(|x| x.valid_up_to() != 0)
+                            .unwrap_or(true);
+                    if valid {
+                        return true;
+                    }
+                }
+                let mut start = index;
+                for _ in 0..MAX_LENGTH {
+                    if let Some(index) = start.checked_sub(1) {
+                        start = index;
+                    } else {
+                        return false;
+                    }
+                    if !util::is_continuation(self.0[start]) {
+                        break;
+                    }
+                }
+                str::from_utf8(&self.0[start..index]).is_ok()
+            }
+            !raw::is_continuation(self.0[index])
+        }
+    }
+
     #[cold]
     #[inline(never)]
     #[track_caller]
     fn index_boundary_error(&self, index: usize) -> ! {
-        debug_assert!(!raw::is_boundary(&self.0[index..]));
+        debug_assert!(!self.is_boundary(index));
 
         if_nightly_return! {
             {
@@ -792,10 +839,8 @@ impl RawOsStr {
 
     #[track_caller]
     fn check_bound(&self, index: usize) {
-        if let Some(bytes) = self.0.get(index..) {
-            if !bytes.is_empty() && !raw::is_boundary(bytes) {
-                self.index_boundary_error(index);
-            }
+        if index < self.0.len() && !self.is_boundary(index) {
+            self.index_boundary_error(index);
         }
     }
 

@@ -247,17 +247,16 @@ macro_rules! if_raw_str {
     };
 }
 
-#[cfg(any(feature = "raw_os_str", windows))]
-macro_rules! if_nightly {
-    ( $($item:item)+ ) => {
-        $(
-            #[cfg(feature = "nightly")]
-            $item
-        )+
-    };
-}
-
 if_raw_str! {
+    macro_rules! if_nightly {
+        ( $($item:item)+ ) => {
+            $(
+                #[cfg(feature = "nightly")]
+                $item
+            )+
+        };
+    }
+
     macro_rules! if_not_nightly {
         ( $($item:item)+ ) => {
             $(
@@ -299,8 +298,10 @@ mod imp;
 #[cfg(any(
     all(
         feature = "raw_os_str",
-        target_family = "wasm",
-        target_os = "unknown",
+        any(
+            feature = "nightly",
+            all(target_family = "wasm", target_os = "unknown"),
+        ),
     ),
     windows,
 ))]

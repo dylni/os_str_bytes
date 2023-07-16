@@ -13,10 +13,6 @@ if_not_nightly! {
     }
 }
 
-if_raw_str! {
-    pub(crate) use crate::util::is_boundary;
-}
-
 #[allow(dead_code)]
 #[path = "../common/raw.rs"]
 mod common_raw;
