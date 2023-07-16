@@ -1,21 +1,38 @@
 use std::fmt;
 use std::fmt::Formatter;
 
-use super::Result;
+use crate::RawOsStr;
 
-#[inline(always)]
-pub(crate) const fn is_continuation(_: u8) -> bool {
-    false
+if_not_nightly! {
+    use super::Result;
 }
 
-#[inline(always)]
-pub(crate) fn validate_bytes(_: &[u8]) -> Result<()> {
-    Ok(())
+if_not_nightly! {
+    #[inline(always)]
+    pub(crate) const fn is_continuation(_: u8) -> bool {
+        unreachable!();
+    }
 }
 
-#[inline(always)]
-pub(crate) fn decode_code_point(_: &[u8]) -> u32 {
-    unreachable!();
+#[cfg_attr(not(debug_assertions), inline(always))]
+pub(crate) fn is_boundary(bytes: &[u8]) -> bool {
+    debug_assert!(!bytes.is_empty());
+
+    true
+}
+
+if_not_nightly! {
+    #[inline(always)]
+    pub(crate) fn validate_bytes(_: &[u8]) -> Result<()> {
+        Ok(())
+    }
+}
+
+if_not_nightly! {
+    #[inline(always)]
+    pub(crate) fn decode_code_point(_: &[u8]) -> u32 {
+        unreachable!();
+    }
 }
 
 pub(crate) fn ends_with(string: &[u8], suffix: &[u8]) -> bool {
@@ -26,8 +43,16 @@ pub(crate) fn starts_with(string: &[u8], prefix: &[u8]) -> bool {
     string.starts_with(prefix)
 }
 
-pub(crate) fn debug(string: &[u8], f: &mut Formatter<'_>) -> fmt::Result {
-    for byte in string {
+#[cfg_attr(feature = "nightly", allow(deprecated), allow(unreachable_code))]
+fn as_inner(string: &RawOsStr) -> &[u8] {
+    if_nightly_return! {{
+        string.as_os_str_bytes()
+    }}
+    string.as_raw_bytes()
+}
+
+pub(crate) fn debug(string: &RawOsStr, f: &mut Formatter<'_>) -> fmt::Result {
+    for byte in as_inner(string) {
         write!(f, "\\x{:02X}", byte)?;
     }
     Ok(())
@@ -39,7 +64,9 @@ pub(crate) mod uniquote {
     use uniquote::Quote;
     use uniquote::Result;
 
-    pub(crate) fn escape(string: &[u8], f: &mut Formatter<'_>) -> Result {
-        string.escape(f)
+    use crate::RawOsStr;
+
+    pub(crate) fn escape(string: &RawOsStr, f: &mut Formatter<'_>) -> Result {
+        super::as_inner(string).escape(f)
     }
 }

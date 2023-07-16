@@ -26,7 +26,7 @@ if_raw_str! {
 
 pub(super) type EncodingError = Infallible;
 
-type Result<T> = result::Result<T, EncodingError>;
+pub(super) type Result<T> = result::Result<T, EncodingError>;
 
 pub(super) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
     Ok(Cow::Borrowed(OsStrExt::from_bytes(string)))

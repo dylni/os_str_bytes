@@ -5,6 +5,7 @@ use os_str_bytes::RawOsStr;
 mod raw_common;
 use raw_common::RAW_WTF8_STRING;
 
+#[cfg_attr(feature = "nightly", allow(deprecated))]
 #[test]
 fn test_ends_with() {
     #[track_caller]
@@ -33,6 +34,7 @@ fn test_ends_with() {
     test(false, b"\xED\xB2\xA9aar");
 }
 
+#[cfg_attr(feature = "nightly", allow(deprecated))]
 #[test]
 fn test_empty_ends_with() {
     #[track_caller]
@@ -48,6 +50,7 @@ fn test_empty_ends_with() {
     test(false, "ar");
 }
 
+#[cfg_attr(feature = "nightly", allow(deprecated))]
 #[test]
 fn test_starts_with() {
     #[track_caller]
@@ -76,6 +79,7 @@ fn test_starts_with() {
     test(false, b"fof\xED\xA0\xBD\xED\xA0\xBD");
 }
 
+#[cfg_attr(feature = "nightly", allow(deprecated))]
 #[test]
 fn test_empty_starts_with() {
     #[track_caller]

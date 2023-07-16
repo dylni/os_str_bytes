@@ -24,7 +24,7 @@ impl Display for EncodingError {
 
 impl Error for EncodingError {}
 
-type Result<T> = result::Result<T, EncodingError>;
+pub(super) type Result<T> = result::Result<T, EncodingError>;
 
 macro_rules! expect_utf8 {
     ( $result:expr ) => {

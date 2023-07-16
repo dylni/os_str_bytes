@@ -102,6 +102,24 @@
 //!   Provides implementations of [`uniquote::Quote`] for [`RawOsStr`] and
 //!   [`RawOsString`].
 //!
+//! ### Nightly Features
+//!
+//! These features are unstable, since they rely on unstable Rust features.
+//!
+//! - **nightly** -
+//!   Changes the implementation to use [`OsStr::as_os_str_bytes`] and
+//!   [`OsStr::from_os_str_bytes_unchecked`] and provides:
+//!   - [`RawOsStr::as_os_str`]
+//!   - [`RawOsStr::assert_cow_from_raw_bytes`]
+//!   - [`RawOsStr::as_os_str_bytes`]
+//!   - [`RawOsStr::cow_from_raw_bytes`]
+//!   - [`RawOsStr::from_os_str`]
+//!   - [`RawOsStr::from_os_str_bytes_unchecked`]
+//!   - [`RawOsStr::to_raw_bytes`]
+//!   - [`RawOsString::from_os_str_vec_unchecked`]
+//!   - [`RawOsString::into_os_str_vec`]
+//!   - additional trait implementations for [`RawOsStr`] and [`RawOsString`]
+//!
 //! # Implementation
 //!
 //! Some methods return [`Cow`] to account for platform differences. However,
@@ -163,8 +181,8 @@
 //! [memchr]: https://crates.io/crates/memchr
 //! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
 //! [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
-//! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 //! [print\_bytes]: https://crates.io/crates/print_bytes
+//! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 
 #![cfg_attr(not(feature = "checked_conversions"), allow(deprecated))]
 // Only require a nightly compiler when building documentation for docs.rs.
@@ -172,6 +190,7 @@
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 // https://github.com/dylni/os_str_bytes/issues/2
 #![cfg_attr(os_str_bytes_docs_rs, feature(doc_cfg))]
+#![cfg_attr(feature = "nightly", feature(os_str_bytes))]
 // Nightly is also currently required for the SGX platform.
 #![cfg_attr(
     all(target_vendor = "fortanix", target_env = "sgx"),
@@ -219,18 +238,50 @@ macro_rules! deprecated_checked_conversion {
     };
 }
 
-macro_rules! expect_encoded {
-    ( $result:expr ) => {
-        $result.expect("invalid raw bytes")
-    };
-}
-
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
         $(
             #[cfg(feature = "raw_os_str")]
             $item
         )+
+    };
+}
+
+#[cfg(any(feature = "raw_os_str", windows))]
+macro_rules! if_nightly {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(feature = "nightly")]
+            $item
+        )+
+    };
+}
+
+if_raw_str! {
+    macro_rules! if_not_nightly {
+        ( $($item:item)+ ) => {
+            $(
+                #[cfg(not(feature = "nightly"))]
+                $item
+            )+
+        };
+    }
+
+    macro_rules! if_nightly_return {
+        ( $nightly_value:block $($not_nightly_token:tt)* ) => {
+            #[cfg(feature = "nightly")]
+            return $nightly_value;
+            #[cfg(not(feature = "nightly"))]
+            {
+                $($not_nightly_token)*
+            }
+        };
+    }
+}
+
+macro_rules! expect_encoded {
+    ( $result:expr ) => {
+        $result.expect("invalid raw bytes")
     };
 }
 
@@ -307,9 +358,7 @@ impl Error for EncodingError {}
 
 type Result<T> = result::Result<T, EncodingError>;
 
-fn from_raw_bytes<'a, S>(
-    string: S,
-) -> result::Result<Cow<'a, OsStr>, imp::EncodingError>
+fn from_raw_bytes<'a, S>(string: S) -> imp::Result<Cow<'a, OsStr>>
 where
     S: Into<Cow<'a, [u8]>>,
 {

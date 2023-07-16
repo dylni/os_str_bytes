@@ -7,6 +7,7 @@ mod random_common;
 use random_common::ITERATIONS;
 use random_common::SMALL_LENGTH;
 
+#[cfg_attr(feature = "nightly", allow(deprecated))]
 #[test]
 fn test_complex() {
     macro_rules! test {

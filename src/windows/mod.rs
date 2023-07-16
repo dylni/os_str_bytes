@@ -57,7 +57,7 @@ impl Display for EncodingError {
 
 impl Error for EncodingError {}
 
-type Result<T> = result::Result<T, EncodingError>;
+pub(super) type Result<T> = result::Result<T, EncodingError>;
 
 fn from_bytes(string: &[u8]) -> Result<Option<OsString>> {
     let mut encoder = wtf8::encode_wide(string);
