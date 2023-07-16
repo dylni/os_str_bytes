@@ -115,6 +115,10 @@ if_nightly! {
 /// representation is not stable. Transmuting between this type and any other
 /// causes immediate undefined behavior.
 ///
+/// # Nightly Notes
+///
+/// Indices are validated on all platforms.
+///
 /// [memchr complexity]: memchr::memmem::find#complexity
 /// [unspecified encoding]: super#encoding
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -136,6 +140,10 @@ impl RawOsStr {
     /// instance as long as possible (instead of the original [`OsStr`]), to
     /// avoid repeated conversions.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`from_os_str`] instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -149,6 +157,8 @@ impl RawOsStr {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    ///
+    /// [`from_os_str`]: Self::from_os_str
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
         deprecated(since = "6.6.0", note = "use `from_os_str` instead")
@@ -242,6 +252,10 @@ impl RawOsStr {
     /// Panics if the string is not valid for the [unspecified encoding] used
     /// by this crate.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`assert_cow_from_raw_bytes`] instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -258,6 +272,7 @@ impl RawOsStr {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
+    /// [`assert_cow_from_raw_bytes`]: Self::assert_cow_from_raw_bytes
     /// [unspecified encoding]: super#encoding
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
@@ -319,6 +334,10 @@ impl RawOsStr {
         ///
         /// See documentation for [`EncodingError`].
         ///
+        /// # Nightly Notes
+        ///
+        /// This method is deprecated. Use [`cow_from_raw_bytes`] instead.
+        ///
         /// # Examples
         ///
         /// ```
@@ -335,6 +354,7 @@ impl RawOsStr {
         /// ```
         ///
         /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
+        /// [`cow_from_raw_bytes`]: Self::cow_from_raw_bytes
         #[cfg_attr(
             all(not(os_str_bytes_docs_rs), feature = "nightly"),
             deprecated(
@@ -401,6 +421,11 @@ impl RawOsStr {
     /// The string must be valid for the [unspecified encoding] used by this
     /// crate.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`assert_from_raw_bytes`] or
+    /// [`from_os_str_bytes_unchecked`] instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -419,6 +444,8 @@ impl RawOsStr {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
+    /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
+    /// [`from_os_str_bytes_unchecked`]: Self::from_os_str_bytes_unchecked
     /// [unspecified encoding]: super#encoding
     #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[cfg_attr(
@@ -478,6 +505,10 @@ impl RawOsStr {
     ///
     /// The returned string will use an [unspecified encoding].
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`to_raw_bytes`] instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -488,6 +519,7 @@ impl RawOsStr {
     /// assert_eq!(string.as_bytes(), raw.as_raw_bytes());
     /// ```
     ///
+    /// [`to_raw_bytes`]: Self::to_raw_bytes
     /// [unspecified encoding]: super#encoding
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
@@ -605,6 +637,10 @@ impl RawOsStr {
 
     /// Equivalent to [`str::ends_with`] but accepts this type for the pattern.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated due to low usage.
+    ///
     /// # Examples
     ///
     /// ```
@@ -675,6 +711,11 @@ impl RawOsStr {
     /// when called on same string, since [`OsStr`] uses an unspecified
     /// encoding.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`as_os_str_bytes`] or [`to_raw_bytes`]
+    /// instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -683,6 +724,9 @@ impl RawOsStr {
     /// assert_eq!(6, RawOsStr::from_str("foobar").raw_len());
     /// assert_eq!(0, RawOsStr::from_str("").raw_len());
     /// ```
+    ///
+    /// [`as_os_str_bytes`]: Self::as_os_str_bytes
+    /// [`to_raw_bytes`]: Self::to_raw_bytes
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
         deprecated(
@@ -953,6 +997,10 @@ impl RawOsStr {
     /// Equivalent to [`str::starts_with`] but accepts this type for the
     /// pattern.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated due to low usage.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1029,6 +1077,10 @@ impl RawOsStr {
     /// When possible, use [`RawOsStrCow::into_os_str`] for a more efficient
     /// conversion on some platforms.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`as_os_str`] instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1043,6 +1095,8 @@ impl RawOsStr {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    ///
+    /// [`as_os_str`]: Self::as_os_str
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
         deprecated(since = "6.6.0", note = "use `as_os_str` instead")
@@ -1311,6 +1365,10 @@ impl ToOwned for RawOsStr {
 pub trait RawOsStrCow<'a>: private::Sealed {
     /// Converts a platform-native string back to this representation.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method does not require copying or encoding conversion.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1330,6 +1388,10 @@ pub trait RawOsStrCow<'a>: private::Sealed {
     fn from_os_str(string: Cow<'a, OsStr>) -> Self;
 
     /// Converts this representation back to a platform-native string.
+    ///
+    /// # Nightly Notes
+    ///
+    /// This method does not require copying or encoding conversion.
     ///
     /// # Examples
     ///
@@ -1352,6 +1414,10 @@ pub trait RawOsStrCow<'a>: private::Sealed {
     /// Returns the byte string stored by this container.
     ///
     /// The returned string will use an [unspecified encoding].
+    ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated due to low usage.
     ///
     /// # Examples
     ///
@@ -1416,6 +1482,10 @@ impl RawOsString {
     ///
     /// For more information, see [`RawOsStr::new`].
     ///
+    /// # Nightly Notes
+    ///
+    /// This method does not require copying or encoding conversion.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1476,6 +1546,11 @@ impl RawOsString {
     /// Panics if the string is not valid for the [unspecified encoding] used
     /// by this crate.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method performs encoding conversion during validation. It should
+    /// be avoided if other safe methods can be used.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1509,6 +1584,11 @@ impl RawOsString {
         /// # Errors
         ///
         /// See documentation for [`EncodingError`].
+        ///
+        /// # Nightly Notes
+        ///
+        /// This method performs encoding conversion during validation. It
+        /// should be avoided if other safe methods can be used.
         ///
         /// # Examples
         ///
@@ -1544,6 +1624,11 @@ impl RawOsString {
     /// The string must be valid for the [unspecified encoding] used by this
     /// crate.
     ///
+    /// # Nightly Notes
+    ///
+    /// This method is deprecated. Use [`assert_from_raw_vec`] or
+    /// [`from_os_str_vec_unchecked`] instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -1562,6 +1647,8 @@ impl RawOsString {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
+    /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
+    /// [`from_os_str_vec_unchecked`]: Self::from_os_str_vec_unchecked
     /// [unspecified encoding]: super#encoding
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
@@ -1656,6 +1743,10 @@ impl RawOsString {
     }
 
     /// Converts this representation back to a platform-native string.
+    ///
+    /// # Nightly Notes
+    ///
+    /// This method does not require copying or encoding conversion.
     ///
     /// # Examples
     ///

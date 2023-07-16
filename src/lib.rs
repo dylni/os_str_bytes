@@ -120,6 +120,10 @@
 //!   - [`RawOsString::into_os_str_vec`]
 //!   - additional trait implementations for [`RawOsStr`] and [`RawOsString`]
 //!
+//!   When applicable, a "Nightly Notes" section will be added to documentation
+//!   descriptions, indicating differences when this feature is enabled.
+//!   However, it will not cause any breaking changes.
+//!
 //! # Implementation
 //!
 //! Some methods return [`Cow`] to account for platform differences. However,
