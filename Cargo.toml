@@ -3,7 +3,7 @@ name = "os_str_bytes"
 version = "6.5.1"
 authors = ["dylni"]
 edition = "2021"
-rust-version = "1.57.0"
+rust-version = "1.61.0"
 description = """
 Convert between byte sequences and platform-native strings
 """

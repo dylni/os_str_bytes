@@ -33,7 +33,7 @@ where
         }
     }
 
-    pub(super) fn is_still_utf8(&self) -> bool {
+    pub(super) const fn is_still_utf8(&self) -> bool {
         self.still_utf8
     }
 

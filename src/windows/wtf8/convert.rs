@@ -47,7 +47,7 @@ where
     }
 
     #[inline(always)]
-    fn get_raw_byte(&self) -> u8 {
+    const fn get_raw_byte(&self) -> u8 {
         (self.code_point >> (self.shifts * BYTE_SHIFT)) as u8
     }
 }
@@ -122,7 +122,7 @@ where
         }
     }
 
-    pub(in super::super) fn is_still_utf8(&self) -> bool {
+    pub(in super::super) const fn is_still_utf8(&self) -> bool {
         self.iter.is_still_utf8()
     }
 }
