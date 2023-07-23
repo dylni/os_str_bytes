@@ -107,8 +107,8 @@
 //! These features are unstable, since they rely on unstable Rust features.
 //!
 //! - **nightly** -
-//!   Changes the implementation to use [`OsStr::as_os_str_bytes`] and
-//!   [`OsStr::from_os_str_bytes_unchecked`] and provides:
+//!   Changes the implementation to use the ["os\_str\_bytes" nightly
+//!   feature][feature] and provides:
 //!   - [`RawOsStr::as_os_str`]
 //!   - [`RawOsStr::assert_cow_from_raw_bytes`]
 //!   - [`RawOsStr::as_os_str_bytes`]
@@ -181,6 +181,7 @@
 //! [bstr]: https://crates.io/crates/bstr
 //! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
+//! [feature]: https://doc.rust-lang.org/unstable-book/library-features/os-str-bytes.html
 //! [memchr complexity]: RawOsStr#complexity
 //! [memchr]: https://crates.io/crates/memchr
 //! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt

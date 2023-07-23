@@ -72,17 +72,6 @@ unsafe trait TransmuteBox {
 unsafe impl TransmuteBox for RawOsStr {}
 unsafe impl TransmuteBox for [u8] {}
 
-if_nightly! {
-    unsafe fn from_os_str_vec_unchecked(string: Vec<u8>) -> OsString {
-        // SAFETY: This function has equivalent safety requirements.
-        unsafe { OsStr::from_os_str_bytes_unchecked(&string) }.to_owned()
-    }
-
-    fn into_os_str_vec(os_string: OsString) -> Vec<u8> {
-        os_string.as_os_str_bytes().to_owned()
-    }
-}
-
 /// A container for borrowed byte strings converted by this crate.
 ///
 /// This wrapper is intended to prevent violating the invariants of the
@@ -1504,7 +1493,7 @@ impl RawOsString {
     #[must_use]
     pub fn new(string: OsString) -> Self {
         if_nightly_return! {{
-            Self(into_os_str_vec(string))
+            Self(string.into_os_str_bytes())
         }}
         Self(imp::os_string_into_vec(string))
     }
@@ -1676,8 +1665,7 @@ impl RawOsString {
     }
 
     if_nightly! {
-        /// Equivalent to [`OsStr::from_os_str_bytes_unchecked`] but accepts an
-        /// owned byte string.
+        /// Equivalent to [`OsString::from_os_str_bytes_unchecked`].
         ///
         /// # Examples
         ///
@@ -1769,7 +1757,7 @@ impl RawOsString {
         if_nightly_return! {{
             // SAFETY: This wrapper prevents violating the invariants of the
             // encoding used by the standard library.
-            unsafe { from_os_str_vec_unchecked(self.0) }
+            unsafe { OsString::from_os_str_bytes_unchecked(self.0) }
         }}
         expect_encoded!(imp::os_string_from_vec(self.0))
     }
@@ -1799,8 +1787,7 @@ impl RawOsString {
     }
 
     if_nightly! {
-        /// Equivalent to [`OsStr::as_os_str_bytes`] but produces an owned byte
-        /// string.
+        /// Equivalent to [`OsString::into_os_str_bytes`].
         ///
         /// The returned string will not use the [unspecified encoding]. It can
         /// only be passed to methods accepting the encoding from the standard
