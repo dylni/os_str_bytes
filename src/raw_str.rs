@@ -853,6 +853,7 @@ impl RawOsStr {
         }
     }
 
+    #[cfg_attr(feature = "nightly", allow(clippy::diverging_sub_expression))]
     #[cold]
     #[inline(never)]
     #[track_caller]
@@ -1664,7 +1665,7 @@ impl RawOsString {
     pub unsafe fn from_raw_vec_unchecked(string: Vec<u8>) -> Self {
         if_nightly_return! {
             {
-                return Self::assert_from_raw_vec(string);
+                Self::assert_from_raw_vec(string)
             }
             if cfg!(debug_assertions) {
                 expect_encoded!(raw::validate_bytes(&string));

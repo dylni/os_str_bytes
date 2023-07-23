@@ -2,11 +2,11 @@
 
 #![cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 
-use std::convert;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::iter::FusedIterator;
+use std::mem;
 
 use super::pattern::Encoded;
 use super::Pattern;
@@ -44,12 +44,14 @@ where
 }
 
 macro_rules! impl_next {
-    ( $self:ident , $split_method:ident , $swap_fn:expr ) => {{
+    ( $self:ident , $split_method:ident , $swap:expr ) => {{
         $self
             .string?
             .$split_method(&$self.pat)
-            .map(|substrings| {
-                let (substring, string) = $swap_fn(substrings);
+            .map(|(mut substring, mut string)| {
+                if $swap {
+                    mem::swap(&mut substring, &mut string);
+                }
                 $self.string = Some(string);
                 substring
             })
@@ -88,7 +90,7 @@ where
     P: Pattern,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        impl_next!(self, rsplit_once_raw, |(prefix, suffix)| (suffix, prefix))
+        impl_next!(self, rsplit_once_raw, true)
     }
 }
 
@@ -106,6 +108,6 @@ where
     }
 
     fn next(&mut self) -> Option<Self::Item> {
-        impl_next!(self, split_once_raw, convert::identity)
+        impl_next!(self, split_once_raw, false)
     }
 }
