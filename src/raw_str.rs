@@ -185,7 +185,7 @@ impl RawOsStr {
         #[inline]
         #[must_use]
         pub fn from_os_str(string: &OsStr) -> &Self {
-            Self::from_inner(string.as_os_str_bytes())
+            Self::from_inner(string.as_encoded_bytes())
         }
     }
 
@@ -210,6 +210,36 @@ impl RawOsStr {
     #[must_use]
     pub fn from_str(string: &str) -> &Self {
         Self::from_inner(string.as_bytes())
+    }
+
+    if_nightly! {
+        /// Equivalent to [`OsStr::from_encoded_bytes_unchecked`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::env;
+        /// # use std::io;
+        ///
+        /// use os_str_bytes::RawOsStr;
+        ///
+        /// let os_string = env::current_exe()?.into_os_string();
+        /// let raw = RawOsStr::new(&os_string);
+        /// let raw_bytes = raw.as_encoded_bytes();
+        /// assert_eq!(&*raw, unsafe {
+        ///     RawOsStr::from_encoded_bytes_unchecked(raw_bytes)
+        /// });
+        /// #
+        /// # Ok::<_, io::Error>(())
+        /// ```
+        ///
+        /// [unspecified encoding]: super#encoding
+        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
+        #[inline]
+        #[must_use]
+        pub unsafe fn from_encoded_bytes_unchecked(string: &[u8]) -> &Self {
+            Self::from_inner(string)
+        }
     }
 
     if_nightly! {
@@ -413,7 +443,7 @@ impl RawOsStr {
     /// # Nightly Notes
     ///
     /// This method is deprecated. Use [`assert_from_raw_bytes`] or
-    /// [`from_os_str_bytes_unchecked`] instead.
+    /// [`from_encoded_bytes_unchecked`] instead.
     ///
     /// # Examples
     ///
@@ -434,7 +464,7 @@ impl RawOsStr {
     /// ```
     ///
     /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
-    /// [`from_os_str_bytes_unchecked`]: Self::from_os_str_bytes_unchecked
+    /// [`from_encoded_bytes_unchecked`]: Self::from_encoded_bytes_unchecked
     /// [unspecified encoding]: super#encoding
     #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[cfg_attr(
@@ -442,7 +472,7 @@ impl RawOsStr {
         deprecated(
             since = "6.6.0",
             note = "use `assert_from_raw_bytes` or
-                    `from_os_str_bytes_unchecked` instead",
+                    `from_encoded_bytes_unchecked` instead",
         )
     )]
     #[inline]
@@ -461,32 +491,29 @@ impl RawOsStr {
     }
 
     if_nightly! {
-        /// Equivalent to [`OsStr::from_os_str_bytes_unchecked`].
+        /// Equivalent to [`OsStr::as_encoded_bytes`].
+        ///
+        /// The returned string will not use the [unspecified encoding]. It can
+        /// only be passed to methods accepting the encoding from the standard
+        /// library, such as [`from_encoded_bytes_unchecked`].
         ///
         /// # Examples
         ///
         /// ```
-        /// use std::env;
-        /// # use std::io;
-        ///
         /// use os_str_bytes::RawOsStr;
         ///
-        /// let os_string = env::current_exe()?.into_os_string();
-        /// let raw = RawOsStr::new(&os_string);
-        /// let raw_bytes = raw.as_os_str_bytes();
-        /// assert_eq!(&*raw, unsafe {
-        ///     RawOsStr::from_os_str_bytes_unchecked(raw_bytes)
-        /// });
-        /// #
-        /// # Ok::<_, io::Error>(())
+        /// let string = "foobar";
+        /// let raw = RawOsStr::from_str(string);
+        /// assert_eq!(string.as_bytes(), raw.as_encoded_bytes());
         /// ```
         ///
+        /// [`from_encoded_bytes_unchecked`]: Self::from_encoded_bytes_unchecked
         /// [unspecified encoding]: super#encoding
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
         #[inline]
         #[must_use]
-        pub unsafe fn from_os_str_bytes_unchecked(string: &[u8]) -> &Self {
-            Self::from_inner(string)
+        pub fn as_encoded_bytes(&self) -> &[u8] {
+            &self.0
         }
     }
 
@@ -550,34 +577,7 @@ impl RawOsStr {
         pub fn as_os_str(&self) -> &OsStr {
             // SAFETY: This wrapper prevents violating the invariants of the
             // encoding used by the standard library.
-            unsafe { OsStr::from_os_str_bytes_unchecked(&self.0) }
-        }
-    }
-
-    if_nightly! {
-        /// Equivalent to [`OsStr::as_os_str_bytes`].
-        ///
-        /// The returned string will not use the [unspecified encoding]. It can
-        /// only be passed to methods accepting the encoding from the standard
-        /// library, such as [`from_os_str_bytes_unchecked`].
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use os_str_bytes::RawOsStr;
-        ///
-        /// let string = "foobar";
-        /// let raw = RawOsStr::from_str(string);
-        /// assert_eq!(string.as_bytes(), raw.as_os_str_bytes());
-        /// ```
-        ///
-        /// [`from_os_str_bytes_unchecked`]: Self::from_os_str_bytes_unchecked
-        /// [unspecified encoding]: super#encoding
-        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
-        #[inline]
-        #[must_use]
-        pub fn as_os_str_bytes(&self) -> &[u8] {
-            &self.0
+            unsafe { OsStr::from_encoded_bytes_unchecked(&self.0) }
         }
     }
 
@@ -702,7 +702,7 @@ impl RawOsStr {
     ///
     /// # Nightly Notes
     ///
-    /// This method is deprecated. Use [`as_os_str_bytes`] or [`to_raw_bytes`]
+    /// This method is deprecated. Use [`as_encoded_bytes`] or [`to_raw_bytes`]
     /// instead.
     ///
     /// # Examples
@@ -714,13 +714,13 @@ impl RawOsStr {
     /// assert_eq!(0, RawOsStr::from_str("").raw_len());
     /// ```
     ///
-    /// [`as_os_str_bytes`]: Self::as_os_str_bytes
+    /// [`as_encoded_bytes`]: Self::as_encoded_bytes
     /// [`to_raw_bytes`]: Self::to_raw_bytes
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
         deprecated(
             since = "6.6.0",
-            note = "use `as_os_str_bytes` or `to_raw_bytes` instead",
+            note = "use `as_encoded_bytes` or `to_raw_bytes` instead",
         )
     )]
     #[inline]
@@ -1493,7 +1493,7 @@ impl RawOsString {
     #[must_use]
     pub fn new(string: OsString) -> Self {
         if_nightly_return! {{
-            Self(string.into_os_str_bytes())
+            Self(string.into_encoded_bytes())
         }}
         Self(imp::os_string_into_vec(string))
     }
@@ -1518,6 +1518,34 @@ impl RawOsString {
     #[must_use]
     pub fn from_string(string: String) -> Self {
         Self(string.into_bytes())
+    }
+
+    if_nightly! {
+        /// Equivalent to [`OsString::from_encoded_bytes_unchecked`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::env;
+        /// # use std::io;
+        ///
+        /// use os_str_bytes::RawOsString;
+        ///
+        /// let os_string = env::current_exe()?.into_os_string();
+        /// let raw = RawOsString::new(os_string);
+        /// let raw_bytes = raw.clone().into_encoded_vec();
+        /// assert_eq!(raw, unsafe {
+        ///     RawOsString::from_encoded_vec_unchecked(raw_bytes)
+        /// });
+        /// #
+        /// # Ok::<_, io::Error>(())
+        /// ```
+        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
+        #[inline]
+        #[must_use]
+        pub unsafe fn from_encoded_vec_unchecked(string: Vec<u8>) -> Self {
+            Self(string)
+        }
     }
 
     fn from_raw_vec_checked(string: Vec<u8>) -> imp::Result<Self> {
@@ -1617,7 +1645,7 @@ impl RawOsString {
     /// # Nightly Notes
     ///
     /// This method is deprecated. Use [`assert_from_raw_vec`] or
-    /// [`from_os_str_vec_unchecked`] instead.
+    /// [`from_encoded_vec_unchecked`] instead.
     ///
     /// # Examples
     ///
@@ -1638,13 +1666,13 @@ impl RawOsString {
     /// ```
     ///
     /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
-    /// [`from_os_str_vec_unchecked`]: Self::from_os_str_vec_unchecked
+    /// [`from_encoded_vec_unchecked`]: Self::from_encoded_vec_unchecked
     /// [unspecified encoding]: super#encoding
     #[cfg_attr(
         all(not(os_str_bytes_docs_rs), feature = "nightly"),
         deprecated(
             since = "6.6.0",
-            note = "use `assert_from_raw_vec` or `from_os_str_vec_unchecked`
+            note = "use `assert_from_raw_vec` or `from_encoded_vec_unchecked`
                     instead",
         )
     )]
@@ -1662,34 +1690,6 @@ impl RawOsString {
         }
 
         Self(string)
-    }
-
-    if_nightly! {
-        /// Equivalent to [`OsString::from_os_str_bytes_unchecked`].
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use std::env;
-        /// # use std::io;
-        ///
-        /// use os_str_bytes::RawOsString;
-        ///
-        /// let os_string = env::current_exe()?.into_os_string();
-        /// let raw = RawOsString::new(os_string);
-        /// let raw_bytes = raw.clone().into_os_str_vec();
-        /// assert_eq!(raw, unsafe {
-        ///     RawOsString::from_os_str_vec_unchecked(raw_bytes)
-        /// });
-        /// #
-        /// # Ok::<_, io::Error>(())
-        /// ```
-        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
-        #[inline]
-        #[must_use]
-        pub unsafe fn from_os_str_vec_unchecked(string: Vec<u8>) -> Self {
-            Self(string)
-        }
     }
 
     /// Equivalent to [`String::clear`].
@@ -1731,6 +1731,33 @@ impl RawOsString {
         self.0.into_boxed_slice().transmute_box()
     }
 
+    if_nightly! {
+        /// Equivalent to [`OsString::into_encoded_bytes`].
+        ///
+        /// The returned string will not use the [unspecified encoding]. It can
+        /// only be passed to methods accepting the encoding from the standard
+        /// library, such as [`from_encoded_vec_unchecked`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use os_str_bytes::RawOsString;
+        ///
+        /// let string = "foobar".to_owned();
+        /// let raw = RawOsString::from_string(string.clone());
+        /// assert_eq!(string.into_bytes(), raw.into_encoded_vec());
+        /// ```
+        ///
+        /// [`from_encoded_vec_unchecked`]: Self::from_encoded_vec_unchecked
+        /// [unspecified encoding]: super#encoding
+        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
+        #[inline]
+        #[must_use]
+        pub fn into_encoded_vec(self) -> Vec<u8> {
+            self.0
+        }
+    }
+
     /// Converts this representation back to a platform-native string.
     ///
     /// # Nightly Notes
@@ -1757,7 +1784,7 @@ impl RawOsString {
         if_nightly_return! {{
             // SAFETY: This wrapper prevents violating the invariants of the
             // encoding used by the standard library.
-            unsafe { OsString::from_os_str_bytes_unchecked(self.0) }
+            unsafe { OsString::from_encoded_bytes_unchecked(self.0) }
         }}
         expect_encoded!(imp::os_string_from_vec(self.0))
     }
@@ -1784,33 +1811,6 @@ impl RawOsString {
             imp::os_string_into_vec(self.into_os_string())
         }}
         self.0
-    }
-
-    if_nightly! {
-        /// Equivalent to [`OsString::into_os_str_bytes`].
-        ///
-        /// The returned string will not use the [unspecified encoding]. It can
-        /// only be passed to methods accepting the encoding from the standard
-        /// library, such as [`from_os_str_vec_unchecked`].
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// use os_str_bytes::RawOsString;
-        ///
-        /// let string = "foobar".to_owned();
-        /// let raw = RawOsString::from_string(string.clone());
-        /// assert_eq!(string.into_bytes(), raw.into_os_str_vec());
-        /// ```
-        ///
-        /// [`from_os_str_vec_unchecked`]: Self::from_os_str_vec_unchecked
-        /// [unspecified encoding]: super#encoding
-        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "nightly")))]
-        #[inline]
-        #[must_use]
-        pub fn into_os_str_vec(self) -> Vec<u8> {
-            self.0
-        }
     }
 
     /// Equivalent to [`OsString::into_string`].

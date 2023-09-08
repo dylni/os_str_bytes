@@ -39,7 +39,7 @@ pub(crate) fn starts_with(string: &[u8], prefix: &[u8]) -> bool {
 #[cfg_attr(feature = "nightly", allow(deprecated), allow(unreachable_code))]
 fn as_inner(string: &RawOsStr) -> &[u8] {
     if_nightly_return! {{
-        string.as_os_str_bytes()
+        string.as_encoded_bytes()
     }}
     string.as_raw_bytes()
 }

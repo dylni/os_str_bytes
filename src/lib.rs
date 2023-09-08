@@ -109,15 +109,14 @@
 //! - **nightly** -
 //!   Changes the implementation to use the ["os\_str\_bytes" nightly
 //!   feature][feature] and provides:
+//!   - [`RawOsStr::as_encoded_bytes`]
 //!   - [`RawOsStr::as_os_str`]
 //!   - [`RawOsStr::assert_cow_from_raw_bytes`]
-//!   - [`RawOsStr::as_os_str_bytes`]
 //!   - [`RawOsStr::cow_from_raw_bytes`]
 //!   - [`RawOsStr::from_os_str`]
-//!   - [`RawOsStr::from_os_str_bytes_unchecked`]
 //!   - [`RawOsStr::to_raw_bytes`]
-//!   - [`RawOsString::from_os_str_vec_unchecked`]
-//!   - [`RawOsString::into_os_str_vec`]
+//!   - [`RawOsString::from_encoded_vec_unchecked`]
+//!   - [`RawOsString::into_encoded_vec`]
 //!   - additional trait implementations for [`RawOsStr`] and [`RawOsString`]
 //!
 //!   When applicable, a "Nightly Notes" section will be added to documentation
@@ -195,7 +194,6 @@
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 // https://github.com/dylni/os_str_bytes/issues/2
 #![cfg_attr(os_str_bytes_docs_rs, feature(doc_cfg))]
-#![cfg_attr(feature = "nightly", feature(os_str_bytes))]
 // Nightly is also currently required for the SGX platform.
 #![cfg_attr(
     all(target_vendor = "fortanix", target_env = "sgx"),
