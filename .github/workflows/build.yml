@@ -2,6 +2,7 @@ name: build
 
 env:
   OS_STR_BYTES_CHECKED_CONVERSIONS: 1
+  OS_STR_BYTES_NIGHTLY: 1
 
 on:
   pull_request:

@@ -137,7 +137,12 @@
 //!
 //!   This feature will cause memory leaks for some newly deprecated methods.
 //!   Therefore, it is not recommended to use this feature until the next major
-//!   version, when those methods will be removed.
+//!   version, when those methods will be removed. However, it can be used to
+//!   prepare for upgrading and determine impact of the new feature.
+//!
+//!   Because this feature should not be used in libraries, the
+//!   "OS_STR_BYTES_NIGHTLY" environment variable must be defined during
+//!   compilation.
 //!
 //! # Implementation
 //!
@@ -246,6 +251,24 @@ if_checked_conversions! {
     );
 }
 
+macro_rules! if_nightly {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(feature = "nightly")]
+            $item
+        )+
+    };
+}
+
+#[cfg(not(os_str_bytes_docs_rs))]
+if_nightly! {
+    const _: &str = env!(
+        "OS_STR_BYTES_NIGHTLY",
+        "The 'OS_STR_BYTES_NIGHTLY' environment variable must be defined to \
+         use the 'nightly' feature.",
+    );
+}
+
 #[rustfmt::skip]
 macro_rules! deprecated_checked_conversion {
     ( $message:expr , $item:item ) => {
@@ -280,15 +303,6 @@ macro_rules! if_raw_str {
 }
 
 if_raw_str! {
-    macro_rules! if_nightly {
-        ( $($item:item)+ ) => {
-            $(
-                #[cfg(feature = "nightly")]
-                $item
-            )+
-        };
-    }
-
     macro_rules! if_not_nightly {
         ( $($item:item)+ ) => {
             $(
