@@ -72,7 +72,7 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td>Xous</td>
         <td><code>*-*-xous-*</code></td>
-        <td>unstable</td>
+        <td>1.74 (rust-lang/rust#104101)</td>
     </tr>
 </table>
 
