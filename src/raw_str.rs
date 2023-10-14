@@ -646,7 +646,8 @@ impl RawOsStr {
     ///
     /// # Nightly Notes
     ///
-    /// This method is deprecated due to low usage.
+    /// This method performs encoding conversion. It should be avoided if
+    /// possible.
     ///
     /// # Examples
     ///
@@ -657,10 +658,6 @@ impl RawOsStr {
     /// assert!(raw.ends_with_os(RawOsStr::from_str("bar")));
     /// assert!(!raw.ends_with_os(RawOsStr::from_str("foo")));
     /// ```
-    #[cfg_attr(
-        all(not(os_str_bytes_docs_rs), feature = "nightly"),
-        deprecated(since = "6.6.0")
-    )]
     #[inline]
     #[must_use]
     pub fn ends_with_os(&self, pat: &Self) -> bool {
@@ -718,11 +715,6 @@ impl RawOsStr {
     /// when called on same string, since [`OsStr`] uses an unspecified
     /// encoding.
     ///
-    /// # Nightly Notes
-    ///
-    /// This method is deprecated. Use [`as_encoded_bytes`] or [`to_raw_bytes`]
-    /// instead.
-    ///
     /// # Examples
     ///
     /// ```
@@ -731,15 +723,9 @@ impl RawOsStr {
     /// assert_eq!(6, RawOsStr::from_str("foobar").raw_len());
     /// assert_eq!(0, RawOsStr::from_str("").raw_len());
     /// ```
-    ///
-    /// [`as_encoded_bytes`]: Self::as_encoded_bytes
-    /// [`to_raw_bytes`]: Self::to_raw_bytes
-    #[cfg_attr(
-        all(not(os_str_bytes_docs_rs), feature = "nightly"),
-        deprecated(
-            since = "6.6.0",
-            note = "use `as_encoded_bytes` or `to_raw_bytes` instead",
-        )
+    #[deprecated(
+        since = "6.6.0",
+        note = "use `as_encoded_bytes` or `to_raw_bytes` instead",
     )]
     #[inline]
     #[must_use]
@@ -1007,7 +993,8 @@ impl RawOsStr {
     ///
     /// # Nightly Notes
     ///
-    /// This method is deprecated due to low usage.
+    /// This method performs encoding conversion. It should be avoided if
+    /// possible.
     ///
     /// # Examples
     ///
@@ -1018,10 +1005,6 @@ impl RawOsStr {
     /// assert!(raw.starts_with_os(RawOsStr::from_str("foo")));
     /// assert!(!raw.starts_with_os(RawOsStr::from_str("bar")));
     /// ```
-    #[cfg_attr(
-        all(not(os_str_bytes_docs_rs), feature = "nightly"),
-        deprecated(since = "6.6.0")
-    )]
     #[inline]
     #[must_use]
     pub fn starts_with_os(&self, pat: &Self) -> bool {
@@ -1417,10 +1400,6 @@ pub trait RawOsStrCow<'a>: private::Sealed {
     ///
     /// The returned string will use an [unspecified encoding].
     ///
-    /// # Nightly Notes
-    ///
-    /// This method is deprecated due to low usage.
-    ///
     /// # Examples
     ///
     /// ```
@@ -1435,10 +1414,7 @@ pub trait RawOsStrCow<'a>: private::Sealed {
     /// ```
     ///
     /// [unspecified encoding]: super#encoding
-    #[cfg_attr(
-        all(not(os_str_bytes_docs_rs), feature = "nightly"),
-        deprecated(since = "6.6.0")
-    )]
+    #[deprecated(since = "6.6.0", note = "removal planned due to low usage")]
     #[must_use]
     fn into_raw_bytes(self) -> Cow<'a, [u8]>;
 }
