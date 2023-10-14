@@ -17,7 +17,7 @@ use super::RawOsStr;
 // [DoubleEndedIterator], and its implementation would likely require
 // significant changes to implement that trait.
 /// The iterator returned by [`RawOsStr::split`].
-pub struct Split<'a, P>
+pub struct RawSplit<'a, P>
 where
     P: Pattern,
 {
@@ -25,7 +25,7 @@ where
     pat: P::__Encoded,
 }
 
-impl<'a, P> Split<'a, P>
+impl<'a, P> RawSplit<'a, P>
 where
     P: Pattern,
 {
@@ -59,7 +59,7 @@ macro_rules! impl_next {
     }};
 }
 
-impl<P> Clone for Split<'_, P>
+impl<P> Clone for RawSplit<'_, P>
 where
     P: Pattern,
 {
@@ -72,20 +72,20 @@ where
     }
 }
 
-impl<P> Debug for Split<'_, P>
+impl<P> Debug for RawSplit<'_, P>
 where
     P: Pattern,
 {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Split")
+        f.debug_struct("RawSplit")
             .field("string", &self.string)
             .field("pat", &self.pat)
             .finish()
     }
 }
 
-impl<P> DoubleEndedIterator for Split<'_, P>
+impl<P> DoubleEndedIterator for RawSplit<'_, P>
 where
     P: Pattern,
 {
@@ -94,9 +94,9 @@ where
     }
 }
 
-impl<P> FusedIterator for Split<'_, P> where P: Pattern {}
+impl<P> FusedIterator for RawSplit<'_, P> where P: Pattern {}
 
-impl<'a, P> Iterator for Split<'a, P>
+impl<'a, P> Iterator for RawSplit<'a, P>
 where
     P: Pattern,
 {
@@ -111,3 +111,7 @@ where
         impl_next!(self, split_once_raw, false)
     }
 }
+
+/// A temporary type alias providing backward compatibility.
+#[deprecated(since = "6.6.0", note = "use `RawSplit` instead")]
+pub type Split<'a, P> = RawSplit<'a, P>;

@@ -28,7 +28,7 @@ use memchr::memmem::rfind;
 
 use super::imp;
 use super::imp::raw;
-use super::iter::Split;
+use super::iter::RawSplit;
 use super::pattern::Encoded as EncodedPattern;
 use super::private;
 use super::Pattern;
@@ -899,11 +899,11 @@ impl RawOsStr {
     #[inline]
     #[must_use]
     #[track_caller]
-    pub fn split<P>(&self, pat: P) -> Split<'_, P>
+    pub fn split<P>(&self, pat: P) -> RawSplit<'_, P>
     where
         P: Pattern,
     {
-        Split::new(self, pat)
+        RawSplit::new(self, pat)
     }
 
     /// Equivalent to [`str::split_at`].
