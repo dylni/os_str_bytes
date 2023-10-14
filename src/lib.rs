@@ -111,8 +111,6 @@
 //!   feature][feature] and provides:
 //!   - [`RawOsStr::as_encoded_bytes`]
 //!   - [`RawOsStr::as_os_str`]
-//!   - [`RawOsStr::assert_cow_from_raw_bytes`]
-//!   - [`RawOsStr::cow_from_raw_bytes`]
 //!   - [`RawOsStr::from_os_str`]
 //!   - [`RawOsStr::to_raw_bytes`]
 //!   - [`RawOsString::from_encoded_vec_unchecked`]
@@ -122,6 +120,10 @@
 //!   When applicable, a "Nightly Notes" section will be added to documentation
 //!   descriptions, indicating differences when this feature is enabled.
 //!   However, it will not cause any breaking changes.
+//!
+//!   This feature will cause memory leaks for some newly deprecated methods.
+//!   Therefore, it is not recommended to use this feature until the next major
+//!   version, when those methods will be removed.
 //!
 //! # Implementation
 //!

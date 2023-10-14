@@ -10,8 +10,8 @@ use raw_common::RAW_WTF8_STRING;
 fn test_ends_with() {
     #[track_caller]
     fn test(result: bool, suffix: &[u8]) {
-        let suffix = RawOsStr::assert_from_raw_bytes(suffix);
-        assert_eq!(result, RAW_WTF8_STRING.ends_with_os(suffix));
+        let suffix = RawOsStr::assert_cow_from_raw_bytes(suffix);
+        assert_eq!(result, RAW_WTF8_STRING.ends_with_os(&suffix));
     }
 
     test(true, b"");
@@ -55,8 +55,8 @@ fn test_empty_ends_with() {
 fn test_starts_with() {
     #[track_caller]
     fn test(result: bool, prefix: &[u8]) {
-        let prefix = RawOsStr::assert_from_raw_bytes(prefix);
-        assert_eq!(result, RAW_WTF8_STRING.starts_with_os(prefix));
+        let prefix = RawOsStr::assert_cow_from_raw_bytes(prefix);
+        assert_eq!(result, RAW_WTF8_STRING.starts_with_os(&prefix));
     }
 
     test(true, b"");

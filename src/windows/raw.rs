@@ -24,6 +24,7 @@ if_not_nightly! {
     }
 }
 
+#[cfg_attr(not(feature = "nightly"), allow(deprecated))]
 pub(crate) fn encode_wide(
     string: &RawOsStr,
 ) -> impl '_ + Iterator<Item = u16> {

@@ -25,7 +25,7 @@ fn test_wft8() {
     } else {
         "\\u{D83D}"
     };
-    test(&format!("\"foo{}\u{1F4A9}bar\"", wchar), *RAW_WTF8_STRING);
+    test(&format!("\"foo{}\u{1F4A9}bar\"", wchar), &RAW_WTF8_STRING);
 }
 
 #[test]
