@@ -33,5 +33,6 @@ default = ["memchr", "raw_os_str"]
 
 nightly = []
 
-checked_conversions = []
+checked_conversions = ["conversions"]
+conversions = []
 raw_os_str = []

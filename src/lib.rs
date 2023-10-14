@@ -88,12 +88,25 @@
 //!   - [`EncodingError`]
 //!   - [`OsStrBytes::from_raw_bytes`]
 //!   - [`OsStringBytes::from_raw_vec`]
-//!   - [`RawOsStr::from_raw_bytes`]
+//!   - [`RawOsStr::cow_from_raw_bytes`]
 //!   - [`RawOsString::from_raw_vec`]
 //!
 //!   Because this feature should not be used in libraries, the
 //!   "OS_STR_BYTES_CHECKED_CONVERSIONS" environment variable must be defined
 //!   during compilation.
+//!
+//! - **conversions** -
+//!   Provides methods that require encoding conversion and may be expensive:
+//!   - [`OsStrBytesExt::ends_with_os`]
+//!   - [`OsStrBytesExt::starts_with_os`]
+//!   - [`RawOsStr::assert_cow_from_raw_bytes`]
+//!   - [`RawOsStr::ends_with_os`]
+//!   - [`RawOsStr::starts_with_os`]
+//!   - [`RawOsStr::to_raw_bytes`]
+//!   - [`RawOsString::assert_from_raw_vec`]
+//!   - [`RawOsString::into_raw_vec`]
+//!   - [`OsStrBytes`]
+//!   - [`OsStringBytes`]
 //!
 //! - **print\_bytes** -
 //!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
@@ -112,8 +125,8 @@
 //!   feature][feature] and provides:
 //!   - [`RawOsStr::as_encoded_bytes`]
 //!   - [`RawOsStr::as_os_str`]
+//!   - [`RawOsStr::from_encoded_bytes_unchecked`]
 //!   - [`RawOsStr::from_os_str`]
-//!   - [`RawOsStr::to_raw_bytes`]
 //!   - [`RawOsString::from_encoded_vec_unchecked`]
 //!   - [`RawOsString::into_encoded_vec`]
 //!   - additional trait implementations for [`RawOsStr`] and [`RawOsString`]
@@ -244,6 +257,19 @@ macro_rules! deprecated_checked_conversion {
     };
 }
 
+#[rustfmt::skip]
+macro_rules! deprecated_conversions {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg_attr(
+                not(feature = "conversions"),
+                deprecated = "enable the 'conversions' feature"
+            )]
+            $item
+        )+
+    };
+}
+
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
         $(
@@ -281,6 +307,19 @@ if_raw_str! {
                 $($not_nightly_token)*
             }
         };
+    }
+}
+
+if_raw_str! {
+    if_nightly! {
+        macro_rules! if_conversions {
+            ( $($item:item)+ ) => {
+                $(
+                    #[cfg(feature = "conversions")]
+                    $item
+                )+
+            };
+        }
     }
 }
 
@@ -382,54 +421,21 @@ fn cow_os_str_into_path(string: Cow<'_, OsStr>) -> Cow<'_, Path> {
     }
 }
 
-/// A platform agnostic variant of [`OsStrExt`].
-///
-/// For more information, see [the module-level documentation][module].
-///
-/// [module]: self
-/// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
-pub trait OsStrBytes: private::Sealed + ToOwned {
-    /// Converts a byte string into an equivalent platform-native string.
+deprecated_conversions! {
+    /// A platform agnostic variant of [`OsStrExt`].
     ///
-    /// # Panics
+    /// For more information, see [the module-level documentation][module].
     ///
-    /// Panics if the string is not valid for the [unspecified encoding] used
-    /// by this crate.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::env;
-    /// use std::ffi::OsStr;
-    /// # use std::io;
-    ///
-    /// use os_str_bytes::OsStrBytes;
-    ///
-    /// let os_string = env::current_exe()?;
-    /// let os_bytes = os_string.to_raw_bytes();
-    /// assert_eq!(os_string, OsStr::assert_from_raw_bytes(os_bytes));
-    /// #
-    /// # Ok::<_, io::Error>(())
-    /// ```
-    ///
-    /// [unspecified encoding]: self#encoding
-    #[must_use = "method should not be used for validation"]
-    #[track_caller]
-    fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
-    where
-        S: Into<Cow<'a, [u8]>>;
-
-    deprecated_checked_conversion! {
-        "use `assert_from_raw_bytes` instead, or enable the \
-         'checked_conversions' feature",
+    /// [module]: self
+    /// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
+    #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
+    pub trait OsStrBytes: private::Sealed + ToOwned {
         /// Converts a byte string into an equivalent platform-native string.
         ///
-        /// [`assert_from_raw_bytes`] should almost always be used instead. For
-        /// more information, see [`EncodingError`].
+        /// # Panics
         ///
-        /// # Errors
-        ///
-        /// See documentation for [`EncodingError`].
+        /// Panics if the string is not valid for the [unspecified encoding]
+        /// used by this crate.
         ///
         /// # Examples
         ///
@@ -442,85 +448,124 @@ pub trait OsStrBytes: private::Sealed + ToOwned {
         ///
         /// let os_string = env::current_exe()?;
         /// let os_bytes = os_string.to_raw_bytes();
-        /// assert_eq!(os_string, OsStr::from_raw_bytes(os_bytes).unwrap());
+        /// assert_eq!(os_string, OsStr::assert_from_raw_bytes(os_bytes));
         /// #
         /// # Ok::<_, io::Error>(())
         /// ```
         ///
-        /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
-        #[cfg_attr(
-            os_str_bytes_docs_rs,
-            doc(cfg(feature = "checked_conversions"))
-        )]
-        fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
+        /// [unspecified encoding]: self#encoding
+        #[must_use = "method should not be used for validation"]
+        #[track_caller]
+        fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
         where
             S: Into<Cow<'a, [u8]>>;
+
+        deprecated_checked_conversion! {
+            "use `assert_from_raw_bytes` instead, or enable the \
+             'checked_conversions' feature",
+            /// Converts a byte string into an equivalent platform-native
+            /// string.
+            ///
+            /// [`assert_from_raw_bytes`] should almost always be used instead.
+            /// For more information, see [`EncodingError`].
+            ///
+            /// # Errors
+            ///
+            /// See documentation for [`EncodingError`].
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// use std::env;
+            /// use std::ffi::OsStr;
+            /// # use std::io;
+            ///
+            /// use os_str_bytes::OsStrBytes;
+            ///
+            /// let os_string = env::current_exe()?;
+            /// let os_bytes = os_string.to_raw_bytes();
+            /// assert_eq!(os_string, OsStr::from_raw_bytes(os_bytes).unwrap());
+            /// #
+            /// # Ok::<_, io::Error>(())
+            /// ```
+            ///
+            /// [`assert_from_raw_bytes`]: Self::assert_from_raw_bytes
+            #[cfg_attr(
+                os_str_bytes_docs_rs,
+                doc(cfg(feature = "checked_conversions"))
+            )]
+            fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
+            where
+                S: Into<Cow<'a, [u8]>>;
+        }
+
+        /// Converts a platform-native string into an equivalent byte string.
+        ///
+        /// The returned string will use an [unspecified encoding].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytes;
+        ///
+        /// let string = "foobar";
+        /// let os_string = OsStr::new(string);
+        /// assert_eq!(string.as_bytes(), &*os_string.to_raw_bytes());
+        /// ```
+        ///
+        /// [unspecified encoding]: self#encoding
+        #[must_use]
+        fn to_raw_bytes(&self) -> Cow<'_, [u8]>;
     }
 
-    /// Converts a platform-native string into an equivalent byte string.
-    ///
-    /// The returned string will use an [unspecified encoding].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::ffi::OsStr;
-    ///
-    /// use os_str_bytes::OsStrBytes;
-    ///
-    /// let string = "foobar";
-    /// let os_string = OsStr::new(string);
-    /// assert_eq!(string.as_bytes(), &*os_string.to_raw_bytes());
-    /// ```
-    ///
-    /// [unspecified encoding]: self#encoding
-    #[must_use]
-    fn to_raw_bytes(&self) -> Cow<'_, [u8]>;
-}
+    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
+    impl OsStrBytes for OsStr {
+        #[inline]
+        fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
+        where
+            S: Into<Cow<'a, [u8]>>,
+        {
+            expect_encoded!(from_raw_bytes(string))
+        }
 
-impl OsStrBytes for OsStr {
-    #[inline]
-    fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
-    where
-        S: Into<Cow<'a, [u8]>>,
-    {
-        expect_encoded!(from_raw_bytes(string))
+        #[inline]
+        fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
+        where
+            S: Into<Cow<'a, [u8]>>,
+        {
+            from_raw_bytes(string).map_err(EncodingError)
+        }
+
+        #[inline]
+        fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
+            imp::os_str_to_bytes(self)
+        }
     }
 
-    #[inline]
-    fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
-    where
-        S: Into<Cow<'a, [u8]>>,
-    {
-        from_raw_bytes(string).map_err(EncodingError)
-    }
+    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
+    impl OsStrBytes for Path {
+        #[inline]
+        fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
+        where
+            S: Into<Cow<'a, [u8]>>,
+        {
+            cow_os_str_into_path(OsStr::assert_from_raw_bytes(string))
+        }
 
-    #[inline]
-    fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
-        imp::os_str_to_bytes(self)
-    }
-}
+        #[inline]
+        fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
+        where
+            S: Into<Cow<'a, [u8]>>,
+        {
+            OsStr::from_raw_bytes(string).map(cow_os_str_into_path)
+        }
 
-impl OsStrBytes for Path {
-    #[inline]
-    fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
-    where
-        S: Into<Cow<'a, [u8]>>,
-    {
-        cow_os_str_into_path(OsStr::assert_from_raw_bytes(string))
-    }
-
-    #[inline]
-    fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
-    where
-        S: Into<Cow<'a, [u8]>>,
-    {
-        OsStr::from_raw_bytes(string).map(cow_os_str_into_path)
-    }
-
-    #[inline]
-    fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
-        self.as_os_str().to_raw_bytes()
+        #[inline]
+        fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
+            self.as_os_str().to_raw_bytes()
+        }
     }
 }
 
@@ -568,25 +613,28 @@ if_raw_str! {
             where
                 P: Pattern;
 
-            /// Equivalent to [`str::ends_with`] but accepts this type for the
-            /// pattern.
-            ///
-            /// This method performs encoding conversion. It should be avoided
-            /// if possible.
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert!(os_string.ends_with_os(OsStr::new("bar")));
-            /// assert!(!os_string.ends_with_os(OsStr::new("foo")));
-            /// ```
-            #[must_use]
-            fn ends_with_os(&self, pat: &Self) -> bool;
+            if_conversions! {
+                /// Equivalent to [`str::ends_with`] but accepts this type for
+                /// the pattern.
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// use std::ffi::OsStr;
+                ///
+                /// use os_str_bytes::OsStrBytesExt;
+                ///
+                /// let os_string = OsStr::new("foobar");
+                /// assert!(os_string.ends_with_os(OsStr::new("bar")));
+                /// assert!(!os_string.ends_with_os(OsStr::new("foo")));
+                /// ```
+                #[cfg_attr(
+                    os_str_bytes_docs_rs,
+                    doc(cfg(feature = "conversions"))
+                )]
+                #[must_use]
+                fn ends_with_os(&self, pat: &Self) -> bool;
+            }
 
             /// Equivalent to [`str::find`].
             ///
@@ -709,25 +757,28 @@ if_raw_str! {
             where
                 P: Pattern;
 
-            /// Equivalent to [`str::starts_with`] but accepts this type for
-            /// the pattern.
-            ///
-            /// This method performs encoding conversion. It should be avoided
-            /// if possible.
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert!(os_string.starts_with_os(OsStr::new("foo")));
-            /// assert!(!os_string.starts_with_os(OsStr::new("bar")));
-            /// ```
-            #[must_use]
-            fn starts_with_os(&self, pat: &Self) -> bool;
+            if_conversions! {
+                /// Equivalent to [`str::starts_with`] but accepts this type
+                /// for the pattern.
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// use std::ffi::OsStr;
+                ///
+                /// use os_str_bytes::OsStrBytesExt;
+                ///
+                /// let os_string = OsStr::new("foobar");
+                /// assert!(os_string.starts_with_os(OsStr::new("foo")));
+                /// assert!(!os_string.starts_with_os(OsStr::new("bar")));
+                /// ```
+                #[cfg_attr(
+                    os_str_bytes_docs_rs,
+                    doc(cfg(feature = "conversions"))
+                )]
+                #[must_use]
+                fn starts_with_os(&self, pat: &Self) -> bool;
+            }
 
             /// Equivalent to [`str::strip_prefix`].
             ///
@@ -843,10 +894,12 @@ if_raw_str! {
                 RawOsStr::from_os_str(self).ends_with(pat)
             }
 
-            #[inline]
-            fn ends_with_os(&self, pat: &Self) -> bool {
-                RawOsStr::from_os_str(self)
-                    .ends_with_os(RawOsStr::from_os_str(pat))
+            if_conversions! {
+                #[inline]
+                fn ends_with_os(&self, pat: &Self) -> bool {
+                    RawOsStr::from_os_str(self)
+                        .ends_with_os(RawOsStr::from_os_str(pat))
+                }
             }
 
             #[inline]
@@ -904,10 +957,12 @@ if_raw_str! {
                 RawOsStr::from_os_str(self).starts_with(pat)
             }
 
-            #[inline]
-            fn starts_with_os(&self, pat: &Self) -> bool {
-                RawOsStr::from_os_str(self)
-                    .starts_with_os(RawOsStr::from_os_str(pat))
+            if_conversions! {
+                #[inline]
+                fn starts_with_os(&self, pat: &Self) -> bool {
+                    RawOsStr::from_os_str(self)
+                        .starts_with_os(RawOsStr::from_os_str(pat))
+                }
             }
 
             #[inline]
@@ -957,52 +1012,21 @@ if_raw_str! {
     }
 }
 
-/// A platform agnostic variant of [`OsStringExt`].
-///
-/// For more information, see [the module-level documentation][module].
-///
-/// [module]: self
-/// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
-pub trait OsStringBytes: private::Sealed + Sized {
-    /// Converts a byte string into an equivalent platform-native string.
+deprecated_conversions! {
+    /// A platform agnostic variant of [`OsStringExt`].
     ///
-    /// # Panics
+    /// For more information, see [the module-level documentation][module].
     ///
-    /// Panics if the string is not valid for the [unspecified encoding] used
-    /// by this crate.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::env;
-    /// use std::ffi::OsString;
-    /// # use std::io;
-    ///
-    /// use os_str_bytes::OsStringBytes;
-    ///
-    /// let os_string = env::current_exe()?;
-    /// let os_bytes = os_string.clone().into_raw_vec();
-    /// assert_eq!(os_string, OsString::assert_from_raw_vec(os_bytes));
-    /// #
-    /// # Ok::<_, io::Error>(())
-    /// ```
-    ///
-    /// [unspecified encoding]: self#encoding
-    #[must_use = "method should not be used for validation"]
-    #[track_caller]
-    fn assert_from_raw_vec(string: Vec<u8>) -> Self;
-
-    deprecated_checked_conversion! {
-        "use `assert_from_raw_vec` instead, or enable the \
-         'checked_conversions' feature",
+    /// [module]: self
+    /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
+    #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(any(feature = "conversions"))))]
+    pub trait OsStringBytes: private::Sealed + Sized {
         /// Converts a byte string into an equivalent platform-native string.
         ///
-        /// [`assert_from_raw_vec`] should almost always be used instead. For
-        /// more information, see [`EncodingError`].
+        /// # Panics
         ///
-        /// # Errors
-        ///
-        /// See documentation for [`EncodingError`].
+        /// Panics if the string is not valid for the [unspecified encoding]
+        /// used by this crate.
         ///
         /// # Examples
         ///
@@ -1015,71 +1039,111 @@ pub trait OsStringBytes: private::Sealed + Sized {
         ///
         /// let os_string = env::current_exe()?;
         /// let os_bytes = os_string.clone().into_raw_vec();
-        /// assert_eq!(os_string, OsString::from_raw_vec(os_bytes).unwrap());
+        /// assert_eq!(os_string, OsString::assert_from_raw_vec(os_bytes));
         /// #
         /// # Ok::<_, io::Error>(())
         /// ```
         ///
-        /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
-        #[cfg_attr(
-            os_str_bytes_docs_rs,
-            doc(cfg(feature = "checked_conversions"))
-        )]
-        fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
+        /// [unspecified encoding]: self#encoding
+        #[must_use = "method should not be used for validation"]
+        #[track_caller]
+        fn assert_from_raw_vec(string: Vec<u8>) -> Self;
+
+        deprecated_checked_conversion! {
+            "use `assert_from_raw_vec` instead, or enable the \
+             'checked_conversions' feature",
+            /// Converts a byte string into an equivalent platform-native
+            /// string.
+            ///
+            /// [`assert_from_raw_vec`] should almost always be used instead.
+            /// For more information, see [`EncodingError`].
+            ///
+            /// # Errors
+            ///
+            /// See documentation for [`EncodingError`].
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// use std::env;
+            /// use std::ffi::OsString;
+            /// # use std::io;
+            ///
+            /// use os_str_bytes::OsStringBytes;
+            ///
+            /// let os_string = env::current_exe()?;
+            /// let os_bytes = os_string.clone().into_raw_vec();
+            /// assert_eq!(
+            ///     os_string,
+            ///     OsString::from_raw_vec(os_bytes).unwrap(),
+            /// );
+            /// #
+            /// # Ok::<_, io::Error>(())
+            /// ```
+            ///
+            /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
+            #[cfg_attr(
+                os_str_bytes_docs_rs,
+                doc(cfg(feature = "checked_conversions"))
+            )]
+            fn from_raw_vec(string: Vec<u8>) -> Result<Self>;
+        }
+
+        /// Converts a platform-native string into an equivalent byte string.
+        ///
+        /// The returned string will use an [unspecified encoding].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsString;
+        ///
+        /// use os_str_bytes::OsStringBytes;
+        ///
+        /// let string = "foobar".to_owned();
+        /// let os_string: OsString = string.clone().into();
+        /// assert_eq!(string.into_bytes(), os_string.into_raw_vec());
+        /// ```
+        ///
+        /// [unspecified encoding]: self#encoding
+        #[must_use]
+        fn into_raw_vec(self) -> Vec<u8>;
     }
 
-    /// Converts a platform-native string into an equivalent byte string.
-    ///
-    /// The returned string will use an [unspecified encoding].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::ffi::OsString;
-    ///
-    /// use os_str_bytes::OsStringBytes;
-    ///
-    /// let string = "foobar".to_owned();
-    /// let os_string: OsString = string.clone().into();
-    /// assert_eq!(string.into_bytes(), os_string.into_raw_vec());
-    /// ```
-    ///
-    /// [unspecified encoding]: self#encoding
-    #[must_use]
-    fn into_raw_vec(self) -> Vec<u8>;
-}
+    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
+    impl OsStringBytes for OsString {
+        #[inline]
+        fn assert_from_raw_vec(string: Vec<u8>) -> Self {
+            expect_encoded!(imp::os_string_from_vec(string))
+        }
 
-impl OsStringBytes for OsString {
-    #[inline]
-    fn assert_from_raw_vec(string: Vec<u8>) -> Self {
-        expect_encoded!(imp::os_string_from_vec(string))
+        #[inline]
+        fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
+            imp::os_string_from_vec(string).map_err(EncodingError)
+        }
+
+        #[inline]
+        fn into_raw_vec(self) -> Vec<u8> {
+            imp::os_string_into_vec(self)
+        }
     }
 
-    #[inline]
-    fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
-        imp::os_string_from_vec(string).map_err(EncodingError)
-    }
+    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
+    impl OsStringBytes for PathBuf {
+        #[inline]
+        fn assert_from_raw_vec(string: Vec<u8>) -> Self {
+            OsString::assert_from_raw_vec(string).into()
+        }
 
-    #[inline]
-    fn into_raw_vec(self) -> Vec<u8> {
-        imp::os_string_into_vec(self)
-    }
-}
+        #[inline]
+        fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
+            OsString::from_raw_vec(string).map(Into::into)
+        }
 
-impl OsStringBytes for PathBuf {
-    #[inline]
-    fn assert_from_raw_vec(string: Vec<u8>) -> Self {
-        OsString::assert_from_raw_vec(string).into()
-    }
-
-    #[inline]
-    fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
-        OsString::from_raw_vec(string).map(Into::into)
-    }
-
-    #[inline]
-    fn into_raw_vec(self) -> Vec<u8> {
-        self.into_os_string().into_raw_vec()
+        #[inline]
+        fn into_raw_vec(self) -> Vec<u8> {
+            self.into_os_string().into_raw_vec()
+        }
     }
 }
 

@@ -1,41 +1,48 @@
 #![cfg(feature = "raw_os_str")]
 
-use os_str_bytes::RawOsStr;
-use os_str_bytes::RawOsString;
+#[macro_use]
+mod common;
 
-mod random_common;
-use random_common::ITERATIONS;
-use random_common::SMALL_LENGTH;
+if_conversions! {
+    use os_str_bytes::RawOsStr;
+    use os_str_bytes::RawOsString;
 
-#[cfg_attr(feature = "nightly", allow(deprecated))]
-#[test]
-fn test_complex() {
-    macro_rules! test {
-        ( $result:expr , $method:ident ( $(& $arg:ident),+) ) => {
-            assert_eq!(
-                $result,
-                RawOsStr::$method($(&$arg),+),
-                concat!(stringify!($method), "({:?}, {:?})"),
-                $($arg,)+
-            );
-        };
-    }
+    mod random_common;
+    use random_common::ITERATIONS;
+    use random_common::SMALL_LENGTH;
+}
 
-    for _ in 0..ITERATIONS {
-        let mut string = random_common::fastrand_os_string(SMALL_LENGTH);
-        let prefix = RawOsStr::new(&string).into_owned();
-        let suffix = random_common::fastrand_os_string(SMALL_LENGTH);
-        string.push(&suffix);
+if_conversions! {
+    #[cfg_attr(feature = "nightly", allow(deprecated))]
+    #[test]
+    fn test_complex() {
+        macro_rules! test {
+            ( $result:expr , $method:ident ( $(& $arg:ident),+) ) => {
+                assert_eq!(
+                    $result,
+                    RawOsStr::$method($(&$arg),+),
+                    concat!(stringify!($method), "({:?}, {:?})"),
+                    $($arg,)+
+                );
+            };
+        }
 
-        let string = RawOsString::new(string);
-        let suffix = RawOsString::new(suffix);
+        for _ in 0..ITERATIONS {
+            let mut string = random_common::fastrand_os_string(SMALL_LENGTH);
+            let prefix = RawOsStr::new(&string).into_owned();
+            let suffix = random_common::fastrand_os_string(SMALL_LENGTH);
+            string.push(&suffix);
 
-        test!(true, ends_with_os(&string, &suffix));
-        test!(true, starts_with_os(&string, &prefix));
+            let string = RawOsString::new(string);
+            let suffix = RawOsString::new(suffix);
 
-        if prefix != suffix {
-            test!(false, ends_with_os(&string, &prefix));
-            test!(false, starts_with_os(&string, &suffix));
+            test!(true, ends_with_os(&string, &suffix));
+            test!(true, starts_with_os(&string, &prefix));
+
+            if prefix != suffix {
+                test!(false, ends_with_os(&string, &prefix));
+                test!(false, starts_with_os(&string, &suffix));
+            }
         }
     }
 }

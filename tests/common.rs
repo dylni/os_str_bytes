@@ -22,6 +22,16 @@ if_checked_conversions! {
     use os_str_bytes::OsStringBytes;
 }
 
+#[allow(unused_macros)]
+macro_rules! if_conversions {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(feature = "conversions")]
+            $item
+        )+
+    };
+}
+
 if_checked_conversions! {
     pub(crate) type Result<T> = result::Result<T, EncodingError>;
 }
