@@ -44,8 +44,7 @@ if_conversions! {
         fn test(result: bool, suffix: &str) {
             assert_eq!(
                 result,
-                RawOsStr::from_str("")
-                    .ends_with_os(RawOsStr::from_str(suffix)),
+                RawOsStr::new("").ends_with_os(RawOsStr::new(suffix)),
             );
         }
 
@@ -88,8 +87,7 @@ if_conversions! {
         fn test(result: bool, prefix: &str) {
             assert_eq!(
                 result,
-                RawOsStr::from_str("")
-                    .starts_with_os(RawOsStr::from_str(prefix)),
+                RawOsStr::new("").starts_with_os(RawOsStr::new(prefix)),
             );
         }
 
@@ -110,5 +108,5 @@ if_conversions! {
 #[should_panic = "cannot split using an empty pattern"]
 #[test]
 fn test_split_empty_by_empty() {
-    let _ = RawOsStr::from_str("").split("");
+    let _ = RawOsStr::new("").split("");
 }

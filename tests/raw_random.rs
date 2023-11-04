@@ -28,7 +28,7 @@ if_conversions! {
 
         for _ in 0..ITERATIONS {
             let mut string = random_common::fastrand_os_string(SMALL_LENGTH);
-            let prefix = RawOsStr::from_os_str(&string).to_owned();
+            let prefix = RawOsStr::new(&string).to_owned();
             let suffix = random_common::fastrand_os_string(SMALL_LENGTH);
             string.push(&suffix);
 

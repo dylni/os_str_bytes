@@ -849,7 +849,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).contains(pat)
+            RawOsStr::new(self).contains(pat)
         }
 
         #[inline]
@@ -857,14 +857,13 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).ends_with(pat)
+            RawOsStr::new(self).ends_with(pat)
         }
 
         if_conversions! {
             #[inline]
             fn ends_with_os(&self, pat: &Self) -> bool {
-                RawOsStr::from_os_str(self)
-                    .ends_with_os(RawOsStr::from_os_str(pat))
+                RawOsStr::new(self).ends_with_os(RawOsStr::new(pat))
             }
         }
 
@@ -873,7 +872,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).find(pat)
+            RawOsStr::new(self).find(pat)
         }
 
         #[inline]
@@ -881,7 +880,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).rfind(pat)
+            RawOsStr::new(self).rfind(pat)
         }
 
         #[inline]
@@ -889,7 +888,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self)
+            RawOsStr::new(self)
                 .rsplit_once(pat)
                 .map(|(prefix, suffix)| {
                     (prefix.as_os_str(), suffix.as_os_str())
@@ -898,7 +897,7 @@ if_raw_str! {
 
         #[inline]
         fn split_at(&self, mid: usize) -> (&Self, &Self) {
-            let (prefix, suffix) = RawOsStr::from_os_str(self).split_at(mid);
+            let (prefix, suffix) = RawOsStr::new(self).split_at(mid);
             (prefix.as_os_str(), suffix.as_os_str())
         }
 
@@ -907,7 +906,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self)
+            RawOsStr::new(self)
                 .split_once(pat)
                 .map(|(prefix, suffix)| {
                     (prefix.as_os_str(), suffix.as_os_str())
@@ -919,14 +918,13 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).starts_with(pat)
+            RawOsStr::new(self).starts_with(pat)
         }
 
         if_conversions! {
             #[inline]
             fn starts_with_os(&self, pat: &Self) -> bool {
-                RawOsStr::from_os_str(self)
-                    .starts_with_os(RawOsStr::from_os_str(pat))
+                RawOsStr::new(self).starts_with_os(RawOsStr::new(pat))
             }
         }
 
@@ -935,9 +933,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self)
-                .strip_prefix(pat)
-                .map(RawOsStr::as_os_str)
+            RawOsStr::new(self).strip_prefix(pat).map(RawOsStr::as_os_str)
         }
 
         #[inline]
@@ -945,9 +941,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self)
-                .strip_suffix(pat)
-                .map(RawOsStr::as_os_str)
+            RawOsStr::new(self).strip_suffix(pat).map(RawOsStr::as_os_str)
         }
 
         #[inline]
@@ -955,7 +949,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).trim_end_matches(pat).as_os_str()
+            RawOsStr::new(self).trim_end_matches(pat).as_os_str()
         }
 
         #[inline]
@@ -963,7 +957,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).trim_matches(pat).as_os_str()
+            RawOsStr::new(self).trim_matches(pat).as_os_str()
         }
 
         #[inline]
@@ -971,7 +965,7 @@ if_raw_str! {
         where
             P: Pattern,
         {
-            RawOsStr::from_os_str(self).trim_start_matches(pat).as_os_str()
+            RawOsStr::new(self).trim_start_matches(pat).as_os_str()
         }
     }
 }

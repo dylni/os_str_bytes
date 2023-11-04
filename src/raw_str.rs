@@ -123,10 +123,35 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let os_string = env::current_exe()?.into_os_string();
+    /// println!("{:?}", RawOsStr::new(&os_string));
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn new<S>(string: &S) -> &Self
+    where
+        S: AsRef<OsStr> + ?Sized,
+    {
+        Self::from_inner(string.as_ref().as_encoded_bytes())
+    }
+
+    /// Wraps a platform-native string, without copying or encoding conversion.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
     /// println!("{:?}", RawOsStr::from_os_str(&os_string));
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
+    #[deprecated(since = "7.0.0", note = "use `new` instead")]
     #[inline]
     #[must_use]
     pub fn from_os_str(string: &OsStr) -> &Self {
@@ -145,6 +170,7 @@ impl RawOsStr {
     /// assert_eq!(string, raw);
     /// ```
     #[allow(clippy::should_implement_trait)]
+    #[deprecated(since = "7.0.0", note = "use `new` instead")]
     #[inline]
     #[must_use]
     pub fn from_str(string: &str) -> &Self {
@@ -162,7 +188,7 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let os_string = env::current_exe()?.into_os_string();
-    /// let raw = RawOsStr::from_os_str(&os_string);
+    /// let raw = RawOsStr::new(&os_string);
     /// let raw_bytes = raw.as_encoded_bytes();
     /// assert_eq!(raw, unsafe {
     ///     RawOsStr::from_encoded_bytes_unchecked(raw_bytes)
@@ -202,7 +228,7 @@ impl RawOsStr {
         /// use os_str_bytes::RawOsStr;
         ///
         /// let os_string = env::current_exe()?.into_os_string();
-        /// let raw = RawOsStr::from_os_str(&os_string);
+        /// let raw = RawOsStr::new(&os_string);
         /// let raw_bytes = raw.to_raw_bytes();
         /// assert_eq!(raw, &*RawOsStr::assert_cow_from_raw_bytes(&raw_bytes));
         /// #
@@ -238,7 +264,7 @@ impl RawOsStr {
         /// use os_str_bytes::RawOsStr;
         ///
         /// let os_string = env::current_exe()?.into_os_string();
-        /// let raw = RawOsStr::from_os_str(&os_string);
+        /// let raw = RawOsStr::new(&os_string);
         /// let raw_bytes = raw.to_raw_bytes();
         /// assert_eq!(
         ///     Ok(raw),
@@ -271,7 +297,7 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let string = "foobar";
-    /// let raw = RawOsStr::from_str(string);
+    /// let raw = RawOsStr::new(string);
     /// assert_eq!(string.as_bytes(), raw.as_encoded_bytes());
     /// ```
     ///
@@ -295,7 +321,7 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let os_string = env::current_exe()?.into_os_string();
-    /// let raw = RawOsStr::from_os_str(&os_string);
+    /// let raw = RawOsStr::new(&os_string);
     /// assert_eq!(os_string, raw.as_os_str());
     /// #
     /// # Ok::<_, io::Error>(())
@@ -315,7 +341,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert!(raw.contains("oo"));
     /// assert!(!raw.contains("of"));
     /// ```
@@ -335,7 +361,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert!(raw.ends_with("bar"));
     /// assert!(!raw.ends_with("foo"));
     /// ```
@@ -360,9 +386,9 @@ impl RawOsStr {
         /// ```
         /// use os_str_bytes::RawOsStr;
         ///
-        /// let raw = RawOsStr::from_str("foobar");
-        /// assert!(raw.ends_with_os(RawOsStr::from_str("bar")));
-        /// assert!(!raw.ends_with_os(RawOsStr::from_str("foo")));
+        /// let raw = RawOsStr::new("foobar");
+        /// assert!(raw.ends_with_os(RawOsStr::new("bar")));
+        /// assert!(!raw.ends_with_os(RawOsStr::new("foo")));
         /// ```
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
@@ -379,7 +405,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert_eq!(Some(1), raw.find("o"));
     /// assert_eq!(None, raw.find("of"));
     /// ```
@@ -402,8 +428,8 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// assert!(RawOsStr::from_str("").is_empty());
-    /// assert!(!RawOsStr::from_str("foobar").is_empty());
+    /// assert!(RawOsStr::new("").is_empty());
+    /// assert!(!RawOsStr::new("foobar").is_empty());
     /// ```
     #[inline]
     #[must_use]
@@ -418,7 +444,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert_eq!(Some(2), raw.rfind("o"));
     /// assert_eq!(None, raw.rfind("of"));
     /// ```
@@ -465,9 +491,9 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert_eq!(
-    ///     Some((RawOsStr::from_str("fo"), RawOsStr::from_str("bar"))),
+    ///     Some((RawOsStr::new("fo"), RawOsStr::new("bar"))),
     ///     raw.rsplit_once("o"),
     /// );
     /// assert_eq!(None, raw.rsplit_once("of"));
@@ -538,7 +564,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert!(raw.split("o").eq(["f", "", "bar"]));
     /// ```
     #[inline]
@@ -561,9 +587,9 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert_eq!(
-    ///     (RawOsStr::from_str("fo"), RawOsStr::from_str("obar")),
+    ///     (RawOsStr::new("fo"), RawOsStr::new("obar")),
     ///     raw.split_at(2),
     /// );
     /// ```
@@ -593,9 +619,9 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert_eq!(
-    ///     Some((RawOsStr::from_str("f"), RawOsStr::from_str("obar"))),
+    ///     Some((RawOsStr::new("f"), RawOsStr::new("obar"))),
     ///     raw.split_once("o"),
     /// );
     /// assert_eq!(None, raw.split_once("of"));
@@ -616,7 +642,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("foobar");
+    /// let raw = RawOsStr::new("foobar");
     /// assert!(raw.starts_with("foo"));
     /// assert!(!raw.starts_with("bar"));
     /// ```
@@ -641,9 +667,9 @@ impl RawOsStr {
         /// ```
         /// use os_str_bytes::RawOsStr;
         ///
-        /// let raw = RawOsStr::from_str("foobar");
-        /// assert!(raw.starts_with_os(RawOsStr::from_str("foo")));
-        /// assert!(!raw.starts_with_os(RawOsStr::from_str("bar")));
+        /// let raw = RawOsStr::new("foobar");
+        /// assert!(raw.starts_with_os(RawOsStr::new("foo")));
+        /// assert!(!raw.starts_with_os(RawOsStr::new("bar")));
         /// ```
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
@@ -660,11 +686,8 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("111foo1bar111");
-    /// assert_eq!(
-    ///     Some(RawOsStr::from_str("11foo1bar111")),
-    ///     raw.strip_prefix("1"),
-    /// );
+    /// let raw = RawOsStr::new("111foo1bar111");
+    /// assert_eq!(Some(RawOsStr::new("11foo1bar111")), raw.strip_prefix("1"));
     /// assert_eq!(None, raw.strip_prefix("o"));
     /// ```
     #[inline]
@@ -686,11 +709,8 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("111foo1bar111");
-    /// assert_eq!(
-    ///     Some(RawOsStr::from_str("111foo1bar11")),
-    ///     raw.strip_suffix("1"),
-    /// );
+    /// let raw = RawOsStr::new("111foo1bar111");
+    /// assert_eq!(Some(RawOsStr::new("111foo1bar11")), raw.strip_suffix("1"));
     /// assert_eq!(None, raw.strip_suffix("o"));
     /// ```
     #[inline]
@@ -716,7 +736,7 @@ impl RawOsStr {
         /// use os_str_bytes::RawOsStr;
         ///
         /// let string = "foobar";
-        /// let raw = RawOsStr::from_str(string);
+        /// let raw = RawOsStr::new(string);
         /// assert_eq!(string.as_bytes(), &*raw.to_raw_bytes());
         /// ```
         ///
@@ -737,7 +757,7 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let string = "foobar";
-    /// let raw = RawOsStr::from_str(string);
+    /// let raw = RawOsStr::new(string);
     /// assert_eq!(Some(string), raw.to_str());
     /// ```
     #[inline]
@@ -764,7 +784,7 @@ impl RawOsStr {
     /// use os_str_bytes::RawOsStr;
     ///
     /// let os_string = env::current_exe()?.into_os_string();
-    /// let raw = RawOsStr::from_os_str(&os_string);
+    /// let raw = RawOsStr::new(&os_string);
     /// println!("{}", raw.to_str_lossy());
     /// #
     /// # Ok::<_, io::Error>(())
@@ -806,7 +826,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("111foo1bar111");
+    /// let raw = RawOsStr::new("111foo1bar111");
     /// assert_eq!("111foo1bar", raw.trim_end_matches("1"));
     /// assert_eq!("111foo1bar111", raw.trim_end_matches("o"));
     /// ```
@@ -826,7 +846,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("111foo1bar111");
+    /// let raw = RawOsStr::new("111foo1bar111");
     /// assert_eq!("foo1bar", raw.trim_matches("1"));
     /// assert_eq!("111foo1bar111", raw.trim_matches("o"));
     /// ```
@@ -854,7 +874,7 @@ impl RawOsStr {
     /// ```
     /// use os_str_bytes::RawOsStr;
     ///
-    /// let raw = RawOsStr::from_str("111foo1bar111");
+    /// let raw = RawOsStr::new("111foo1bar111");
     /// assert_eq!("foo1bar111", raw.trim_start_matches("1"));
     /// assert_eq!("111foo1bar111", raw.trim_start_matches("o"));
     /// ```
@@ -885,7 +905,7 @@ impl AsRef<OsStr> for RawOsStr {
 impl AsRef<RawOsStr> for OsStr {
     #[inline]
     fn as_ref(&self) -> &RawOsStr {
-        RawOsStr::from_os_str(self)
+        RawOsStr::new(self)
     }
 }
 
@@ -899,7 +919,7 @@ impl AsRef<RawOsStr> for OsString {
 impl AsRef<RawOsStr> for str {
     #[inline]
     fn as_ref(&self) -> &RawOsStr {
-        RawOsStr::from_str(self)
+        RawOsStr::new(self)
     }
 }
 
@@ -913,7 +933,7 @@ impl AsRef<RawOsStr> for String {
 impl Default for &RawOsStr {
     #[inline]
     fn default() -> Self {
-        RawOsStr::from_str("")
+        RawOsStr::new("")
     }
 }
 
@@ -980,7 +1000,7 @@ pub trait RawOsStrCow<'a>: private::Sealed {
     /// use os_str_bytes::RawOsStrCow;
     ///
     /// let os_string = env::current_exe()?.into_os_string();
-    /// let raw = Cow::Borrowed(RawOsStr::from_os_str(&os_string));
+    /// let raw = Cow::Borrowed(RawOsStr::new(&os_string));
     /// assert_eq!(os_string, raw.into_os_str());
     /// #
     /// # Ok::<_, io::Error>(())
@@ -993,9 +1013,7 @@ impl<'a> RawOsStrCow<'a> for Cow<'a, RawOsStr> {
     #[inline]
     fn from_os_str(string: Cow<'a, OsStr>) -> Self {
         match string {
-            Cow::Borrowed(string) => {
-                Cow::Borrowed(RawOsStr::from_os_str(string))
-            }
+            Cow::Borrowed(string) => Cow::Borrowed(RawOsStr::new(string)),
             Cow::Owned(string) => Cow::Owned(RawOsString::new(string)),
         }
     }
@@ -1034,8 +1052,11 @@ impl RawOsString {
     /// ```
     #[inline]
     #[must_use]
-    pub fn new(string: OsString) -> Self {
-        Self(string.into_encoded_bytes())
+    pub fn new<S>(string: S) -> Self
+    where
+        S: Into<OsString>,
+    {
+        Self(string.into().into_encoded_bytes())
     }
 
     /// Wraps a string, without copying or encoding conversion.
@@ -1049,6 +1070,7 @@ impl RawOsString {
     /// let raw = RawOsString::from_string(string.clone());
     /// assert_eq!(string, raw);
     /// ```
+    #[deprecated(since = "7.0.0", note = "use `new` instead")]
     #[inline]
     #[must_use]
     pub fn from_string(string: String) -> Self {
@@ -1188,7 +1210,7 @@ impl RawOsString {
     /// use os_str_bytes::RawOsString;
     ///
     /// let string = "foobar".to_owned();
-    /// let raw = RawOsString::from_string(string.clone());
+    /// let raw = RawOsString::new(string.clone());
     /// assert_eq!(string, *raw.into_box());
     /// ```
     #[inline]
@@ -1209,7 +1231,7 @@ impl RawOsString {
     /// use os_str_bytes::RawOsString;
     ///
     /// let string = "foobar".to_owned();
-    /// let raw = RawOsString::from_string(string.clone());
+    /// let raw = RawOsString::new(string.clone());
     /// assert_eq!(string.into_bytes(), raw.into_encoded_vec());
     /// ```
     ///
@@ -1257,7 +1279,7 @@ impl RawOsString {
         /// use os_str_bytes::RawOsString;
         ///
         /// let string = "foobar".to_owned();
-        /// let raw = RawOsString::from_string(string.clone());
+        /// let raw = RawOsString::new(string.clone());
         /// assert_eq!(string.into_bytes(), raw.into_raw_vec());
         /// ```
         ///
@@ -1278,7 +1300,7 @@ impl RawOsString {
     /// use os_str_bytes::RawOsString;
     ///
     /// let string = "foobar".to_owned();
-    /// let raw = RawOsString::from_string(string.clone());
+    /// let raw = RawOsString::new(string.clone());
     /// assert_eq!(Ok(string), raw.into_string());
     /// ```
     #[inline]
@@ -1294,7 +1316,7 @@ impl RawOsString {
     /// use os_str_bytes::RawOsString;
     ///
     /// let string = "foobar".to_owned();
-    /// let mut raw = RawOsString::from_string(string.clone());
+    /// let mut raw = RawOsString::new(string.clone());
     /// raw.shrink_to_fit();
     /// assert_eq!(string, raw);
     /// ```
@@ -1314,7 +1336,7 @@ impl RawOsString {
     /// ```
     /// use os_str_bytes::RawOsString;
     ///
-    /// let mut raw = RawOsString::from_string("foobar".to_owned());
+    /// let mut raw = RawOsString::new("foobar".to_owned());
     /// assert_eq!("bar", raw.split_off(3));
     /// assert_eq!("foo", raw);
     /// ```
@@ -1340,7 +1362,7 @@ impl RawOsString {
     /// ```
     /// use os_str_bytes::RawOsString;
     ///
-    /// let mut raw = RawOsString::from_string("foobar".to_owned());
+    /// let mut raw = RawOsString::new("foobar".to_owned());
     /// raw.truncate(3);
     /// assert_eq!("foo", raw);
     /// ```
@@ -1423,7 +1445,7 @@ impl From<RawOsString> for OsString {
 impl From<String> for RawOsString {
     #[inline]
     fn from(value: String) -> Self {
-        Self::from_string(value)
+        Self::new(value)
     }
 }
 

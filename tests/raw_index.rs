@@ -66,7 +66,7 @@ fn test_panics() {
         assert!(panic::catch_unwind(f).is_err());
     }
 
-    let string = RawOsStr::from_str("\u{F6}");
+    let string = RawOsStr::new("\u{F6}");
     test(|| string.index(1..2));
     test(|| string.index(0..1));
     test(|| string.index(1..));

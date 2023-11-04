@@ -19,7 +19,7 @@ fn test(result: &str, string: &RawOsStr) {
 
 #[test]
 fn test_empty() {
-    test("\"\"", RawOsStr::from_str(""));
+    test("\"\"", RawOsStr::new(""));
 }
 
 if_conversions! {
@@ -36,5 +36,5 @@ if_conversions! {
 
 #[test]
 fn test_quote() {
-    test("\"foo\\\"bar\"", RawOsStr::from_str("foo\"bar"));
+    test("\"foo\\\"bar\"", RawOsStr::new("foo\"bar"));
 }
