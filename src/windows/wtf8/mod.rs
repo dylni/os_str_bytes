@@ -12,7 +12,9 @@ pub(super) use convert::encode_wide;
 pub(super) use convert::DecodeWide;
 
 if_raw_str! {
-    mod string;
-    pub(crate) use string::ends_with;
-    pub(crate) use string::starts_with;
+    if_conversions! {
+        mod string;
+        pub(crate) use string::ends_with;
+        pub(crate) use string::starts_with;
+    }
 }

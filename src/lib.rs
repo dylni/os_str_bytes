@@ -209,7 +209,6 @@
 //! [print\_bytes]: https://crates.io/crates/print_bytes
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 
-#![cfg_attr(not(feature = "checked_conversions"), allow(deprecated))]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
@@ -222,16 +221,27 @@
 )]
 #![warn(unused_results)]
 
-use std::borrow::Cow;
-use std::error::Error;
+#[cfg(any(
+    feature = "conversions",
+    all(feature = "raw_os_str", feature = "nightly"),
+))]
 use std::ffi::OsStr;
-use std::ffi::OsString;
-use std::fmt;
-use std::fmt::Display;
-use std::fmt::Formatter;
-use std::path::Path;
-use std::path::PathBuf;
-use std::result;
+
+macro_rules! if_conversions {
+    ( $($item:item)+ ) => {
+        $(
+            #[cfg(feature = "conversions")]
+            $item
+        )+
+    };
+}
+
+if_conversions! {
+    use std::borrow::Cow;
+    use std::ffi::OsString;
+    use std::path::Path;
+    use std::path::PathBuf;
+}
 
 macro_rules! if_checked_conversions {
     ( $($item:item)+ ) => {
@@ -240,6 +250,14 @@ macro_rules! if_checked_conversions {
             $item
         )+
     };
+}
+
+if_checked_conversions! {
+    use std::error::Error;
+    use std::fmt;
+    use std::fmt::Display;
+    use std::fmt::Formatter;
+    use std::result;
 }
 
 #[cfg(not(os_str_bytes_docs_rs))]
@@ -267,30 +285,6 @@ if_nightly! {
         "The 'OS_STR_BYTES_NIGHTLY' environment variable must be defined to \
          use the 'nightly' feature.",
     );
-}
-
-#[rustfmt::skip]
-macro_rules! deprecated_checked_conversion {
-    ( $message:expr , $item:item ) => {
-        #[cfg_attr(
-            not(feature = "checked_conversions"),
-            deprecated = $message
-        )]
-        $item
-    };
-}
-
-#[rustfmt::skip]
-macro_rules! deprecated_conversions {
-    ( $($item:item)+ ) => {
-        $(
-            #[cfg_attr(
-                not(feature = "conversions"),
-                deprecated = "enable the 'conversions' feature"
-            )]
-            $item
-        )+
-    };
 }
 
 macro_rules! if_raw_str {
@@ -324,25 +318,14 @@ if_raw_str! {
     }
 }
 
-if_raw_str! {
-    if_nightly! {
-        macro_rules! if_conversions {
-            ( $($item:item)+ ) => {
-                $(
-                    #[cfg(feature = "conversions")]
-                    $item
-                )+
-            };
-        }
-    }
-}
-
+#[cfg(any(feature = "conversions", feature = "raw_os_str"))]
 macro_rules! expect_encoded {
     ( $result:expr ) => {
         $result.expect("invalid raw bytes")
     };
 }
 
+#[cfg(any(feature = "conversions", feature = "raw_os_str"))]
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
     path = "wasm/mod.rs"
@@ -360,9 +343,10 @@ mod imp;
         any(
             feature = "nightly",
             all(target_family = "wasm", target_os = "unknown"),
+            windows,
         ),
     ),
-    windows,
+    all(feature = "conversions", windows)
 ))]
 mod util;
 
@@ -378,10 +362,7 @@ if_raw_str! {
     pub use raw_str::RawOsString;
 }
 
-deprecated_checked_conversion! {
-    "use `OsStrBytes::assert_from_raw_bytes` or \
-     `OsStringBytes::assert_from_raw_vec` instead, or enable the \
-     'checked_conversions' feature",
+if_checked_conversions! {
     /// The error that occurs when a byte sequence is not representable in the
     /// platform encoding.
     ///
@@ -405,37 +386,45 @@ deprecated_checked_conversion! {
         doc(cfg(feature = "checked_conversions"))
     )]
     pub struct EncodingError(imp::EncodingError);
+
+    impl Display for EncodingError {
+        #[inline]
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            self.0.fmt(f)
+        }
+    }
+
+    impl Error for EncodingError {}
 }
 
-impl Display for EncodingError {
-    #[inline]
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+if_checked_conversions! {
+    type Result<T> = result::Result<T, EncodingError>;
+}
+
+if_conversions! {
+    fn from_raw_bytes<'a, S>(string: S) -> imp::Result<Cow<'a, OsStr>>
+    where
+        S: Into<Cow<'a, [u8]>>,
+    {
+        match string.into() {
+            Cow::Borrowed(string) => imp::os_str_from_bytes(string),
+            Cow::Owned(string) => {
+                imp::os_string_from_vec(string).map(Cow::Owned)
+            }
+        }
     }
 }
 
-impl Error for EncodingError {}
-
-type Result<T> = result::Result<T, EncodingError>;
-
-fn from_raw_bytes<'a, S>(string: S) -> imp::Result<Cow<'a, OsStr>>
-where
-    S: Into<Cow<'a, [u8]>>,
-{
-    match string.into() {
-        Cow::Borrowed(string) => imp::os_str_from_bytes(string),
-        Cow::Owned(string) => imp::os_string_from_vec(string).map(Cow::Owned),
+if_conversions! {
+    fn cow_os_str_into_path(string: Cow<'_, OsStr>) -> Cow<'_, Path> {
+        match string {
+            Cow::Borrowed(string) => Cow::Borrowed(Path::new(string)),
+            Cow::Owned(string) => Cow::Owned(string.into()),
+        }
     }
 }
 
-fn cow_os_str_into_path(string: Cow<'_, OsStr>) -> Cow<'_, Path> {
-    match string {
-        Cow::Borrowed(string) => Cow::Borrowed(Path::new(string)),
-        Cow::Owned(string) => Cow::Owned(string.into()),
-    }
-}
-
-deprecated_conversions! {
+if_conversions! {
     /// A platform agnostic variant of [`OsStrExt`].
     ///
     /// For more information, see [the module-level documentation][module].
@@ -474,9 +463,7 @@ deprecated_conversions! {
         where
             S: Into<Cow<'a, [u8]>>;
 
-        deprecated_checked_conversion! {
-            "use `assert_from_raw_bytes` instead, or enable the \
-             'checked_conversions' feature",
+        if_checked_conversions! {
             /// Converts a byte string into an equivalent platform-native
             /// string.
             ///
@@ -534,7 +521,6 @@ deprecated_conversions! {
         fn to_raw_bytes(&self) -> Cow<'_, [u8]>;
     }
 
-    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
     impl OsStrBytes for OsStr {
         #[inline]
         fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
@@ -544,12 +530,14 @@ deprecated_conversions! {
             expect_encoded!(from_raw_bytes(string))
         }
 
-        #[inline]
-        fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
-        where
-            S: Into<Cow<'a, [u8]>>,
-        {
-            from_raw_bytes(string).map_err(EncodingError)
+        if_checked_conversions! {
+            #[inline]
+            fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
+            where
+                S: Into<Cow<'a, [u8]>>,
+            {
+                from_raw_bytes(string).map_err(EncodingError)
+            }
         }
 
         #[inline]
@@ -558,7 +546,6 @@ deprecated_conversions! {
         }
     }
 
-    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
     impl OsStrBytes for Path {
         #[inline]
         fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
@@ -568,12 +555,14 @@ deprecated_conversions! {
             cow_os_str_into_path(OsStr::assert_from_raw_bytes(string))
         }
 
-        #[inline]
-        fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
-        where
-            S: Into<Cow<'a, [u8]>>,
-        {
-            OsStr::from_raw_bytes(string).map(cow_os_str_into_path)
+        if_checked_conversions! {
+            #[inline]
+            fn from_raw_bytes<'a, S>(string: S) -> Result<Cow<'a, Self>>
+            where
+                S: Into<Cow<'a, [u8]>>,
+            {
+                OsStr::from_raw_bytes(string).map(cow_os_str_into_path)
+            }
         }
 
         #[inline]
@@ -585,7 +574,14 @@ deprecated_conversions! {
 
 if_raw_str! {
     if_nightly! {
+        #[cfg(not(feature = "conversions"))]
+        trait OsStrBytes: private::Sealed {}
+
+        #[cfg(not(feature = "conversions"))]
+        impl OsStrBytes for OsStr {}
+
         /// An extension trait providing methods from [`RawOsStr`].
+        #[cfg_attr(not(feature = "conversions"), allow(private_bounds))]
         #[cfg_attr(
             os_str_bytes_docs_rs,
             doc(cfg(all(feature = "nightly", feature = "raw_os_str")))
@@ -1026,7 +1022,7 @@ if_raw_str! {
     }
 }
 
-deprecated_conversions! {
+if_conversions! {
     /// A platform agnostic variant of [`OsStringExt`].
     ///
     /// For more information, see [the module-level documentation][module].
@@ -1063,9 +1059,7 @@ deprecated_conversions! {
         #[track_caller]
         fn assert_from_raw_vec(string: Vec<u8>) -> Self;
 
-        deprecated_checked_conversion! {
-            "use `assert_from_raw_vec` instead, or enable the \
-             'checked_conversions' feature",
+        if_checked_conversions! {
             /// Converts a byte string into an equivalent platform-native
             /// string.
             ///
@@ -1124,16 +1118,17 @@ deprecated_conversions! {
         fn into_raw_vec(self) -> Vec<u8>;
     }
 
-    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
     impl OsStringBytes for OsString {
         #[inline]
         fn assert_from_raw_vec(string: Vec<u8>) -> Self {
             expect_encoded!(imp::os_string_from_vec(string))
         }
 
-        #[inline]
-        fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
-            imp::os_string_from_vec(string).map_err(EncodingError)
+        if_checked_conversions! {
+            #[inline]
+            fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
+                imp::os_string_from_vec(string).map_err(EncodingError)
+            }
         }
 
         #[inline]
@@ -1142,16 +1137,17 @@ deprecated_conversions! {
         }
     }
 
-    #[cfg_attr(not(feature = "conversions"), allow(useless_deprecated))]
     impl OsStringBytes for PathBuf {
         #[inline]
         fn assert_from_raw_vec(string: Vec<u8>) -> Self {
             OsString::assert_from_raw_vec(string).into()
         }
 
-        #[inline]
-        fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
-            OsString::from_raw_vec(string).map(Into::into)
+        if_checked_conversions! {
+            #[inline]
+            fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
+                OsString::from_raw_vec(string).map(Into::into)
+            }
         }
 
         #[inline]

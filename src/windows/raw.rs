@@ -3,8 +3,10 @@ use std::fmt::Formatter;
 
 use crate::RawOsStr;
 
-pub(crate) use super::wtf8::ends_with;
-pub(crate) use super::wtf8::starts_with;
+if_conversions! {
+    pub(crate) use super::wtf8::ends_with;
+    pub(crate) use super::wtf8::starts_with;
+}
 
 if_nightly! {
     use std::os::windows::ffi::OsStrExt;
@@ -15,12 +17,17 @@ if_not_nightly! {
 
     use super::wtf8;
     use super::wtf8::CodePoints;
-    use super::Result;
+
+    if_conversions! {
+        use super::Result;
+    }
 }
 
 if_not_nightly! {
-    pub(crate) fn validate_bytes(string: &[u8]) -> Result<()> {
-        wtf8::encode_wide(string).try_for_each(|x| x.map(drop))
+    if_conversions! {
+        pub(crate) fn validate_bytes(string: &[u8]) -> Result<()> {
+            wtf8::encode_wide(string).try_for_each(|x| x.map(drop))
+        }
     }
 }
 
