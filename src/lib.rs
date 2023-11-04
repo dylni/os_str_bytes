@@ -248,6 +248,24 @@ macro_rules! if_nightly {
     };
 }
 
+macro_rules! r#impl {
+    ( $($feature:literal),+ ) => {
+        $(
+            #[cfg(all(feature = $feature, not(feature = "raw_os_str")))]
+            const _: &str = env!(
+                "__OS_STR_BYTES_CI",
+                concat!(
+                    "The '",
+                    $feature,
+                    "' feature is useless when 'raw_os_str' is disabled; it \
+                     should be disabled too.",
+                ),
+            );
+        )+
+    };
+}
+r#impl!("memchr", "print_bytes", "uniquote");
+
 #[cfg(not(os_str_bytes_docs_rs))]
 if_nightly! {
     const _: &str = env!(

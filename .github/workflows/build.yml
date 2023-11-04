@@ -14,6 +14,8 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.platform }}
+    env:
+      __OS_STR_BYTES_CI: 1
     steps:
     - uses: dylni/build-actions/setup@master
       with:
@@ -34,6 +36,8 @@ jobs:
   build-other:
     needs: [build]
     runs-on: ubuntu-latest
+    env:
+      __OS_STR_BYTES_CI: 1
     steps:
     - uses: dylni/build-actions/build-other@master
       with:
