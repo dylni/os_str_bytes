@@ -14,7 +14,7 @@ pub(crate) struct EncodingError(Utf8Error);
 
 impl Display for EncodingError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "os_str_bytes: {}", self.0)
+        write!(f, "{}", self.0)
     }
 }
 
