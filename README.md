@@ -47,32 +47,32 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td>SOLID</td>
         <td><code>*-*-solid_asp3(-*)</code></td>
-        <td>1.61.0</td>
+        <td>1.74.0</td>
     </tr>
     <tr>
         <td>Unix</td>
         <td>Unix</td>
-        <td>1.61.0</td>
+        <td>1.74.0</td>
     </tr>
     <tr>
         <td>WASI</td>
         <td><code>*-wasi</code></td>
-        <td>1.61.0</td>
+        <td>1.74.0</td>
     </tr>
     <tr>
         <td>WebAssembly</td>
         <td><code>wasm32-*-unknown</code></td>
-        <td>1.61.0</td>
+        <td>1.74.0</td>
     </tr>
     <tr>
         <td>Windows</td>
         <td><code>*-*-windows-*</code></td>
-        <td>1.61.0</td>
+        <td>1.74.0</td>
     </tr>
     <tr>
         <td>Xous</td>
         <td><code>*-*-xous-*</code></td>
-        <td>1.74 (rust-lang/rust#104101)</td>
+        <td>1.74.0</td>
     </tr>
 </table>
 

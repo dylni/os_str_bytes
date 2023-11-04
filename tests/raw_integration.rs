@@ -10,7 +10,6 @@ if_conversions! {
 }
 
 if_conversions! {
-    #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[test]
     fn test_ends_with() {
         #[track_caller]
@@ -39,7 +38,6 @@ if_conversions! {
         test(false, b"\xED\xB2\xA9aar");
     }
 
-    #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[test]
     fn test_empty_ends_with() {
         #[track_caller]
@@ -56,7 +54,6 @@ if_conversions! {
         test(false, "ar");
     }
 
-    #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[test]
     fn test_starts_with() {
         #[track_caller]
@@ -85,7 +82,6 @@ if_conversions! {
         test(false, b"fof\xED\xA0\xBD\xED\xA0\xBD");
     }
 
-    #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[test]
     fn test_empty_starts_with() {
         #[track_caller]

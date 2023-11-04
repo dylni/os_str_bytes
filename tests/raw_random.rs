@@ -13,7 +13,6 @@ if_conversions! {
 }
 
 if_conversions! {
-    #[cfg_attr(feature = "nightly", allow(deprecated))]
     #[test]
     fn test_complex() {
         macro_rules! test {
@@ -29,7 +28,7 @@ if_conversions! {
 
         for _ in 0..ITERATIONS {
             let mut string = random_common::fastrand_os_string(SMALL_LENGTH);
-            let prefix = RawOsStr::new(&string).into_owned();
+            let prefix = RawOsStr::from_os_str(&string).to_owned();
             let suffix = random_common::fastrand_os_string(SMALL_LENGTH);
             string.push(&suffix);
 

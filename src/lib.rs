@@ -116,34 +116,6 @@
 //!   Provides implementations of [`uniquote::Quote`] for [`RawOsStr`] and
 //!   [`RawOsString`].
 //!
-//! ### Nightly Features
-//!
-//! These features are unstable, since they rely on unstable Rust features.
-//!
-//! - **nightly** -
-//!   Changes the implementation to use the ["os\_str\_bytes" nightly
-//!   feature][feature] and provides:
-//!   - [`RawOsStr::as_encoded_bytes`]
-//!   - [`RawOsStr::as_os_str`]
-//!   - [`RawOsStr::from_encoded_bytes_unchecked`]
-//!   - [`RawOsStr::from_os_str`]
-//!   - [`RawOsString::from_encoded_vec_unchecked`]
-//!   - [`RawOsString::into_encoded_vec`]
-//!   - additional trait implementations for [`RawOsStr`] and [`RawOsString`]
-//!
-//!   When applicable, a "Nightly Notes" section will be added to documentation
-//!   descriptions, indicating differences when this feature is enabled.
-//!   However, it will not cause any breaking changes.
-//!
-//!   This feature will cause memory leaks for some newly deprecated methods.
-//!   Therefore, it is not recommended to use this feature until the next major
-//!   version, when those methods will be removed. However, it can be used to
-//!   prepare for upgrading and determine impact of the new feature.
-//!
-//!   Because this feature should not be used in libraries, the
-//!   "OS_STR_BYTES_NIGHTLY" environment variable must be defined during
-//!   compilation.
-//!
 //! # Implementation
 //!
 //! Some methods return [`Cow`] to account for platform differences. However,
@@ -173,7 +145,7 @@
 //! use std::env;
 //! use std::fs;
 //!
-//! use os_str_bytes::RawOsStr;
+//! use os_str_bytes::OsStrBytesExt;
 //!
 //! # mod env {
 //! #   use std::env;
@@ -187,7 +159,7 @@
 //! # }
 //! #
 //! for file in env::args_os().skip(1) {
-//!     if !RawOsStr::new(&file).starts_with('-') {
+//!     if !file.starts_with('-') {
 //!         let string = "Hello, world!";
 //!         fs::write(&file, string)?;
 //!         assert_eq!(string, fs::read_to_string(file)?);
@@ -201,7 +173,6 @@
 //! [bstr]: https://crates.io/crates/bstr
 //! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
-//! [feature]: https://doc.rust-lang.org/unstable-book/library-features/os-str-bytes.html
 //! [memchr complexity]: RawOsStr#complexity
 //! [memchr]: https://crates.io/crates/memchr
 //! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
@@ -221,10 +192,7 @@
 )]
 #![warn(unused_results)]
 
-#[cfg(any(
-    feature = "conversions",
-    all(feature = "raw_os_str", feature = "nightly"),
-))]
+#[cfg(any(feature = "conversions", feature = "raw_os_str"))]
 use std::ffi::OsStr;
 
 macro_rules! if_conversions {
@@ -296,36 +264,15 @@ macro_rules! if_raw_str {
     };
 }
 
-if_raw_str! {
-    macro_rules! if_not_nightly {
-        ( $($item:item)+ ) => {
-            $(
-                #[cfg(not(feature = "nightly"))]
-                $item
-            )+
-        };
-    }
-
-    macro_rules! if_nightly_return {
-        ( $nightly_value:block $($not_nightly_token:tt)* ) => {
-            #[cfg(feature = "nightly")]
-            return $nightly_value;
-            #[cfg(not(feature = "nightly"))]
-            {
-                $($not_nightly_token)*
-            }
+if_conversions! {
+    macro_rules! expect_encoded {
+        ( $result:expr ) => {
+            $result.expect("invalid raw bytes")
         };
     }
 }
 
-#[cfg(any(feature = "conversions", feature = "raw_os_str"))]
-macro_rules! expect_encoded {
-    ( $result:expr ) => {
-        $result.expect("invalid raw bytes")
-    };
-}
-
-#[cfg(any(feature = "conversions", feature = "raw_os_str"))]
+#[allow(dead_code)]
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
     path = "wasm/mod.rs"
@@ -337,17 +284,7 @@ macro_rules! expect_encoded {
 )]
 mod imp;
 
-#[cfg(any(
-    all(
-        feature = "raw_os_str",
-        any(
-            feature = "nightly",
-            all(target_family = "wasm", target_os = "unknown"),
-            windows,
-        ),
-    ),
-    all(feature = "conversions", windows)
-))]
+#[cfg(any(feature = "raw_os_str", windows))]
 mod util;
 
 if_raw_str! {
@@ -573,21 +510,55 @@ if_conversions! {
 }
 
 if_raw_str! {
-    if_nightly! {
-        #[cfg(not(feature = "conversions"))]
-        trait OsStrBytes: private::Sealed {}
+    #[cfg(not(feature = "conversions"))]
+    trait OsStrBytes: private::Sealed {}
 
-        #[cfg(not(feature = "conversions"))]
-        impl OsStrBytes for OsStr {}
+    #[cfg(not(feature = "conversions"))]
+    impl OsStrBytes for OsStr {}
 
-        /// An extension trait providing methods from [`RawOsStr`].
-        #[cfg_attr(not(feature = "conversions"), allow(private_bounds))]
-        #[cfg_attr(
-            os_str_bytes_docs_rs,
-            doc(cfg(all(feature = "nightly", feature = "raw_os_str")))
-        )]
-        pub trait OsStrBytesExt: OsStrBytes {
-            /// Equivalent to [`str::contains`].
+    /// An extension trait providing methods from [`RawOsStr`].
+    #[cfg_attr(not(feature = "conversions"), allow(private_bounds))]
+    #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
+    pub trait OsStrBytesExt: OsStrBytes {
+        /// Equivalent to [`str::contains`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert!(os_string.contains("oo"));
+        /// assert!(!os_string.contains("of"));
+        /// ```
+        #[must_use]
+        fn contains<P>(&self, pat: P) -> bool
+        where
+            P: Pattern;
+
+        /// Equivalent to [`str::ends_with`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert!(os_string.ends_with("bar"));
+        /// assert!(!os_string.ends_with("foo"));
+        /// ```
+        #[must_use]
+        fn ends_with<P>(&self, pat: P) -> bool
+        where
+            P: Pattern;
+
+        if_conversions! {
+            /// Equivalent to [`str::ends_with`] but accepts this type for the
+            /// pattern.
             ///
             /// # Examples
             ///
@@ -597,427 +568,387 @@ if_raw_str! {
             /// use os_str_bytes::OsStrBytesExt;
             ///
             /// let os_string = OsStr::new("foobar");
-            /// assert!(os_string.contains("oo"));
-            /// assert!(!os_string.contains("of"));
+            /// assert!(os_string.ends_with_os(OsStr::new("bar")));
+            /// assert!(!os_string.ends_with_os(OsStr::new("foo")));
             /// ```
+            #[cfg_attr(
+                os_str_bytes_docs_rs,
+                doc(cfg(feature = "conversions"))
+            )]
             #[must_use]
-            fn contains<P>(&self, pat: P) -> bool
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::ends_with`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert!(os_string.ends_with("bar"));
-            /// assert!(!os_string.ends_with("foo"));
-            /// ```
-            #[must_use]
-            fn ends_with<P>(&self, pat: P) -> bool
-            where
-                P: Pattern;
-
-            if_conversions! {
-                /// Equivalent to [`str::ends_with`] but accepts this type for
-                /// the pattern.
-                ///
-                /// # Examples
-                ///
-                /// ```
-                /// use std::ffi::OsStr;
-                ///
-                /// use os_str_bytes::OsStrBytesExt;
-                ///
-                /// let os_string = OsStr::new("foobar");
-                /// assert!(os_string.ends_with_os(OsStr::new("bar")));
-                /// assert!(!os_string.ends_with_os(OsStr::new("foo")));
-                /// ```
-                #[cfg_attr(
-                    os_str_bytes_docs_rs,
-                    doc(cfg(feature = "conversions"))
-                )]
-                #[must_use]
-                fn ends_with_os(&self, pat: &Self) -> bool;
-            }
-
-            /// Equivalent to [`str::find`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert_eq!(Some(1), os_string.find("o"));
-            /// assert_eq!(None, os_string.find("of"));
-            /// ```
-            #[must_use]
-            fn find<P>(&self, pat: P) -> Option<usize>
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::rfind`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert_eq!(Some(2), os_string.rfind("o"));
-            /// assert_eq!(None, os_string.rfind("of"));
-            /// ```
-            #[must_use]
-            fn rfind<P>(&self, pat: P) -> Option<usize>
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::rsplit_once`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert_eq!(
-            ///     Some((OsStr::new("fo"), OsStr::new("bar"))),
-            ///     os_string.rsplit_once("o"),
-            /// );
-            /// assert_eq!(None, os_string.rsplit_once("of"));
-            /// ```
-            #[must_use]
-            fn rsplit_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::split_at`].
-            ///
-            /// # Panics
-            ///
-            /// Panics if the index is not a [valid boundary].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert_eq!(
-            ///     ((OsStr::new("fo"), OsStr::new("obar"))),
-            ///     os_string.split_at(2),
-            /// );
-            /// ```
-            ///
-            /// [valid boundary]: RawOsStr#indices
-            #[must_use]
-            #[track_caller]
-            fn split_at(&self, mid: usize) -> (&Self, &Self);
-
-            /// Equivalent to [`str::split_once`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert_eq!(
-            ///     Some((OsStr::new("f"), OsStr::new("obar"))),
-            ///     os_string.split_once("o"),
-            /// );
-            /// assert_eq!(None, os_string.split_once("of"));
-            /// ```
-            #[must_use]
-            fn split_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::starts_with`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("foobar");
-            /// assert!(os_string.starts_with("foo"));
-            /// assert!(!os_string.starts_with("bar"));
-            /// ```
-            #[must_use]
-            fn starts_with<P>(&self, pat: P) -> bool
-            where
-                P: Pattern;
-
-            if_conversions! {
-                /// Equivalent to [`str::starts_with`] but accepts this type
-                /// for the pattern.
-                ///
-                /// # Examples
-                ///
-                /// ```
-                /// use std::ffi::OsStr;
-                ///
-                /// use os_str_bytes::OsStrBytesExt;
-                ///
-                /// let os_string = OsStr::new("foobar");
-                /// assert!(os_string.starts_with_os(OsStr::new("foo")));
-                /// assert!(!os_string.starts_with_os(OsStr::new("bar")));
-                /// ```
-                #[cfg_attr(
-                    os_str_bytes_docs_rs,
-                    doc(cfg(feature = "conversions"))
-                )]
-                #[must_use]
-                fn starts_with_os(&self, pat: &Self) -> bool;
-            }
-
-            /// Equivalent to [`str::strip_prefix`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("111foo1bar111");
-            /// assert_eq!(
-            ///     Some(OsStr::new("11foo1bar111")),
-            ///     os_string.strip_prefix("1"),
-            /// );
-            /// assert_eq!(None, os_string.strip_prefix("o"));
-            /// ```
-            #[must_use]
-            fn strip_prefix<P>(&self, pat: P) -> Option<&Self>
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::strip_suffix`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("111foo1bar111");
-            /// assert_eq!(
-            ///     Some(OsStr::new("111foo1bar11")),
-            ///     os_string.strip_suffix("1"),
-            /// );
-            /// assert_eq!(None, os_string.strip_suffix("o"));
-            /// ```
-            #[must_use]
-            fn strip_suffix<P>(&self, pat: P) -> Option<&Self>
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::trim_end_matches`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("111foo1bar111");
-            /// assert_eq!("111foo1bar", os_string.trim_end_matches("1"));
-            /// assert_eq!("111foo1bar111", os_string.trim_end_matches("o"));
-            /// ```
-            #[must_use]
-            fn trim_end_matches<P>(&self, pat: P) -> &Self
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::trim_matches`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("111foo1bar111");
-            /// assert_eq!("foo1bar", os_string.trim_matches("1"));
-            /// assert_eq!("111foo1bar111", os_string.trim_matches("o"));
-            /// ```
-            #[must_use]
-            fn trim_matches<P>(&self, pat: P) -> &Self
-            where
-                P: Pattern;
-
-            /// Equivalent to [`str::trim_start_matches`].
-            ///
-            /// # Examples
-            ///
-            /// ```
-            /// use std::ffi::OsStr;
-            ///
-            /// use os_str_bytes::OsStrBytesExt;
-            ///
-            /// let os_string = OsStr::new("111foo1bar111");
-            /// assert_eq!("foo1bar111", os_string.trim_start_matches("1"));
-            /// assert_eq!("111foo1bar111", os_string.trim_start_matches("o"));
-            /// ```
-            #[must_use]
-            fn trim_start_matches<P>(&self, pat: P) -> &Self
-            where
-                P: Pattern;
+            fn ends_with_os(&self, pat: &Self) -> bool;
         }
 
-        impl OsStrBytesExt for OsStr {
-            #[inline]
-            fn contains<P>(&self, pat: P) -> bool
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).contains(pat)
-            }
+        /// Equivalent to [`str::find`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert_eq!(Some(1), os_string.find("o"));
+        /// assert_eq!(None, os_string.find("of"));
+        /// ```
+        #[must_use]
+        fn find<P>(&self, pat: P) -> Option<usize>
+        where
+            P: Pattern;
 
-            #[inline]
-            fn ends_with<P>(&self, pat: P) -> bool
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).ends_with(pat)
-            }
+        /// Equivalent to [`str::rfind`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert_eq!(Some(2), os_string.rfind("o"));
+        /// assert_eq!(None, os_string.rfind("of"));
+        /// ```
+        #[must_use]
+        fn rfind<P>(&self, pat: P) -> Option<usize>
+        where
+            P: Pattern;
 
-            if_conversions! {
-                #[inline]
-                fn ends_with_os(&self, pat: &Self) -> bool {
-                    RawOsStr::from_os_str(self)
-                        .ends_with_os(RawOsStr::from_os_str(pat))
-                }
-            }
+        /// Equivalent to [`str::rsplit_once`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert_eq!(
+        ///     Some((OsStr::new("fo"), OsStr::new("bar"))),
+        ///     os_string.rsplit_once("o"),
+        /// );
+        /// assert_eq!(None, os_string.rsplit_once("of"));
+        /// ```
+        #[must_use]
+        fn rsplit_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
+        where
+            P: Pattern;
 
-            #[inline]
-            fn find<P>(&self, pat: P) -> Option<usize>
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).find(pat)
-            }
+        /// Equivalent to [`str::split_at`].
+        ///
+        /// # Panics
+        ///
+        /// Panics if the index is not a [valid boundary].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert_eq!(
+        ///     ((OsStr::new("fo"), OsStr::new("obar"))),
+        ///     os_string.split_at(2),
+        /// );
+        /// ```
+        ///
+        /// [valid boundary]: RawOsStr#indices
+        #[must_use]
+        #[track_caller]
+        fn split_at(&self, mid: usize) -> (&Self, &Self);
 
-            #[inline]
-            fn rfind<P>(&self, pat: P) -> Option<usize>
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).rfind(pat)
-            }
+        /// Equivalent to [`str::split_once`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert_eq!(
+        ///     Some((OsStr::new("f"), OsStr::new("obar"))),
+        ///     os_string.split_once("o"),
+        /// );
+        /// assert_eq!(None, os_string.split_once("of"));
+        /// ```
+        #[must_use]
+        fn split_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
+        where
+            P: Pattern;
 
+        /// Equivalent to [`str::starts_with`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("foobar");
+        /// assert!(os_string.starts_with("foo"));
+        /// assert!(!os_string.starts_with("bar"));
+        /// ```
+        #[must_use]
+        fn starts_with<P>(&self, pat: P) -> bool
+        where
+            P: Pattern;
+
+        if_conversions! {
+            /// Equivalent to [`str::starts_with`] but accepts this type
+            /// for the pattern.
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// use std::ffi::OsStr;
+            ///
+            /// use os_str_bytes::OsStrBytesExt;
+            ///
+            /// let os_string = OsStr::new("foobar");
+            /// assert!(os_string.starts_with_os(OsStr::new("foo")));
+            /// assert!(!os_string.starts_with_os(OsStr::new("bar")));
+            /// ```
+            #[cfg_attr(
+                os_str_bytes_docs_rs,
+                doc(cfg(feature = "conversions"))
+            )]
+            #[must_use]
+            fn starts_with_os(&self, pat: &Self) -> bool;
+        }
+
+        /// Equivalent to [`str::strip_prefix`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("111foo1bar111");
+        /// assert_eq!(
+        ///     Some(OsStr::new("11foo1bar111")),
+        ///     os_string.strip_prefix("1"),
+        /// );
+        /// assert_eq!(None, os_string.strip_prefix("o"));
+        /// ```
+        #[must_use]
+        fn strip_prefix<P>(&self, pat: P) -> Option<&Self>
+        where
+            P: Pattern;
+
+        /// Equivalent to [`str::strip_suffix`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("111foo1bar111");
+        /// assert_eq!(
+        ///     Some(OsStr::new("111foo1bar11")),
+        ///     os_string.strip_suffix("1"),
+        /// );
+        /// assert_eq!(None, os_string.strip_suffix("o"));
+        /// ```
+        #[must_use]
+        fn strip_suffix<P>(&self, pat: P) -> Option<&Self>
+        where
+            P: Pattern;
+
+        /// Equivalent to [`str::trim_end_matches`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("111foo1bar111");
+        /// assert_eq!("111foo1bar", os_string.trim_end_matches("1"));
+        /// assert_eq!("111foo1bar111", os_string.trim_end_matches("o"));
+        /// ```
+        #[must_use]
+        fn trim_end_matches<P>(&self, pat: P) -> &Self
+        where
+            P: Pattern;
+
+        /// Equivalent to [`str::trim_matches`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("111foo1bar111");
+        /// assert_eq!("foo1bar", os_string.trim_matches("1"));
+        /// assert_eq!("111foo1bar111", os_string.trim_matches("o"));
+        /// ```
+        #[must_use]
+        fn trim_matches<P>(&self, pat: P) -> &Self
+        where
+            P: Pattern;
+
+        /// Equivalent to [`str::trim_start_matches`].
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::ffi::OsStr;
+        ///
+        /// use os_str_bytes::OsStrBytesExt;
+        ///
+        /// let os_string = OsStr::new("111foo1bar111");
+        /// assert_eq!("foo1bar111", os_string.trim_start_matches("1"));
+        /// assert_eq!("111foo1bar111", os_string.trim_start_matches("o"));
+        /// ```
+        #[must_use]
+        fn trim_start_matches<P>(&self, pat: P) -> &Self
+        where
+            P: Pattern;
+    }
+
+    impl OsStrBytesExt for OsStr {
+        #[inline]
+        fn contains<P>(&self, pat: P) -> bool
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).contains(pat)
+        }
+
+        #[inline]
+        fn ends_with<P>(&self, pat: P) -> bool
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).ends_with(pat)
+        }
+
+        if_conversions! {
             #[inline]
-            fn rsplit_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
-            where
-                P: Pattern,
-            {
+            fn ends_with_os(&self, pat: &Self) -> bool {
                 RawOsStr::from_os_str(self)
-                    .rsplit_once(pat)
-                    .map(|(prefix, suffix)| {
-                        (prefix.as_os_str(), suffix.as_os_str())
-                    })
+                    .ends_with_os(RawOsStr::from_os_str(pat))
             }
+        }
 
-            #[inline]
-            fn split_at(&self, mid: usize) -> (&Self, &Self) {
-                let (prefix, suffix) =
-                    RawOsStr::from_os_str(self).split_at(mid);
-                (prefix.as_os_str(), suffix.as_os_str())
-            }
+        #[inline]
+        fn find<P>(&self, pat: P) -> Option<usize>
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).find(pat)
+        }
 
+        #[inline]
+        fn rfind<P>(&self, pat: P) -> Option<usize>
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).rfind(pat)
+        }
+
+        #[inline]
+        fn rsplit_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self)
+                .rsplit_once(pat)
+                .map(|(prefix, suffix)| {
+                    (prefix.as_os_str(), suffix.as_os_str())
+                })
+        }
+
+        #[inline]
+        fn split_at(&self, mid: usize) -> (&Self, &Self) {
+            let (prefix, suffix) = RawOsStr::from_os_str(self).split_at(mid);
+            (prefix.as_os_str(), suffix.as_os_str())
+        }
+
+        #[inline]
+        fn split_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self)
+                .split_once(pat)
+                .map(|(prefix, suffix)| {
+                    (prefix.as_os_str(), suffix.as_os_str())
+                })
+        }
+
+        #[inline]
+        fn starts_with<P>(&self, pat: P) -> bool
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).starts_with(pat)
+        }
+
+        if_conversions! {
             #[inline]
-            fn split_once<P>(&self, pat: P) -> Option<(&Self, &Self)>
-            where
-                P: Pattern,
-            {
+            fn starts_with_os(&self, pat: &Self) -> bool {
                 RawOsStr::from_os_str(self)
-                    .split_once(pat)
-                    .map(|(prefix, suffix)| {
-                        (prefix.as_os_str(), suffix.as_os_str())
-                    })
+                    .starts_with_os(RawOsStr::from_os_str(pat))
             }
+        }
 
-            #[inline]
-            fn starts_with<P>(&self, pat: P) -> bool
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).starts_with(pat)
-            }
+        #[inline]
+        fn strip_prefix<P>(&self, pat: P) -> Option<&Self>
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self)
+                .strip_prefix(pat)
+                .map(RawOsStr::as_os_str)
+        }
 
-            if_conversions! {
-                #[inline]
-                fn starts_with_os(&self, pat: &Self) -> bool {
-                    RawOsStr::from_os_str(self)
-                        .starts_with_os(RawOsStr::from_os_str(pat))
-                }
-            }
+        #[inline]
+        fn strip_suffix<P>(&self, pat: P) -> Option<&Self>
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self)
+                .strip_suffix(pat)
+                .map(RawOsStr::as_os_str)
+        }
 
-            #[inline]
-            fn strip_prefix<P>(&self, pat: P) -> Option<&Self>
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self)
-                    .strip_prefix(pat)
-                    .map(RawOsStr::as_os_str)
-            }
+        #[inline]
+        fn trim_end_matches<P>(&self, pat: P) -> &Self
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).trim_end_matches(pat).as_os_str()
+        }
 
-            #[inline]
-            fn strip_suffix<P>(&self, pat: P) -> Option<&Self>
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self)
-                    .strip_suffix(pat)
-                    .map(RawOsStr::as_os_str)
-            }
+        #[inline]
+        fn trim_matches<P>(&self, pat: P) -> &Self
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).trim_matches(pat).as_os_str()
+        }
 
-            #[inline]
-            fn trim_end_matches<P>(&self, pat: P) -> &Self
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).trim_end_matches(pat).as_os_str()
-            }
-
-            #[inline]
-            fn trim_matches<P>(&self, pat: P) -> &Self
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).trim_matches(pat).as_os_str()
-            }
-
-            #[inline]
-            fn trim_start_matches<P>(&self, pat: P) -> &Self
-            where
-                P: Pattern,
-            {
-                RawOsStr::from_os_str(self).trim_start_matches(pat).as_os_str()
-            }
+        #[inline]
+        fn trim_start_matches<P>(&self, pat: P) -> &Self
+        where
+            P: Pattern,
+        {
+            RawOsStr::from_os_str(self).trim_start_matches(pat).as_os_str()
         }
     }
 }

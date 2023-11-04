@@ -3,9 +3,7 @@ use crate::util;
 const SURROGATE_LENGTH: usize = 3;
 
 pub(crate) fn ends_with(string: &[u8], mut suffix: &[u8]) -> bool {
-    let index = if let Some(index) = string.len().checked_sub(suffix.len()) {
-        index
-    } else {
+    let Some(index) = string.len().checked_sub(suffix.len()) else {
         return false;
     };
     if let Some(&byte) = string.get(index) {
@@ -38,11 +36,8 @@ pub(crate) fn ends_with(string: &[u8], mut suffix: &[u8]) -> bool {
 pub(crate) fn starts_with(string: &[u8], mut prefix: &[u8]) -> bool {
     if let Some(&byte) = string.get(prefix.len()) {
         if util::is_continuation(byte) {
-            let index = if let Some(index) =
-                prefix.len().checked_sub(SURROGATE_LENGTH)
-            {
-                index
-            } else {
+            let Some(index) = prefix.len().checked_sub(SURROGATE_LENGTH)
+            else {
                 return false;
             };
             let (substring, surrogate) = prefix.split_at(index);
