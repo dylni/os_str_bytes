@@ -1,4 +1,10 @@
 use std::ffi::OsStr;
+use std::ops::Range;
+use std::ops::RangeFrom;
+use std::ops::RangeFull;
+use std::ops::RangeInclusive;
+use std::ops::RangeTo;
+use std::ops::RangeToInclusive;
 use std::str;
 
 use super::pattern::Encoded as EncodedPattern;
@@ -242,6 +248,32 @@ pub trait OsStrBytesExt: OsStrBytes {
     fn find<P>(&self, pat: P) -> Option<usize>
     where
         P: Pattern;
+
+    /// Equivalent to the [`Index::index`] implementation for [`prim@str`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not a [valid boundary].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::ffi::OsStr;
+    ///
+    /// use os_str_bytes::OsStrBytesExt;
+    ///
+    /// let os_string = OsStr::new("foobar");
+    /// assert_eq!("foo", os_string.index(..3));
+    /// assert_eq!("bar", os_string.index(3..));
+    /// ```
+    ///
+    /// [`Index::index`]: std::ops::Index::index
+    /// [valid boundary]: #indices
+    #[must_use]
+    #[track_caller]
+    fn index<I>(&self, index: I) -> &Self
+    where
+        I: SliceIndex;
 
     /// Equivalent to [`str::rfind`].
     ///
@@ -505,6 +537,14 @@ impl OsStrBytesExt for OsStr {
     }
 
     #[inline]
+    fn index<I>(&self, index: I) -> &Self
+    where
+        I: SliceIndex,
+    {
+        index.index(self)
+    }
+
+    #[inline]
     fn rfind<P>(&self, pat: P) -> Option<usize>
     where
         P: Pattern,
@@ -611,3 +651,32 @@ impl OsStrBytesExt for OsStr {
         trim_start_matches(self, &pat.__encode())
     }
 }
+
+pub trait SliceIndex {
+    fn index(self, string: &OsStr) -> &OsStr;
+}
+
+macro_rules! r#impl {
+    ( $type:ty $(, $var:ident , $($bound:expr),+)? ) => {
+        impl SliceIndex for $type {
+            #[inline]
+            fn index(self, string: &OsStr) -> &OsStr {
+                $(
+                    let $var = &self;
+                    $(check_bound(string, $bound);)+
+                )?
+
+                // SAFETY: This substring is separated by valid boundaries.
+                unsafe { os_str(&string.as_encoded_bytes()[self]) }
+            }
+        }
+    };
+}
+r#impl!(Range<usize>, x, x.start, x.end);
+r#impl!(RangeFrom<usize>, x, x.start);
+r#impl!(RangeFull);
+// [usize::MAX] will always be a valid inclusive end index.
+#[rustfmt::skip]
+r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
+r#impl!(RangeTo<usize>, x, x.end);
+r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));

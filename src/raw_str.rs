@@ -10,12 +10,6 @@ use std::fmt::Formatter;
 use std::mem;
 use std::ops::Deref;
 use std::ops::Index;
-use std::ops::Range;
-use std::ops::RangeFrom;
-use std::ops::RangeFull;
-use std::ops::RangeInclusive;
-use std::ops::RangeTo;
-use std::ops::RangeToInclusive;
 use std::result;
 use std::str;
 
@@ -776,6 +770,18 @@ impl From<Box<str>> for Box<RawOsStr> {
     }
 }
 
+impl<Idx> Index<Idx> for RawOsStr
+where
+    Idx: ext::SliceIndex,
+{
+    type Output = Self;
+
+    #[inline]
+    fn index(&self, idx: Idx) -> &Self::Output {
+        Self::new(self.as_os_str().index(idx))
+    }
+}
+
 impl ToOwned for RawOsStr {
     type Owned = RawOsString;
 
@@ -1337,41 +1343,17 @@ macro_rules! r#impl {
 r#impl!(RawOsStr);
 r#impl!(RawOsString);
 
-macro_rules! r#impl {
-    ( $index_type:ty $(, $index_var:ident , $($bound:expr),+)? ) => {
-        impl Index<$index_type> for RawOsStr {
-            type Output = Self;
+impl<Idx> Index<Idx> for RawOsString
+where
+    Idx: ext::SliceIndex,
+{
+    type Output = <RawOsStr as Index<Idx>>::Output;
 
-            #[inline]
-            fn index(&self, idx: $index_type) -> &Self::Output {
-                $(
-                    let $index_var = &idx;
-                    $(self.check_bound($bound);)+
-                )?
-
-                // SAFETY: This substring is separated by valid boundaries.
-                unsafe { Self::from_encoded_bytes_unchecked(&self.0[idx]) }
-            }
-        }
-
-        impl Index<$index_type> for RawOsString {
-            type Output = RawOsStr;
-
-            #[inline]
-            fn index(&self, idx: $index_type) -> &Self::Output {
-                &(**self)[idx]
-            }
-        }
-    };
+    #[inline]
+    fn index(&self, idx: Idx) -> &Self::Output {
+        &(**self)[idx]
+    }
 }
-r#impl!(Range<usize>, x, x.start, x.end);
-r#impl!(RangeFrom<usize>, x, x.start);
-r#impl!(RangeFull);
-// [usize::MAX] will always be a valid inclusive end index.
-#[rustfmt::skip]
-r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
-r#impl!(RangeTo<usize>, x, x.end);
-r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
 
 macro_rules! r#impl {
     ( $(#[$attr:meta])* $type:ty , $other_type:ty ) => {
