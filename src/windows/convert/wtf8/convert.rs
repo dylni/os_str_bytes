@@ -6,6 +6,7 @@ use std::num::NonZeroU16;
 use crate::util::BYTE_SHIFT;
 use crate::util::CONT_MASK;
 use crate::util::CONT_TAG;
+use crate::util::MAX_UTF8_LENGTH;
 
 use super::CodePoints;
 use super::Result;
@@ -15,6 +16,8 @@ const MIN_HIGH_SURROGATE: u16 = 0xD800;
 const MIN_LOW_SURROGATE: u16 = 0xDC00;
 
 const MIN_SURROGATE_CODE: u32 = (u16::MAX as u32) + 1;
+
+const MAX_WTF8_LENGTH: usize = MAX_UTF8_LENGTH;
 
 macro_rules! static_assert {
     ( $condition:expr ) => {
@@ -94,7 +97,7 @@ where
         let shifts = self.shifts.into();
         (
             low.saturating_add(shifts),
-            high.and_then(|x| x.checked_mul(4))
+            high.and_then(|x| x.checked_mul(MAX_WTF8_LENGTH))
                 .and_then(|x| x.checked_add(shifts)),
         )
     }

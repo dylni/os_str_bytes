@@ -29,7 +29,7 @@ pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
 }
 
 pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Borrowed(OsStrExt::as_bytes(os_string))
+    Cow::Borrowed(os_string.as_bytes())
 }
 
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
@@ -37,5 +37,5 @@ pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
 }
 
 pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
-    OsStringExt::into_vec(os_string)
+    os_string.into_vec()
 }

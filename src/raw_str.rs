@@ -29,6 +29,7 @@ use super::iter::RawSplit;
 use super::pattern::Encoded as EncodedPattern;
 use super::private;
 use super::util;
+use super::util::MAX_UTF8_LENGTH;
 use super::Pattern;
 
 if_checked_conversions! {
@@ -90,7 +91,7 @@ unsafe impl TransmuteBox for [u8] {}
 /// All searching methods have worst-case multiplicative time complexity (i.e.,
 /// `O(self.as_encoded_bytes().len() * pat.len())`). Enabling the "memchr"
 /// feature allows these methods to instead run in linear time in the worst
-/// case (documented for [`memchr::memmem::find`][memchr complexity]).
+/// case (documented for [`memchr::memmem::find`][memchr_complexity]).
 ///
 /// # Safety
 ///
@@ -98,7 +99,7 @@ unsafe impl TransmuteBox for [u8] {}
 /// representation is not stable. Transmuting between this type and any other
 /// causes immediate undefined behavior.
 ///
-/// [memchr complexity]: memchr::memmem::find#complexity
+/// [memchr_complexity]: ::memchr::memmem::find#complexity
 /// [unspecified encoding]: super#encoding
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
@@ -169,8 +170,6 @@ impl RawOsStr {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    ///
-    /// [unspecified encoding]: super#encoding-conversions
     #[allow(clippy::missing_safety_doc)]
     #[inline]
     #[must_use]
@@ -188,8 +187,6 @@ impl RawOsStr {
 
     if_conversions! {
         /// Converts and wraps a byte string.
-        ///
-        /// This method should be avoided if other safe methods can be used.
         ///
         /// # Panics
         ///
@@ -488,8 +485,6 @@ impl RawOsStr {
     fn is_boundary(&self, index: usize) -> bool {
         debug_assert!(index < self.0.len());
 
-        const MAX_LENGTH: usize = 4;
-
         if index == 0 {
             return true;
         }
@@ -500,16 +495,17 @@ impl RawOsStr {
 
         if !util::is_continuation(byte) {
             let bytes = &self.0[index..];
-            let valid = str::from_utf8(&bytes[..bytes.len().min(MAX_LENGTH)])
-                .err()
-                .map(|x| x.valid_up_to() != 0)
-                .unwrap_or(true);
+            let valid =
+                str::from_utf8(&bytes[..bytes.len().min(MAX_UTF8_LENGTH)])
+                    .err()
+                    .map(|x| x.valid_up_to() != 0)
+                    .unwrap_or(true);
             if valid {
                 return true;
             }
         }
         let mut start = index;
-        for _ in 0..MAX_LENGTH {
+        for _ in 0..MAX_UTF8_LENGTH {
             if let Some(index) = start.checked_sub(1) {
                 start = index;
             } else {
@@ -546,7 +542,6 @@ impl RawOsStr {
     /// assert!(raw.split("o").eq(["f", "", "bar"]));
     /// ```
     #[inline]
-    #[must_use]
     #[track_caller]
     pub fn split<P>(&self, pat: P) -> RawSplit<'_, P>
     where
@@ -568,7 +563,7 @@ impl RawOsStr {
     ///
     /// let raw = RawOsStr::from_str("foobar");
     /// assert_eq!(
-    ///     ((RawOsStr::from_str("fo"), RawOsStr::from_str("obar"))),
+    ///     (RawOsStr::from_str("fo"), RawOsStr::from_str("obar")),
     ///     raw.split_at(2),
     /// );
     /// ```

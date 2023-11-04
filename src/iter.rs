@@ -17,6 +17,7 @@ use super::RawOsStr;
 // [DoubleEndedIterator], and its implementation would likely require
 // significant changes to implement that trait.
 /// The iterator returned by [`RawOsStr::split`].
+#[must_use]
 pub struct RawSplit<'a, P>
 where
     P: Pattern,

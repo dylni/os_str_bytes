@@ -7,3 +7,5 @@ pub(super) const CONT_TAG: u8 = 0b1000_0000;
 pub(super) const fn is_continuation(byte: u8) -> bool {
     byte & !CONT_MASK == CONT_TAG
 }
+
+pub(super) const MAX_UTF8_LENGTH: usize = 4;

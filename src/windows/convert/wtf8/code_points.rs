@@ -9,7 +9,7 @@ use crate::util::CONT_MASK;
 use super::EncodingError;
 use super::Result;
 
-pub(in super::super) struct CodePoints<I>
+pub(super) struct CodePoints<I>
 where
     I: Iterator<Item = u8>,
 {
@@ -22,7 +22,7 @@ impl<I> CodePoints<I>
 where
     I: Iterator<Item = u8>,
 {
-    pub(in super::super) fn new<S>(string: S) -> Self
+    pub(super) fn new<S>(string: S) -> Self
     where
         S: IntoIterator<IntoIter = I>,
     {

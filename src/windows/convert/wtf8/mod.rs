@@ -5,7 +5,7 @@ use super::EncodingError;
 use super::Result;
 
 mod code_points;
-pub(super) use code_points::CodePoints;
+use code_points::CodePoints;
 
 mod convert;
 pub(super) use convert::encode_wide;

@@ -42,7 +42,7 @@
 //!   Changes the implementation to use crate [memchr] for better performance.
 //!   This feature is useless when the "raw\_os\_str" feature is disabled.
 //!
-//!   For more information, see [`RawOsStr`][memchr complexity].
+//!   For more information, see [`RawOsStr`][memchr_complexity].
 //!
 //! - **raw\_os\_str** -
 //!   Provides:
@@ -153,10 +153,10 @@
 //! #   use std::env;
 //! #   use std::ffi::OsString;
 //! #
-//! #   pub fn args_os() -> impl Iterator<Item = OsString> {
+//! #   pub(super) fn args_os() -> impl Iterator<Item = OsString> {
 //! #       let mut file = env::temp_dir();
 //! #       file.push("os_str_bytes\u{E9}.txt");
-//! #       return vec![OsString::new(), file.into_os_string()].into_iter();
+//! #       vec![OsString::new(), file.into_os_string()].into_iter()
 //! #   }
 //! # }
 //! #
@@ -176,11 +176,10 @@
 //! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
 //! [Encoding Conversions]: #encoding-conversions
-//! [memchr complexity]: RawOsStr#complexity
 //! [memchr]: https://crates.io/crates/memchr
+//! [memchr_complexity]: RawOsStr#complexity
 //! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
 //! [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
-//! [print\_bytes]: https://crates.io/crates/print_bytes
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
 
 // Only require a nightly compiler when building documentation for docs.rs.
@@ -966,7 +965,7 @@ if_conversions! {
     ///
     /// [module]: self
     /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
-    #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(any(feature = "conversions"))))]
+    #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
     pub trait OsStringBytes: private::Sealed + Sized {
         /// Converts a byte string into an equivalent platform-native string.
         ///

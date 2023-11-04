@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use super::private;
+use super::util::MAX_UTF8_LENGTH;
 
 pub trait Encoded {
     fn __get(&self) -> &[u8];
@@ -8,7 +9,7 @@ pub trait Encoded {
 
 #[derive(Clone, Debug)]
 pub struct EncodedChar {
-    buffer: [u8; 4],
+    buffer: [u8; MAX_UTF8_LENGTH],
     length: usize,
 }
 
@@ -46,7 +47,7 @@ impl Pattern for char {
 
     fn __encode(self) -> Self::__Encoded {
         let mut encoded = EncodedChar {
-            buffer: [0; 4],
+            buffer: [0; MAX_UTF8_LENGTH],
             length: 0,
         };
         encoded.length = self.encode_utf8(&mut encoded.buffer).len();
