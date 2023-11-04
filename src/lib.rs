@@ -322,7 +322,7 @@ if_checked_conversions! {
     /// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
     /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
     /// [`Result::unwrap`]: ::std::result::Result::unwrap
-    #[derive(Clone, Debug, Eq, PartialEq)]
+    #[derive(Clone, Debug, PartialEq)]
     #[cfg_attr(
         os_str_bytes_docs_rs,
         doc(cfg(feature = "checked_conversions"))

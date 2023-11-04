@@ -28,7 +28,7 @@ if_raw_str! {
 #[cfg(test)]
 mod tests;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum EncodingError {
     Byte(u8),
     CodePoint(u32),

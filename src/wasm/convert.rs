@@ -9,7 +9,7 @@ use std::result;
 use std::str;
 use std::str::Utf8Error;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) struct EncodingError(Utf8Error);
 
 impl Display for EncodingError {
