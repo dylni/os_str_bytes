@@ -2,6 +2,7 @@
 
 #![cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 
+use std::ffi::OsStr;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Formatter;
@@ -9,6 +10,7 @@ use std::iter::FusedIterator;
 use std::mem;
 
 use super::pattern::Encoded;
+use super::OsStrBytesExt;
 use super::Pattern;
 use super::RawOsStr;
 
@@ -16,22 +18,22 @@ use super::RawOsStr;
 // become self-referential. Additionally, that iterator does not implement
 // [DoubleEndedIterator], and its implementation would likely require
 // significant changes to implement that trait.
-/// The iterator returned by [`RawOsStr::split`].
+/// The iterator returned by [`OsStrBytesExt::split`].
 #[must_use]
-pub struct RawSplit<'a, P>
+pub struct Split<'a, P>
 where
     P: Pattern,
 {
-    string: Option<&'a RawOsStr>,
+    string: Option<&'a OsStr>,
     pat: P::__Encoded,
 }
 
-impl<'a, P> RawSplit<'a, P>
+impl<'a, P> Split<'a, P>
 where
     P: Pattern,
 {
     #[track_caller]
-    pub(super) fn new(string: &'a RawOsStr, pat: P) -> Self {
+    pub(super) fn new(string: &'a OsStr, pat: P) -> Self {
         let pat = pat.__encode();
         assert!(
             !pat.__as_str().is_empty(),
@@ -60,7 +62,7 @@ macro_rules! impl_next {
     }};
 }
 
-impl<P> Clone for RawSplit<'_, P>
+impl<P> Clone for Split<'_, P>
 where
     P: Pattern,
 {
@@ -73,16 +75,79 @@ where
     }
 }
 
+impl<P> Debug for Split<'_, P>
+where
+    P: Pattern,
+{
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Split")
+            .field("string", &self.string)
+            .field("pat", &self.pat)
+            .finish()
+    }
+}
+
+impl<P> DoubleEndedIterator for Split<'_, P>
+where
+    P: Pattern,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        impl_next!(self, rsplit_once, true)
+    }
+}
+
+impl<P> FusedIterator for Split<'_, P> where P: Pattern {}
+
+impl<'a, P> Iterator for Split<'a, P>
+where
+    P: Pattern,
+{
+    type Item = &'a OsStr;
+
+    #[inline]
+    fn last(mut self) -> Option<Self::Item> {
+        self.next_back()
+    }
+
+    fn next(&mut self) -> Option<Self::Item> {
+        impl_next!(self, split_once, false)
+    }
+}
+
+/// The iterator returned by [`RawOsStr::split`].
+#[must_use]
+pub struct RawSplit<'a, P>(Split<'a, P>)
+where
+    P: Pattern;
+
+impl<'a, P> RawSplit<'a, P>
+where
+    P: Pattern,
+{
+    #[track_caller]
+    pub(super) fn new(string: &'a RawOsStr, pat: P) -> Self {
+        Self(Split::new(string.as_os_str(), pat))
+    }
+}
+
+impl<P> Clone for RawSplit<'_, P>
+where
+    P: Pattern,
+{
+    #[inline]
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
 impl<P> Debug for RawSplit<'_, P>
 where
     P: Pattern,
 {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("RawSplit")
-            .field("string", &self.string)
-            .field("pat", &self.pat)
-            .finish()
+        f.debug_tuple("RawSplit").field(&self.0).finish()
     }
 }
 
@@ -90,8 +155,9 @@ impl<P> DoubleEndedIterator for RawSplit<'_, P>
 where
     P: Pattern,
 {
+    #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
-        impl_next!(self, rsplit_once, true)
+        self.0.next_back().map(RawOsStr::new)
     }
 }
 
@@ -104,15 +170,12 @@ where
     type Item = &'a RawOsStr;
 
     #[inline]
-    fn last(mut self) -> Option<Self::Item> {
-        self.next_back()
+    fn last(self) -> Option<Self::Item> {
+        self.0.last().map(RawOsStr::new)
     }
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        impl_next!(self, split_once, false)
+        self.0.next().map(RawOsStr::new)
     }
 }
-
-/// A temporary type alias providing backward compatibility.
-#[deprecated(since = "6.6.0", note = "use `RawSplit` instead")]
-pub type Split<'a, P> = RawSplit<'a, P>;

@@ -7,6 +7,7 @@ use std::ops::RangeTo;
 use std::ops::RangeToInclusive;
 use std::str;
 
+use super::iter::Split;
 use super::pattern::Encoded as EncodedPattern;
 use super::util;
 use super::util::MAX_UTF8_LENGTH;
@@ -314,6 +315,25 @@ pub trait OsStrBytesExt: OsStrBytes {
     where
         P: Pattern;
 
+    /// Equivalent to [`str::split`], but empty patterns are not accepted.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the pattern is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::new("foobar");
+    /// assert!(raw.split("o").eq(["f", "", "bar"]));
+    /// ```
+    #[track_caller]
+    fn split<P>(&self, pat: P) -> Split<'_, P>
+    where
+        P: Pattern;
+
     /// Equivalent to [`str::split_at`].
     ///
     /// # Panics
@@ -561,6 +581,14 @@ impl OsStrBytesExt for OsStr {
         P: Pattern,
     {
         split_once(self, &pat.__encode(), Self::rfind)
+    }
+
+    #[inline]
+    fn split<P>(&self, pat: P) -> Split<'_, P>
+    where
+        P: Pattern,
+    {
+        Split::new(self, pat)
     }
 
     #[inline]

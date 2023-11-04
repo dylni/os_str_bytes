@@ -432,16 +432,7 @@ impl RawOsStr {
         self.as_os_str().rsplit_once(pat).map(Self::from_tuple)
     }
 
-    #[track_caller]
-    fn check_bound(&self, index: usize) {
-        ext::check_bound(self.as_os_str(), index);
-    }
-
-    /// Equivalent to [`str::split`], but empty patterns are not accepted.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the pattern is empty.
+    /// Equivalent to [`OsStrBytesExt::split`].
     ///
     /// # Examples
     ///
@@ -1154,6 +1145,11 @@ impl RawOsString {
     #[inline]
     pub fn shrink_to_fit(&mut self) {
         self.0.shrink_to_fit();
+    }
+
+    #[track_caller]
+    fn check_bound(&self, index: usize) {
+        ext::check_bound(self.as_os_str(), index);
     }
 
     /// Equivalent to [`String::split_off`].
