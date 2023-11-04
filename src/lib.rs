@@ -1,47 +1,19 @@
-//! This crate allows interacting with the data stored by [`OsStr`] and
+//! This crate provides additional functionality for [`OsStr`] and
 //! [`OsString`], without resorting to panics or corruption for invalid UTF-8.
-//! Thus, methods can be used that are already defined on [`[u8]`][slice] and
-//! [`Vec<u8>`].
+//! Thus, familiar methods from [`str`] and [`String`] can be used.
 //!
-//! Typically, the only way to losslessly construct [`OsStr`] or [`OsString`]
-//! from a byte sequence is to use `OsStr::new(str::from_utf8(bytes)?)`, which
-//! requires the bytes to be valid in UTF-8. However, since this crate makes
-//! conversions directly between the platform encoding and raw bytes, even some
-//! strings invalid in UTF-8 can be converted.
+//! # Usage
 //!
-//! In most cases, [`RawOsStr`] and [`RawOsString`] should be used.
-//! [`OsStrBytes`] and [`OsStringBytes`] provide lower-level APIs that are
-//! easier to misuse.
+//! The most important trait included is [`OsStrBytesExt`], which provides
+//! methods analagous to those of [`str`] but for [`OsStr`]. These methods will
+//! never panic for invalid UTF-8 in a platform string, so they can be used to
+//! manipulate [`OsStr`] values with the same simplicity possible for [`str`].
 //!
-//! # Encoding
-//!
-//! The encoding of bytes returned or accepted by methods of this crate is
-//! intentionally left unspecified. It may vary for different platforms, so
-//! defining it would run contrary to the goal of generic string handling.
-//! However, the following invariants will always be upheld:
-//!
-//! - The encoding will be compatible with UTF-8. In particular, splitting an
-//!   encoded byte sequence by a UTF-8&ndash;encoded character always produces
-//!   other valid byte sequences. They can be re-encoded without error using
-//!   [`RawOsString::into_os_string`] and similar methods.
-//!
-//! - All characters valid in platform strings are representable. [`OsStr`] and
-//!   [`OsString`] can always be losslessly reconstructed from extracted bytes.
-//!
-//! Note that the chosen encoding may not match how Rust stores these strings
-//! internally, which is undocumented. For instance, the result of calling
-//! [`OsStr::len`] will not necessarily match the number of bytes this crate
-//! uses to represent the same string.
-//!
-//! Additionally, concatenation may yield unexpected results without a UTF-8
-//! separator. If two platform strings need to be concatenated, the only safe
-//! way to do so is using [`OsString::push`]. This limitation also makes it
-//! undesirable to use the bytes in interchange.
-//!
-//! Since this encoding can change between versions and platforms, it should
-//! not be used for storage. The standard library provides implementations of
-//! [`OsStrExt`] and [`OsStringExt`] for various platforms, which should be
-//! preferred for that use case.
+//! Additionally, the following wrappers are provided. They are primarily
+//! legacy types from when this crate needed to perform more frequent encoding
+//! conversions. However, they may be useful for their trait implementations.
+//! - [`RawOsStr`] is a wrapper for [`OsStr`].
+//! - [`RawOsString`] is a wrapper for [`OsString`].
 //!
 //! # User Input
 //!
@@ -68,7 +40,7 @@
 //!
 //! - **memchr** -
 //!   Changes the implementation to use crate [memchr] for better performance.
-//!   This feature is useless when "raw\_os\_str" is disabled.
+//!   This feature is useless when the "raw\_os\_str" feature is disabled.
 //!
 //!   For more information, see [`RawOsStr`][memchr complexity].
 //!
@@ -108,6 +80,8 @@
 //!   - [`OsStrBytes`]
 //!   - [`OsStringBytes`]
 //!
+//!   For more information, see [Encoding Conversions].
+//!
 //! - **print\_bytes** -
 //!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
 //!   [`RawOsString`].
@@ -127,12 +101,40 @@
 //! crate. Otherwise, backward compatibility would be more difficult to
 //! maintain for new features.
 //!
-//! # Complexity
+//! # Encoding Conversions
 //!
-//! Conversion method complexities will vary based on what functionality is
-//! available for the platform. At worst, they will all be linear, but some can
-//! take constant time. For example, [`RawOsString::into_os_string`] might be
-//! able to reuse its allocation.
+//! Methods provided by the "conversions" feature use an intentionally
+//! unspecified encoding. It may vary for different platforms, so defining it
+//! would run contrary to the goal of generic string handling. However, the
+//! following invariants will always be upheld:
+//!
+//! - The encoding will be compatible with UTF-8. In particular, splitting an
+//!   encoded byte sequence by a UTF-8&ndash;encoded character always produces
+//!   other valid byte sequences. They can be re-encoded without error using
+//!   [`RawOsString::into_os_string`] and similar methods.
+//!
+//! - All characters valid in platform strings are representable. [`OsStr`] and
+//!   [`OsString`] can always be losslessly reconstructed from extracted bytes.
+//!
+//! Note that the chosen encoding may not match how [`OsStr`] stores these
+//! strings internally, which is undocumented. For instance, the result of
+//! calling [`OsStr::len`] will not necessarily match the number of bytes this
+//! crate uses to represent the same string. However, unlike the encoding used
+//! by [`OsStr`], the encoding used by this crate can be validated safely using
+//! the following methods:
+//! - [`OsStrBytes::assert_from_raw_bytes`]
+//! - [`RawOsStr::assert_cow_from_raw_bytes`]
+//! - [`RawOsString::assert_from_raw_vec`]
+//!
+//! Concatenation may yield unexpected results without a UTF-8 separator. If
+//! two platform strings need to be concatenated, the only safe way to do so is
+//! using [`OsString::push`]. This limitation also makes it undesirable to use
+//! the bytes in interchange.
+//!
+//! Since this encoding can change between versions and platforms, it should
+//! not be used for storage. The standard library provides implementations of
+//! [`OsStrExt`] and [`OsStringExt`] for various platforms, which should be
+//! preferred for that use case.
 //!
 //! # Examples
 //!
@@ -173,6 +175,7 @@
 //! [bstr]: https://crates.io/crates/bstr
 //! [`ByteSlice::to_os_str`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteSlice.html#method.to_os_str
 //! [`ByteVec::into_os_string`]: https://docs.rs/bstr/0.2.12/bstr/trait.ByteVec.html#method.into_os_string
+//! [Encoding Conversions]: #encoding-conversions
 //! [memchr complexity]: RawOsStr#complexity
 //! [memchr]: https://crates.io/crates/memchr
 //! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
@@ -313,7 +316,7 @@ if_checked_conversions! {
     /// On Unix, this error is never returned, but [`OsStrExt`] or
     /// [`OsStringExt`] should be used instead if that needs to be guaranteed.
     ///
-    /// [encoding]: self#encoding
+    /// [encoding]: self#encoding-conversions
     /// [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
     /// [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
     /// [`Result::unwrap`]: ::std::result::Result::unwrap
@@ -393,7 +396,7 @@ if_conversions! {
         /// # Ok::<_, io::Error>(())
         /// ```
         ///
-        /// [unspecified encoding]: self#encoding
+        /// [unspecified encoding]: self#encoding-conversions
         #[must_use = "method should not be used for validation"]
         #[track_caller]
         fn assert_from_raw_bytes<'a, S>(string: S) -> Cow<'a, Self>
@@ -453,7 +456,7 @@ if_conversions! {
         /// assert_eq!(string.as_bytes(), &*os_string.to_raw_bytes());
         /// ```
         ///
-        /// [unspecified encoding]: self#encoding
+        /// [unspecified encoding]: self#encoding-conversions
         #[must_use]
         fn to_raw_bytes(&self) -> Cow<'_, [u8]>;
     }
@@ -985,7 +988,7 @@ if_conversions! {
         /// # Ok::<_, io::Error>(())
         /// ```
         ///
-        /// [unspecified encoding]: self#encoding
+        /// [unspecified encoding]: self#encoding-conversions
         #[must_use = "method should not be used for validation"]
         #[track_caller]
         fn assert_from_raw_vec(string: Vec<u8>) -> Self;
@@ -1044,7 +1047,7 @@ if_conversions! {
         /// assert_eq!(string.into_bytes(), os_string.into_raw_vec());
         /// ```
         ///
-        /// [unspecified encoding]: self#encoding
+        /// [unspecified encoding]: self#encoding-conversions
         #[must_use]
         fn into_raw_vec(self) -> Vec<u8>;
     }

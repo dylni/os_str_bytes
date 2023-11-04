@@ -85,10 +85,6 @@ unsafe impl TransmuteBox for [u8] {}
 /// implementation and are generally not necessary. However, all indices
 /// returned by this struct can be used for slicing.
 ///
-/// On Unix, all indices are permitted, to avoid false positives. However,
-/// relying on this implementation detail is discouraged. Platform-specific
-/// indices are error-prone.
-///
 /// # Complexity
 ///
 /// All searching methods have worst-case multiplicative time complexity (i.e.,
@@ -101,10 +97,6 @@ unsafe impl TransmuteBox for [u8] {}
 /// Although this type is annotated with `#[repr(transparent)]`, the inner
 /// representation is not stable. Transmuting between this type and any other
 /// causes immediate undefined behavior.
-///
-/// # Nightly Notes
-///
-/// Indices are validated on all platforms.
 ///
 /// [memchr complexity]: memchr::memmem::find#complexity
 /// [unspecified encoding]: super#encoding
@@ -142,9 +134,6 @@ impl RawOsStr {
 
     /// Wraps a string, without copying or encoding conversion.
     ///
-    /// This method is much more efficient than [`RawOsStr::new`], since the
-    /// [encoding] used by this crate is compatible with UTF-8.
-    ///
     /// # Examples
     ///
     /// ```
@@ -154,8 +143,6 @@ impl RawOsStr {
     /// let raw = RawOsStr::from_str(string);
     /// assert_eq!(string, raw);
     /// ```
-    ///
-    /// [encoding]: super#encoding
     #[allow(clippy::should_implement_trait)]
     #[inline]
     #[must_use]
@@ -183,7 +170,7 @@ impl RawOsStr {
     /// # Ok::<_, io::Error>(())
     /// ```
     ///
-    /// [unspecified encoding]: super#encoding
+    /// [unspecified encoding]: super#encoding-conversions
     #[allow(clippy::missing_safety_doc)]
     #[inline]
     #[must_use]
@@ -225,7 +212,7 @@ impl RawOsStr {
         /// # Ok::<_, io::Error>(())
         /// ```
         ///
-        /// [unspecified encoding]: super#encoding
+        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use = "method should not be used for validation"]
@@ -292,7 +279,7 @@ impl RawOsStr {
     /// ```
     ///
     /// [`from_encoded_bytes_unchecked`]: Self::from_encoded_bytes_unchecked
-    /// [unspecified encoding]: super#encoding
+    /// [unspecified encoding]: super#encoding-conversions
     #[inline]
     #[must_use]
     pub fn as_encoded_bytes(&self) -> &[u8] {
@@ -738,7 +725,7 @@ impl RawOsStr {
         /// assert_eq!(string.as_bytes(), &*raw.to_raw_bytes());
         /// ```
         ///
-        /// [unspecified encoding]: super#encoding
+        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use]
@@ -963,11 +950,8 @@ impl ToOwned for RawOsStr {
 /// [`Cow<RawOsStr>`]: Cow
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub trait RawOsStrCow<'a>: private::Sealed {
-    /// Converts a platform-native string back to this representation.
-    ///
-    /// # Nightly Notes
-    ///
-    /// This method does not require copying or encoding conversion.
+    /// Converts a platform-native string back to this representation, without
+    /// copying or encoding conversion.
     ///
     /// # Examples
     ///
@@ -987,11 +971,8 @@ pub trait RawOsStrCow<'a>: private::Sealed {
     #[must_use]
     fn from_os_str(string: Cow<'a, OsStr>) -> Self;
 
-    /// Converts this representation back to a platform-native string.
-    ///
-    /// # Nightly Notes
-    ///
-    /// This method does not require copying or encoding conversion.
+    /// Converts this representation back to a platform-native string, without
+    /// copying or encoding conversion.
     ///
     /// # Examples
     ///
@@ -1041,14 +1022,7 @@ impl<'a> RawOsStrCow<'a> for Cow<'a, RawOsStr> {
 pub struct RawOsString(Vec<u8>);
 
 impl RawOsString {
-    /// Converts a platform-native string into a representation that can be
-    /// more easily manipulated.
-    ///
-    /// For more information, see [`RawOsStr::new`].
-    ///
-    /// # Nightly Notes
-    ///
-    /// This method does not require copying or encoding conversion.
+    /// Wraps a platform-native string, without copying or encoding conversion.
     ///
     /// # Examples
     ///
@@ -1071,9 +1045,6 @@ impl RawOsString {
 
     /// Wraps a string, without copying or encoding conversion.
     ///
-    /// This method is much more efficient than [`RawOsString::new`], since the
-    /// [encoding] used by this crate is compatible with UTF-8.
-    ///
     /// # Examples
     ///
     /// ```
@@ -1083,8 +1054,6 @@ impl RawOsString {
     /// let raw = RawOsString::from_string(string.clone());
     /// assert_eq!(string, raw);
     /// ```
-    ///
-    /// [encoding]: super#encoding
     #[inline]
     #[must_use]
     pub fn from_string(string: String) -> Self {
@@ -1147,7 +1116,7 @@ impl RawOsString {
         /// # Ok::<_, io::Error>(())
         /// ```
         ///
-        /// [unspecified encoding]: super#encoding
+        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use = "method should not be used for validation"]
@@ -1250,18 +1219,15 @@ impl RawOsString {
     /// ```
     ///
     /// [`from_encoded_vec_unchecked`]: Self::from_encoded_vec_unchecked
-    /// [unspecified encoding]: super#encoding
+    /// [unspecified encoding]: super#encoding-conversions
     #[inline]
     #[must_use]
     pub fn into_encoded_vec(self) -> Vec<u8> {
         self.0
     }
 
-    /// Converts this representation back to a platform-native string.
-    ///
-    /// # Nightly Notes
-    ///
-    /// This method does not require copying or encoding conversion.
+    /// Converts this representation back to a platform-native string, without
+    /// copying or encoding conversion.
     ///
     /// # Examples
     ///
@@ -1300,7 +1266,7 @@ impl RawOsString {
         /// assert_eq!(string.into_bytes(), raw.into_raw_vec());
         /// ```
         ///
-        /// [unspecified encoding]: super#encoding
+        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use]
