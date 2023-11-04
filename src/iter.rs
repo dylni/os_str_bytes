@@ -34,7 +34,7 @@ where
     pub(super) fn new(string: &'a RawOsStr, pat: P) -> Self {
         let pat = pat.__encode();
         assert!(
-            !pat.__get().is_empty(),
+            !pat.__as_str().is_empty(),
             "cannot split using an empty pattern",
         );
         Self {
@@ -48,7 +48,7 @@ macro_rules! impl_next {
     ( $self:ident , $split_method:ident , $swap:expr ) => {{
         $self
             .string?
-            .$split_method(&$self.pat)
+            .$split_method($self.pat.__as_str())
             .map(|(mut substring, mut string)| {
                 if $swap {
                     mem::swap(&mut substring, &mut string);
@@ -91,7 +91,7 @@ where
     P: Pattern,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        impl_next!(self, rsplit_once_raw, true)
+        impl_next!(self, rsplit_once, true)
     }
 }
 
@@ -109,7 +109,7 @@ where
     }
 
     fn next(&mut self) -> Option<Self::Item> {
-        impl_next!(self, split_once_raw, false)
+        impl_next!(self, split_once, false)
     }
 }
 

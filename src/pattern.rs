@@ -1,10 +1,15 @@
 use std::fmt::Debug;
+use std::str;
 
 use super::private;
 use super::util::MAX_UTF8_LENGTH;
 
 pub trait Encoded {
-    fn __get(&self) -> &[u8];
+    fn __as_bytes(&self) -> &[u8] {
+        self.__as_str().as_bytes()
+    }
+
+    fn __as_str(&self) -> &str;
 }
 
 #[derive(Clone, Debug)]
@@ -14,14 +19,15 @@ pub struct EncodedChar {
 }
 
 impl Encoded for EncodedChar {
-    fn __get(&self) -> &[u8] {
-        &self.buffer[..self.length]
+    fn __as_str(&self) -> &str {
+        // SAFETY: This slice was encoded from a character.
+        unsafe { str::from_utf8_unchecked(&self.buffer[..self.length]) }
     }
 }
 
 impl Encoded for &str {
-    fn __get(&self) -> &[u8] {
-        self.as_bytes()
+    fn __as_str(&self) -> &str {
+        self
     }
 }
 
