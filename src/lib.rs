@@ -275,7 +275,6 @@ if_conversions! {
     }
 }
 
-#[allow(dead_code)]
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
     path = "wasm/mod.rs"
@@ -287,7 +286,11 @@ if_conversions! {
 )]
 mod imp;
 
-#[cfg(any(feature = "raw_os_str", windows))]
+if_conversions! {
+    use imp::convert;
+}
+
+#[cfg(any(all(feature = "conversions", windows), feature = "raw_os_str"))]
 mod util;
 
 if_raw_str! {
@@ -325,7 +328,7 @@ if_checked_conversions! {
         os_str_bytes_docs_rs,
         doc(cfg(feature = "checked_conversions"))
     )]
-    pub struct EncodingError(imp::EncodingError);
+    pub struct EncodingError(convert::EncodingError);
 
     impl Display for EncodingError {
         #[inline]
@@ -342,14 +345,14 @@ if_checked_conversions! {
 }
 
 if_conversions! {
-    fn from_raw_bytes<'a, S>(string: S) -> imp::Result<Cow<'a, OsStr>>
+    fn from_raw_bytes<'a, S>(string: S) -> convert::Result<Cow<'a, OsStr>>
     where
         S: Into<Cow<'a, [u8]>>,
     {
         match string.into() {
-            Cow::Borrowed(string) => imp::os_str_from_bytes(string),
+            Cow::Borrowed(string) => convert::os_str_from_bytes(string),
             Cow::Owned(string) => {
-                imp::os_string_from_vec(string).map(Cow::Owned)
+                convert::os_string_from_vec(string).map(Cow::Owned)
             }
         }
     }
@@ -482,7 +485,7 @@ if_conversions! {
 
         #[inline]
         fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
-            imp::os_str_to_bytes(self)
+            convert::os_str_to_bytes(self)
         }
     }
 
@@ -1055,19 +1058,19 @@ if_conversions! {
     impl OsStringBytes for OsString {
         #[inline]
         fn assert_from_raw_vec(string: Vec<u8>) -> Self {
-            expect_encoded!(imp::os_string_from_vec(string))
+            expect_encoded!(convert::os_string_from_vec(string))
         }
 
         if_checked_conversions! {
             #[inline]
             fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
-                imp::os_string_from_vec(string).map_err(EncodingError)
+                convert::os_string_from_vec(string).map_err(EncodingError)
             }
         }
 
         #[inline]
         fn into_raw_vec(self) -> Vec<u8> {
-            imp::os_string_into_vec(self)
+            convert::os_string_into_vec(self)
         }
     }
 

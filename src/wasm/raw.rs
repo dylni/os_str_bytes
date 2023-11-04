@@ -3,6 +3,7 @@ use std::fmt::Formatter;
 
 use crate::RawOsStr;
 
+#[allow(dead_code)]
 #[path = "../common/raw.rs"]
 mod common_raw;
 #[cfg(feature = "uniquote")]

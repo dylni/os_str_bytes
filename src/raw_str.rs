@@ -37,7 +37,7 @@ if_checked_conversions! {
 }
 
 if_conversions! {
-    use super::imp;
+    use super::convert;
 }
 
 #[cfg(not(feature = "memchr"))]
@@ -181,8 +181,8 @@ impl RawOsStr {
     if_conversions! {
         fn cow_from_raw_bytes_checked(
             string: &[u8],
-        ) -> imp::Result<Cow<'_, Self>> {
-            imp::os_str_from_bytes(string).map(RawOsStrCow::from_os_str)
+        ) -> convert::Result<Cow<'_, Self>> {
+            convert::os_str_from_bytes(string).map(RawOsStrCow::from_os_str)
         }
     }
 
@@ -730,7 +730,7 @@ impl RawOsStr {
         #[inline]
         #[must_use]
         pub fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
-            imp::os_str_to_bytes(self.as_os_str())
+            convert::os_str_to_bytes(self.as_os_str())
         }
     }
 
@@ -1087,8 +1087,8 @@ impl RawOsString {
     }
 
     if_conversions! {
-        fn from_raw_vec_checked(string: Vec<u8>) -> imp::Result<Self> {
-            imp::os_string_from_vec(string).map(Self::new)
+        fn from_raw_vec_checked(string: Vec<u8>) -> convert::Result<Self> {
+            convert::os_string_from_vec(string).map(Self::new)
         }
     }
 
@@ -1271,7 +1271,7 @@ impl RawOsString {
         #[inline]
         #[must_use]
         pub fn into_raw_vec(self) -> Vec<u8> {
-            imp::os_string_into_vec(self.into_os_string())
+            convert::os_string_into_vec(self.into_os_string())
         }
     }
 
