@@ -28,7 +28,7 @@ if_conversions! {
         let wchar = if cfg!(unix) {
             "\\xED\\xA0\\xBD"
         } else {
-            "\\u{D83D}"
+            "\\u{d83d}"
         };
         test(&format!("\"foo{}\u{1F4A9}bar\"", wchar), &RAW_WTF8_STRING);
     }

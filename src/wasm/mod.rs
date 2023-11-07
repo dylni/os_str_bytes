@@ -3,5 +3,6 @@ if_conversions! {
 }
 
 if_raw_str! {
+    #[path = "../common/raw.rs"]
     pub(super) mod raw;
 }

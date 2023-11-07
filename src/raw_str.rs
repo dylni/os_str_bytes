@@ -5,7 +5,6 @@ use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::fmt;
 use std::fmt::Debug;
-use std::fmt::Display;
 use std::fmt::Formatter;
 use std::mem;
 use std::ops::Deref;
@@ -14,7 +13,6 @@ use std::result;
 use std::str;
 
 use super::ext;
-use super::imp::raw;
 use super::iter::RawSplit;
 use super::private;
 use super::OsStrBytesExt;
@@ -1278,59 +1276,13 @@ impl From<String> for RawOsString {
     }
 }
 
-struct DebugBuffer<'a>(&'a [u8]);
-
-impl Debug for DebugBuffer<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str("\"")?;
-
-        let mut string = self.0;
-        let mut invalid_length = 0;
-        while !string.is_empty() {
-            let (invalid, substring) = string.split_at(invalid_length);
-
-            let valid = match str::from_utf8(substring) {
-                Ok(valid) => {
-                    string = b"";
-                    valid
-                }
-                Err(error) => {
-                    let (valid, substring) =
-                        substring.split_at(error.valid_up_to());
-
-                    let invalid_char_length =
-                        error.error_len().unwrap_or_else(|| substring.len());
-                    if valid.is_empty() {
-                        invalid_length += invalid_char_length;
-                        continue;
-                    }
-                    string = substring;
-                    invalid_length = invalid_char_length;
-
-                    // SAFETY: This slice was validated to be UTF-8.
-                    unsafe { str::from_utf8_unchecked(valid) }
-                }
-            };
-
-            // SAFETY: This substring was separated by a UTF-8 string.
-            raw::debug(
-                unsafe { RawOsStr::from_encoded_bytes_unchecked(invalid) },
-                f,
-            )?;
-            Display::fmt(&valid.escape_debug(), f)?;
-        }
-
-        f.write_str("\"")
-    }
-}
-
 macro_rules! r#impl {
     ( $type:ty ) => {
         impl Debug for $type {
             #[inline]
             fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
                 f.debug_tuple(stringify!($type))
-                    .field(&DebugBuffer(&self.0))
+                    .field(&self.as_os_str())
                     .finish()
             }
         }
@@ -1387,7 +1339,10 @@ r#impl!(RawOsString, str);
 r#impl!(RawOsString, &str);
 r#impl!(RawOsString, String);
 
-#[cfg(feature = "print_bytes")]
+#[cfg(all(
+    feature = "print_bytes",
+    not(all(target_family = "wasm", target_os = "unknown")),
+))]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "print_bytes")))]
 mod print_bytes {
     use print_bytes::ByteStr;
@@ -1395,22 +1350,19 @@ mod print_bytes {
     #[cfg(windows)]
     use print_bytes::WideStr;
 
-    #[cfg(windows)]
-    use crate::imp::raw;
-
     use super::RawOsStr;
     use super::RawOsString;
 
     impl ToBytes for RawOsStr {
         #[inline]
         fn to_bytes(&self) -> ByteStr<'_> {
-            self.0.to_bytes()
+            self.as_os_str().to_bytes()
         }
 
         #[cfg(windows)]
         #[inline]
         fn to_wide(&self) -> Option<WideStr> {
-            Some(WideStr::new(raw::encode_wide(self).collect()))
+            self.as_os_str().to_wide()
         }
     }
 
@@ -1428,14 +1380,15 @@ mod print_bytes {
     }
 }
 
-#[cfg(feature = "uniquote")]
+#[cfg(all(
+    feature = "uniquote",
+    not(all(target_family = "wasm", target_os = "unknown")),
+))]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "uniquote")))]
 mod uniquote {
     use uniquote::Formatter;
     use uniquote::Quote;
     use uniquote::Result;
-
-    use crate::imp::raw;
 
     use super::RawOsStr;
     use super::RawOsString;
@@ -1443,7 +1396,7 @@ mod uniquote {
     impl Quote for RawOsStr {
         #[inline]
         fn escape(&self, f: &mut Formatter<'_>) -> Result {
-            raw::uniquote::escape(self, f)
+            self.as_os_str().escape(f)
         }
     }
 
