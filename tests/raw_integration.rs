@@ -1,12 +1,16 @@
 #![cfg(feature = "raw_os_str")]
 
-use os_str_bytes::RawOsStr;
+use std::ffi::OsStr;
+
+use os_str_bytes::OsStrBytesExt;
 
 #[macro_use]
 mod raw_common;
 
 if_conversions! {
-    use raw_common::RAW_WTF8_STRING;
+    use os_str_bytes::OsStrBytes;
+
+    use raw_common::WTF8_OS_STRING;
 }
 
 if_conversions! {
@@ -14,8 +18,8 @@ if_conversions! {
     fn test_ends_with() {
         #[track_caller]
         fn test(result: bool, suffix: &[u8]) {
-            let suffix = RawOsStr::assert_cow_from_raw_bytes(suffix);
-            assert_eq!(result, RAW_WTF8_STRING.ends_with_os(&suffix));
+            let suffix = OsStr::assert_from_raw_bytes(suffix);
+            assert_eq!(result, WTF8_OS_STRING.ends_with_os(&suffix));
         }
 
         test(true, b"");
@@ -44,7 +48,7 @@ if_conversions! {
         fn test(result: bool, suffix: &str) {
             assert_eq!(
                 result,
-                RawOsStr::new("").ends_with_os(RawOsStr::new(suffix)),
+                OsStr::new("").ends_with_os(OsStr::new(suffix)),
             );
         }
 
@@ -57,8 +61,8 @@ if_conversions! {
     fn test_starts_with() {
         #[track_caller]
         fn test(result: bool, prefix: &[u8]) {
-            let prefix = RawOsStr::assert_cow_from_raw_bytes(prefix);
-            assert_eq!(result, RAW_WTF8_STRING.starts_with_os(&prefix));
+            let prefix = OsStr::assert_from_raw_bytes(prefix);
+            assert_eq!(result, WTF8_OS_STRING.starts_with_os(&prefix));
         }
 
         test(true, b"");
@@ -87,7 +91,7 @@ if_conversions! {
         fn test(result: bool, prefix: &str) {
             assert_eq!(
                 result,
-                RawOsStr::new("").starts_with_os(RawOsStr::new(prefix)),
+                OsStr::new("").starts_with_os(OsStr::new(prefix)),
             );
         }
 
@@ -101,12 +105,12 @@ if_conversions! {
     #[should_panic = "cannot split using an empty pattern"]
     #[test]
     fn test_split_by_empty() {
-        let _ = RAW_WTF8_STRING.split("");
+        let _ = WTF8_OS_STRING.split("");
     }
 }
 
 #[should_panic = "cannot split using an empty pattern"]
 #[test]
 fn test_split_empty_by_empty() {
-    let _ = RawOsStr::new("").split("");
+    let _ = OsStr::new("").split("");
 }

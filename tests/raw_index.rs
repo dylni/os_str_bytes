@@ -1,16 +1,16 @@
 #![cfg(feature = "raw_os_str")]
 
-use std::ops::Index;
+use std::ffi::OsStr;
 use std::panic;
 use std::panic::UnwindSafe;
 
-use os_str_bytes::RawOsStr;
+use os_str_bytes::OsStrBytesExt;
 
 #[macro_use]
 mod raw_common;
 
 if_conversions! {
-    use raw_common::RAW_WTF8_STRING;
+    use raw_common::WTF8_OS_STRING;
 }
 
 if_conversions! {
@@ -18,7 +18,7 @@ if_conversions! {
     fn test_valid() {
         #[track_caller]
         fn test(index: usize) {
-            let _ = RAW_WTF8_STRING.index(index..);
+            let _ = WTF8_OS_STRING.index(index..);
         }
 
         test(0);
@@ -38,7 +38,7 @@ if_conversions! {
             #[test]
             fn $name() {
                 let error =
-                    panic::catch_unwind(|| RAW_WTF8_STRING.index($index..))
+                    panic::catch_unwind(|| WTF8_OS_STRING.index($index..))
                         .expect_err("test did not panic as expected");
                 let error: &String =
                     error.downcast_ref().expect("incorrect panic message type");
@@ -66,7 +66,7 @@ fn test_panics() {
         assert!(panic::catch_unwind(f).is_err());
     }
 
-    let string = RawOsStr::new("\u{F6}");
+    let string = OsStr::new("\u{F6}");
     test(|| string.index(1..2));
     test(|| string.index(0..1));
     test(|| string.index(1..));

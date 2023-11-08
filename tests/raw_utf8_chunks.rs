@@ -2,7 +2,7 @@
 
 use std::ffi::OsStr;
 
-use os_str_bytes::RawOsStr;
+use os_str_bytes::OsStrBytesExt;
 
 #[macro_use]
 mod raw_common;
@@ -10,10 +10,10 @@ mod raw_common;
 if_conversions! {
     use os_str_bytes::OsStrBytes;
 
-    use raw_common::RAW_WTF8_STRING;
+    use raw_common::WTF8_OS_STRING;
 }
 
-fn test(result: &[(&OsStr, &str)], string: &RawOsStr) {
+fn test(result: &[(&OsStr, &str)], string: &OsStr) {
     assert_eq!(
         result,
         string
@@ -25,7 +25,7 @@ fn test(result: &[(&OsStr, &str)], string: &RawOsStr) {
 
 #[test]
 fn test_empty() {
-    test(&[], RawOsStr::new(""));
+    test(&[], OsStr::new(""));
 }
 
 if_conversions! {
@@ -39,7 +39,7 @@ if_conversions! {
                     "\u{1F4A9}bar",
                 ),
             ],
-            &RAW_WTF8_STRING,
+            &WTF8_OS_STRING,
         );
     }
 
@@ -52,8 +52,8 @@ if_conversions! {
                 (&OsStr::assert_from_raw_bytes(&b"\xF1\xF1\x80"[..]), "bar"),
                 (&OsStr::assert_from_raw_bytes(&b"\xF1\x80\x80"[..]), ""),
             ],
-            &RawOsStr::assert_cow_from_raw_bytes(
-                b"foo\xF1\xF1\x80bar\xF1\x80\x80",
+            &OsStr::assert_from_raw_bytes(
+                &b"foo\xF1\xF1\x80bar\xF1\x80\x80"[..],
             ),
         );
     }

@@ -4,8 +4,9 @@
 mod common;
 
 if_conversions! {
-    use os_str_bytes::RawOsStr;
-    use os_str_bytes::RawOsString;
+    use std::ffi::OsStr;
+
+    use os_str_bytes::OsStrBytesExt;
 
     mod random_common;
     use random_common::ITERATIONS;
@@ -19,7 +20,7 @@ if_conversions! {
             ( $result:expr , $method:ident ( $(& $arg:ident),+) ) => {
                 assert_eq!(
                     $result,
-                    RawOsStr::$method($(&$arg),+),
+                    OsStr::$method($(&$arg),+),
                     concat!(stringify!($method), "({:?}, {:?})"),
                     $($arg,)+
                 );
@@ -28,12 +29,9 @@ if_conversions! {
 
         for _ in 0..ITERATIONS {
             let mut string = random_common::fastrand_os_string(SMALL_LENGTH);
-            let prefix = RawOsStr::new(&string).to_owned();
+            let prefix = string.clone();
             let suffix = random_common::fastrand_os_string(SMALL_LENGTH);
             string.push(&suffix);
-
-            let string = RawOsString::new(string);
-            let suffix = RawOsString::new(suffix);
 
             test!(true, ends_with_os(&string, &suffix));
             test!(true, starts_with_os(&string, &prefix));

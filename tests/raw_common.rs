@@ -7,17 +7,18 @@ mod common;
 
 if_conversions! {
     use std::borrow::Cow;
+    use std::ffi::OsStr;
 
     use lazy_static::lazy_static;
 
-    use os_str_bytes::RawOsStr;
+    use os_str_bytes::OsStrBytes;
 
     use common::WTF8_STRING;
 }
 
 if_conversions! {
     lazy_static! {
-        pub(crate) static ref RAW_WTF8_STRING: Cow<'static, RawOsStr> =
-            RawOsStr::assert_cow_from_raw_bytes(WTF8_STRING);
+        pub(crate) static ref WTF8_OS_STRING: Cow<'static, OsStr> =
+            OsStr::assert_from_raw_bytes(WTF8_STRING);
     }
 }
