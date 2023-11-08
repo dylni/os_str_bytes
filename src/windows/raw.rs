@@ -1,4 +1,2 @@
-if_conversions! {
-    pub(crate) use super::convert::ends_with;
-    pub(crate) use super::convert::starts_with;
-}
+pub(crate) use super::convert::ends_with;
+pub(crate) use super::convert::starts_with;

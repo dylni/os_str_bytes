@@ -25,17 +25,17 @@ pub(crate) type EncodingError = Infallible;
 pub(crate) type Result<T> = result::Result<T, EncodingError>;
 
 pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
-    Ok(Cow::Borrowed(OsStrExt::from_bytes(string)))
+    Ok(Cow::Borrowed(OsStr::from_bytes(string)))
 }
 
-pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Borrowed(os_string.as_bytes())
+pub(crate) fn os_str_to_bytes(string: &OsStr) -> Cow<'_, [u8]> {
+    Cow::Borrowed(string.as_bytes())
 }
 
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
-    Ok(OsStringExt::from_vec(string))
+    Ok(OsString::from_vec(string))
 }
 
-pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
-    os_string.into_vec()
+pub(crate) fn os_string_into_vec(string: OsString) -> Vec<u8> {
+    string.into_vec()
 }

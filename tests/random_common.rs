@@ -20,7 +20,7 @@ pub(crate) fn fastrand_os_string(buffer_length: usize) -> OsString {
     #[cfg(unix)]
     {
         rng.fill(&mut buffer);
-        OsStringExt::from_vec(buffer)
+        OsString::from_vec(buffer)
     }
     #[cfg(windows)]
     {
@@ -35,6 +35,6 @@ pub(crate) fn fastrand_os_string(buffer_length: usize) -> OsString {
         }
 
         rng.fill(as_mut_bytes(&mut buffer));
-        OsStringExt::from_wide(&buffer)
+        OsString::from_wide(&buffer)
     }
 }

@@ -31,16 +31,14 @@ macro_rules! expect_utf8 {
     };
 }
 
-fn from_bytes(string: &[u8]) -> Result<&str> {
-    str::from_utf8(string).map_err(EncodingError)
-}
-
 pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
-    from_bytes(string).map(|x| Cow::Borrowed(OsStr::new(x)))
+    str::from_utf8(string)
+        .map(|x| Cow::Borrowed(OsStr::new(x)))
+        .map_err(EncodingError)
 }
 
-pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Borrowed(expect_utf8!(os_string.to_str()).as_bytes())
+pub(crate) fn os_str_to_bytes(string: &OsStr) -> Cow<'_, [u8]> {
+    Cow::Borrowed(expect_utf8!(string.to_str()).as_bytes())
 }
 
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
@@ -49,6 +47,6 @@ pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
         .map_err(|x| EncodingError(x.utf8_error()))
 }
 
-pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
-    expect_utf8!(os_string.into_string()).into_bytes()
+pub(crate) fn os_string_into_vec(string: OsString) -> Vec<u8> {
+    expect_utf8!(string.into_string()).into_bytes()
 }

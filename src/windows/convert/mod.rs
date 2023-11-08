@@ -76,11 +76,11 @@ fn from_bytes(string: &[u8]) -> Result<Option<OsString>> {
     Ok(encoder
         .is_still_utf8()
         .not()
-        .then(|| OsStringExt::from_wide(&encoded_string)))
+        .then(|| OsString::from_wide(&encoded_string)))
 }
 
-fn to_bytes(os_string: &OsStr) -> Vec<u8> {
-    let encoder = os_string.encode_wide();
+fn to_bytes(string: &OsStr) -> Vec<u8> {
+    let encoder = string.encode_wide();
 
     let mut string = Vec::with_capacity(encoder.size_hint().0);
     string.extend(DecodeWide::new(encoder));
@@ -88,8 +88,8 @@ fn to_bytes(os_string: &OsStr) -> Vec<u8> {
 }
 
 pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
-    from_bytes(string).map(|os_string| {
-        os_string.map(Cow::Owned).unwrap_or_else(|| {
+    from_bytes(string).map(|result| {
+        result.map(Cow::Owned).unwrap_or_else(|| {
             // SAFETY: This slice was validated to be UTF-8.
             Cow::Borrowed(OsStr::new(unsafe {
                 str::from_utf8_unchecked(string)
@@ -98,19 +98,19 @@ pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
     })
 }
 
-pub(crate) fn os_str_to_bytes(os_string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Owned(to_bytes(os_string))
+pub(crate) fn os_str_to_bytes(string: &OsStr) -> Cow<'_, [u8]> {
+    Cow::Owned(to_bytes(string))
 }
 
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
-    from_bytes(&string).map(|os_string| {
-        os_string.unwrap_or_else(|| {
+    from_bytes(&string).map(|result| {
+        result.unwrap_or_else(|| {
             // SAFETY: This slice was validated to be UTF-8.
             unsafe { String::from_utf8_unchecked(string) }.into()
         })
     })
 }
 
-pub(crate) fn os_string_into_vec(os_string: OsString) -> Vec<u8> {
-    to_bytes(&os_string)
+pub(crate) fn os_string_into_vec(string: OsString) -> Vec<u8> {
+    to_bytes(&string)
 }

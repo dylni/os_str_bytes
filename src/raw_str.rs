@@ -1330,18 +1330,16 @@ where
 }
 
 macro_rules! r#impl {
-    ( $(#[$attr:meta])* $type:ty , $other_type:ty ) => {
-        $(#[$attr])*
+    ( $type:ty , $other_type:ty ) => {
         impl PartialEq<$other_type> for $type {
             #[inline]
             fn eq(&self, other: &$other_type) -> bool {
-                let raw: &RawOsStr = self;
-                let other: &RawOsStr = other.as_ref();
+                let raw: &OsStr = self.as_ref();
+                let other: &OsStr = other.as_ref();
                 raw == other
             }
         }
 
-        $(#[$attr])*
         impl PartialEq<$type> for $other_type {
             #[inline]
             fn eq(&self, other: &$type) -> bool {

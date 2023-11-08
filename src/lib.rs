@@ -48,8 +48,8 @@
 //!   Provides:
 //!   - [`iter`]
 //!   - [`NonUnicodeOsStr`]
-//!   - [`Pattern`]
 //!   - [`OsStrBytesExt`]
+//!   - [`Pattern`]
 //!   - [`RawOsStr`]
 //!   - [`RawOsStrCow`]
 //!   - [`RawOsString`]
@@ -238,15 +238,6 @@ if_checked_conversions! {
     );
 }
 
-macro_rules! if_nightly {
-    ( $($item:item)+ ) => {
-        $(
-            #[cfg(feature = "nightly")]
-            $item
-        )+
-    };
-}
-
 macro_rules! r#impl {
     ( $($feature:literal),+ ) => {
         $(
@@ -264,15 +255,6 @@ macro_rules! r#impl {
     };
 }
 r#impl!("memchr", "print_bytes", "uniquote");
-
-#[cfg(not(os_str_bytes_docs_rs))]
-if_nightly! {
-    const _: &str = env!(
-        "OS_STR_BYTES_NIGHTLY",
-        "The 'OS_STR_BYTES_NIGHTLY' environment variable must be defined to \
-         use the 'nightly' feature.",
-    );
-}
 
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {

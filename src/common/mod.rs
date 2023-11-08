@@ -1,7 +1,7 @@
 if_conversions! {
     pub(super) mod convert;
-}
 
-if_raw_str! {
-    pub(super) mod raw;
+    if_raw_str! {
+        pub(super) mod raw;
+    }
 }
