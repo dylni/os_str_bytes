@@ -14,6 +14,7 @@ use std::str;
 
 use super::ext;
 use super::iter::RawSplit;
+use super::iter::Utf8Chunks;
 use super::private;
 use super::OsStrBytesExt;
 use super::Pattern;
@@ -693,6 +694,31 @@ impl RawOsStr {
         P: Pattern,
     {
         Self::new(self.as_os_str().trim_start_matches(pat))
+    }
+
+    /// Equivalent to [`OsStrBytesExt::utf8_chunks`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// fn to_str_lossy<F>(raw: &RawOsStr, mut push: F)
+    /// where
+    ///     F: FnMut(&str),
+    /// {
+    ///     for (invalid, string) in raw.utf8_chunks() {
+    ///         if !invalid.as_os_str().is_empty() {
+    ///             push("\u{FFFD}");
+    ///         }
+    ///
+    ///         push(string);
+    ///     }
+    /// }
+    /// ```
+    #[inline]
+    pub fn utf8_chunks(&self) -> Utf8Chunks<'_> {
+        Utf8Chunks::new(self.as_os_str())
     }
 }
 

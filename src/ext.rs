@@ -1,4 +1,5 @@
 use std::ffi::OsStr;
+use std::mem;
 use std::ops::Range;
 use std::ops::RangeFrom;
 use std::ops::RangeFull;
@@ -8,6 +9,7 @@ use std::ops::RangeToInclusive;
 use std::str;
 
 use super::iter::Split;
+use super::iter::Utf8Chunks;
 use super::pattern::Encoded as EncodedPattern;
 use super::util;
 use super::util::MAX_UTF8_LENGTH;
@@ -516,6 +518,38 @@ pub trait OsStrBytesExt: OsStrBytes {
     fn trim_start_matches<P>(&self, pat: P) -> &Self
     where
         P: Pattern;
+
+    /// Splits this string into platform and UTF-8 substrings.
+    ///
+    /// The iterator returned by this method is very similar to
+    /// [`str::Utf8Chunks`]. However, the [`OsStr`] portion of each chunk
+    /// precedes the [`prim@str`] portion and has no length restrictions.
+    ///
+    /// The [`OsStr`] portion of each chunk can be empty only at the start of a
+    /// string, and the [`prim@str`] portion at the end of a string. They will
+    /// never be empty simultaneously.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::ffi::OsStr;
+    ///
+    /// use os_str_bytes::OsStrBytesExt;
+    ///
+    /// fn to_str_lossy<F>(os_string: &OsStr, mut push: F)
+    /// where
+    ///     F: FnMut(&str),
+    /// {
+    ///     for (invalid, string) in os_string.utf8_chunks() {
+    ///         if !invalid.as_os_str().is_empty() {
+    ///             push("\u{FFFD}");
+    ///         }
+    ///
+    ///         push(string);
+    ///     }
+    /// }
+    /// ```
+    fn utf8_chunks(&self) -> Utf8Chunks<'_>;
 }
 
 impl OsStrBytesExt for OsStr {
@@ -678,6 +712,11 @@ impl OsStrBytesExt for OsStr {
     {
         trim_start_matches(self, &pat.__encode())
     }
+
+    #[inline]
+    fn utf8_chunks(&self) -> Utf8Chunks<'_> {
+        Utf8Chunks::new(self)
+    }
 }
 
 pub trait SliceIndex {
@@ -708,3 +747,44 @@ r#impl!(RangeFull);
 r#impl!(RangeInclusive<usize>, x, *x.start(), x.end().wrapping_add(1));
 r#impl!(RangeTo<usize>, x, x.end);
 r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
+
+/// A container for platform strings containing no unicode characters.
+///
+/// Instances can only be constructed using [`Utf8Chunks`].
+///
+/// # Safety
+///
+/// Although this type is annotated with `#[repr(transparent)]`, the inner
+/// representation is not stable. Transmuting between this type and any other
+/// causes immediate undefined behavior.
+#[derive(Debug)]
+#[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
+#[repr(transparent)]
+pub struct NonUnicodeOsStr(OsStr);
+
+impl NonUnicodeOsStr {
+    unsafe fn from_inner(string: &OsStr) -> &Self {
+        // SAFETY: This struct has a layout that makes this operation safe.
+        unsafe { mem::transmute(string) }
+    }
+
+    pub(super) unsafe fn new_unchecked(string: &[u8]) -> &Self {
+        // SAFETY: This method has stricter safety requirements.
+        unsafe { Self::from_inner(os_str(string)) }
+    }
+
+    /// Converts this representation back to a platform-native string, without
+    /// copying or encoding conversion.
+    #[inline]
+    #[must_use]
+    pub fn as_os_str(&self) -> &OsStr {
+        &self.0
+    }
+}
+
+impl AsRef<OsStr> for NonUnicodeOsStr {
+    #[inline]
+    fn as_ref(&self) -> &OsStr {
+        &self.0
+    }
+}

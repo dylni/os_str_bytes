@@ -47,6 +47,7 @@
 //! - **raw\_os\_str** -
 //!   Provides:
 //!   - [`iter`]
+//!   - [`NonUnicodeOsStr`]
 //!   - [`Pattern`]
 //!   - [`OsStrBytesExt`]
 //!   - [`RawOsStr`]
@@ -310,6 +311,7 @@ mod util;
 
 if_raw_str! {
     mod ext;
+    pub use ext::NonUnicodeOsStr;
     pub use ext::OsStrBytesExt;
 
     pub mod iter;
