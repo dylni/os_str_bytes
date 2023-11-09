@@ -243,6 +243,49 @@ impl RawOsStr {
         }
     }
 
+    if_conversions! {
+        /// Converts and wraps a byte string.
+        ///
+        /// # Safety
+        ///
+        /// The string must be valid for the [unspecified encoding] used by
+        /// this crate.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::env;
+        /// # use std::io;
+        ///
+        /// use os_str_bytes::RawOsStr;
+        ///
+        /// let os_string = env::current_exe()?.into_os_string();
+        /// let raw = RawOsStr::new(&os_string);
+        /// let raw_bytes = raw.to_raw_bytes();
+        /// assert_eq!(raw, unsafe {
+        ///     &*RawOsStr::cow_from_raw_bytes_unchecked(&raw_bytes)
+        /// });
+        /// #
+        /// # Ok::<_, io::Error>(())
+        /// ```
+        ///
+        /// [unspecified encoding]: super#encoding-conversions
+        #[deprecated(
+            since = "6.6.0",
+            note = "use `assert_cow_from_raw_bytes` or
+                    `from_encoded_bytes_unchecked` instead",
+        )]
+        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
+        #[inline]
+        #[must_use]
+        #[track_caller]
+        pub unsafe fn cow_from_raw_bytes_unchecked(
+            string: &[u8],
+        ) -> Cow<'_, Self> {
+            Self::assert_cow_from_raw_bytes(string)
+        }
+    }
+
     /// Equivalent to [`OsStr::as_encoded_bytes`].
     ///
     /// The returned string will not use the [unspecified encoding]. It can
@@ -571,6 +614,32 @@ impl RawOsStr {
         P: Pattern,
     {
         self.as_os_str().strip_suffix(pat).map(Self::new)
+    }
+
+    /// Converts this representation back to a platform-native string.
+    ///
+    /// When possible, use [`RawOsStrCow::into_os_str`] for a more efficient
+    /// conversion on some platforms.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::env;
+    /// # use std::io;
+    ///
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let os_string = env::current_exe()?.into_os_string();
+    /// let raw = RawOsStr::new(&os_string);
+    /// assert_eq!(os_string, raw.to_os_str());
+    /// #
+    /// # Ok::<_, io::Error>(())
+    /// ```
+    #[deprecated(since = "6.6.0", note = "use `as_os_str` instead")]
+    #[inline]
+    #[must_use]
+    pub fn to_os_str(&self) -> Cow<'_, OsStr> {
+        Cow::Borrowed(self.as_os_str())
     }
 
     if_conversions! {
@@ -1023,6 +1092,47 @@ impl RawOsString {
         #[inline]
         pub fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
             Self::from_raw_vec_checked(string).map_err(EncodingError)
+        }
+    }
+
+    if_conversions! {
+        /// Wraps a byte string, without copying or encoding conversion.
+        ///
+        /// # Safety
+        ///
+        /// The string must be valid for the [unspecified encoding] used by
+        /// this crate.
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// use std::env;
+        /// # use std::io;
+        ///
+        /// use os_str_bytes::RawOsString;
+        ///
+        /// let os_string = env::current_exe()?.into_os_string();
+        /// let raw = RawOsString::new(os_string);
+        /// let raw_bytes = raw.clone().into_raw_vec();
+        /// assert_eq!(raw, unsafe {
+        ///     RawOsString::from_raw_vec_unchecked(raw_bytes)
+        /// });
+        /// #
+        /// # Ok::<_, io::Error>(())
+        /// ```
+        ///
+        /// [unspecified encoding]: super#encoding-conversions
+        #[deprecated(
+            since = "6.6.0",
+            note = "use `assert_from_raw_vec` or
+                    `from_encoded_vec_unchecked` instead",
+        )]
+        #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
+        #[inline]
+        #[must_use]
+        #[track_caller]
+        pub unsafe fn from_raw_vec_unchecked(string: Vec<u8>) -> Self {
+            Self::assert_from_raw_vec(string)
         }
     }
 
