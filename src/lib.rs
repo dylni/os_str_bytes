@@ -83,14 +83,6 @@
 //!
 //!   For more information, see [Encoding Conversions].
 //!
-//! - **print\_bytes** -
-//!   Provides implementations of [`print_bytes::ToBytes`] for [`RawOsStr`] and
-//!   [`RawOsString`].
-//!
-//! - **uniquote** -
-//!   Provides implementations of [`uniquote::Quote`] for [`RawOsStr`] and
-//!   [`RawOsString`].
-//!
 //! # Implementation
 //!
 //! Some methods return [`Cow`] to account for platform differences. However,
@@ -137,6 +129,14 @@
 //! [`OsStrExt`] and [`OsStringExt`] for various platforms, which should be
 //! preferred for that use case.
 //!
+//! # Related Crates
+//!
+//! - [print\_bytes] -
+//!   Used to print byte and platform strings as losslessly as possible.
+//!
+//! - [uniquote] -
+//!   Used to display paths using escapes instead of replacement characters.
+//!
 //! # Examples
 //!
 //! ```
@@ -181,7 +181,9 @@
 //! [memchr_complexity]: OsStrBytesExt#complexity
 //! [`OsStrExt`]: ::std::os::unix::ffi::OsStrExt
 //! [`OsStringExt`]: ::std::os::unix::ffi::OsStringExt
+//! [print\_bytes]: https://crates.io/crates/print_bytes
 //! [sealed]: https://rust-lang.github.io/api-guidelines/future-proofing.html#c-sealed
+//! [uniquote]: https://crates.io/crates/uniquote
 
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
@@ -238,23 +240,14 @@ if_checked_conversions! {
     );
 }
 
-macro_rules! r#impl {
-    ( $($feature:literal),+ ) => {
-        $(
-            #[cfg(all(feature = $feature, not(feature = "raw_os_str")))]
-            const _: &str = env!(
-                "__OS_STR_BYTES_CI",
-                concat!(
-                    "The '",
-                    $feature,
-                    "' feature is useless when 'raw_os_str' is disabled; it \
-                     should be disabled too.",
-                ),
-            );
-        )+
-    };
-}
-r#impl!("memchr", "print_bytes", "uniquote");
+#[cfg(all(feature = "memchr", not(feature = "raw_os_str")))]
+const _: &str = env!(
+    "__OS_STR_BYTES_CI",
+    concat!(
+        "The 'memchr' feature is useless when 'raw_os_str' is disabled; it \
+         should be disabled too.",
+    ),
+);
 
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
