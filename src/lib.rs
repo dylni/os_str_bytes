@@ -147,23 +147,27 @@
 //! # #[cfg(any())]
 //! use std::env;
 //! use std::fs;
+//! # use std::path::Path;
 //!
 //! use os_str_bytes::OsStrBytesExt;
 //!
 //! # mod env {
-//! #   use std::env;
 //! #   use std::ffi::OsString;
+//! #   use std::iter;
+//! #
+//! #   use tempfile::NamedTempFile;
 //! #
 //! #   pub(super) fn args_os() -> impl Iterator<Item = OsString> {
-//! #       let mut file = env::temp_dir();
-//! #       file.push("os_str_bytes\u{E9}.txt");
-//! #       vec![OsString::new(), file.into_os_string()].into_iter()
+//! #       let file = NamedTempFile::with_prefix("os_str_bytes_").unwrap();
+//! #       iter::from_fn(move || Some(file.path().as_os_str().to_owned()))
+//! #           .take(2)
 //! #   }
 //! # }
 //! #
 //! for file in env::args_os().skip(1) {
 //!     if !file.starts_with('-') {
 //!         let string = "Hello, world!";
+//! #       assert!(Path::new(&file).exists());
 //!         fs::write(&file, string)?;
 //!         assert_eq!(string, fs::read_to_string(file)?);
 //!     }

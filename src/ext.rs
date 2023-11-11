@@ -37,26 +37,17 @@ fn is_boundary(string: &OsStr, index: usize) -> bool {
 
     if !util::is_continuation(byte) {
         let bytes = &string[index..];
-        let valid = str::from_utf8(&bytes[..bytes.len().min(MAX_UTF8_LENGTH)])
-            .err()
-            .map(|x| x.valid_up_to() != 0)
-            .unwrap_or(true);
-        if valid {
+        if !str::from_utf8(&bytes[..bytes.len().min(MAX_UTF8_LENGTH)])
+            .is_err_and(|x| x.valid_up_to() == 0)
+        {
             return true;
         }
     }
-    let mut start = index;
-    for _ in 0..MAX_UTF8_LENGTH {
-        if let Some(index) = start.checked_sub(1) {
-            start = index;
-        } else {
-            return false;
-        }
-        if !util::is_continuation(string[start]) {
-            break;
-        }
-    }
-    str::from_utf8(&string[start..index]).is_ok()
+    (0..index)
+        .rev()
+        .take(MAX_UTF8_LENGTH)
+        .find(|&x| !util::is_continuation(string[x]))
+        .is_some_and(|x| str::from_utf8(&string[x..index]).is_ok())
 }
 
 #[track_caller]

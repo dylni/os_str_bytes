@@ -35,7 +35,7 @@ The minimum supported Rust toolchain version depends on the platform:
     <tr>
         <td>HermitCore</td>
         <td><code>*-*-hermit</code></td>
-        <td>nightly (<a href="https://github.com/hermitcore/rusty-hermit/blob/86232e295ff5c50db6c283a47cff3f38a0d1b012/rust-toolchain.toml#L3"><code>rust-toolchain.toml</code></a>)</td>
+        <td>nightly (<a href="https://github.com/hermit-os/hermit-rs/blob/5f148e3f97d24e1a142d68b649c31579d8f499ba/rust-toolchain.toml#L2"><code>rust-toolchain.toml</code></a>)</td>
     </tr>
     <tr>
         <td>SOLID</td>

@@ -5,7 +5,7 @@ authors = ["dylni"]
 edition = "2021"
 rust-version = "1.74.0"
 description = """
-Convert between byte sequences and platform-native strings
+Losslessly manipulate platform-native strings
 """
 readme = "README.md"
 repository = "https://github.com/dylni/os_str_bytes"
@@ -25,6 +25,7 @@ memchr = { version = "2.4", optional = true }
 [dev-dependencies]
 fastrand = "2.0"
 lazy_static = "1.4"
+tempfile = "3.2"
 
 [features]
 default = ["memchr", "raw_os_str"]
