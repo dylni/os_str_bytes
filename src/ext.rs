@@ -13,15 +13,12 @@ use super::iter::Utf8Chunks;
 use super::pattern::Encoded as EncodedPattern;
 use super::util;
 use super::util::MAX_UTF8_LENGTH;
+use super::OsStrBytes;
 use super::Pattern;
 
 if_conversions! {
     use super::imp::raw;
-    use super::OsStrBytes;
 }
-
-#[cfg(not(feature = "conversions"))]
-use super::private;
 
 fn is_boundary(string: &OsStr, index: usize) -> bool {
     let string = string.as_encoded_bytes();
@@ -133,12 +130,6 @@ where
 {
     trim_matches(string, pat, OsStrBytesExt::strip_prefix)
 }
-
-#[cfg(not(feature = "conversions"))]
-trait OsStrBytes: private::Sealed {}
-
-#[cfg(not(feature = "conversions"))]
-impl OsStrBytes for OsStr {}
 
 /// An extension trait providing additional methods to [`OsStr`].
 ///

@@ -4,21 +4,8 @@ use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::result;
 
-#[cfg(all(target_vendor = "fortanix", target_env = "sgx"))]
-use std::os::fortanix_sgx as os;
-#[cfg(target_os = "hermit")]
-use std::os::hermit as os;
-#[cfg(target_os = "solid_asp3")]
-use std::os::solid as os;
-#[cfg(unix)]
-use std::os::unix as os;
-#[cfg(target_os = "wasi")]
-use std::os::wasi as os;
-#[cfg(target_os = "xous")]
-use std::os::xous as os;
-
-use os::ffi::OsStrExt;
-use os::ffi::OsStringExt;
+use super::os::ffi::OsStrExt;
+use super::os::ffi::OsStringExt;
 
 pub(crate) type EncodingError = Infallible;
 
