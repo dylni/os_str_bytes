@@ -1,3 +1,10 @@
+if_conversions! {
+    #[cfg(target_os = "uefi")]
+    use std::os::uefi as sys;
+    #[cfg(windows)]
+    use std::os::windows as sys;
+}
+
 pub(super) mod convert_io;
 
 if_conversions! {

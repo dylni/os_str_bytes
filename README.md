@@ -43,6 +43,11 @@ The minimum supported Rust toolchain version depends on the platform:
         <td>1.74.0</td>
     </tr>
     <tr>
+        <td>UEFI</td>
+        <td><code>*-*-uefi</code></td>
+        <td>nightly (<a href="https://doc.rust-lang.org/unstable-book/library-features/uefi-std.html"><code>uefi_std</code></a>)</td>
+    </tr>
+    <tr>
         <td>Unix</td>
         <td>Unix</td>
         <td>1.74.0</td>

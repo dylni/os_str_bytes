@@ -51,6 +51,8 @@ jobs:
         include:
         - target: x86_64-fortanix-unknown-sgx
           version: nightly
+        - target: x86_64-unknown-uefi
+          version: nightly
   test:
     needs: [build]
     runs-on: ${{ matrix.platform }}

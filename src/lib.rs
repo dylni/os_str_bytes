@@ -198,11 +198,11 @@
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
 // https://github.com/dylni/os_str_bytes/issues/2
 #![cfg_attr(os_str_bytes_docs_rs, feature(doc_cfg))]
-// Nightly is also currently required for the SGX platform.
 #![cfg_attr(
     all(target_vendor = "fortanix", target_env = "sgx"),
     feature(sgx_platform)
 )]
+#![cfg_attr(target_os = "uefi", feature(uefi_std))]
 #![warn(unused_results)]
 
 use std::borrow::Cow;
@@ -276,9 +276,13 @@ macro_rules! if_raw_str {
     all(target_family = "wasm", target_os = "unknown"),
     path = "wasm/mod.rs"
 )]
-#[cfg_attr(windows, path = "windows/mod.rs")]
+#[cfg_attr(any(target_os = "uefi", windows), path = "windows/mod.rs")]
 #[cfg_attr(
-    not(any(all(target_family = "wasm", target_os = "unknown"), windows)),
+    not(any(
+        all(target_family = "wasm", target_os = "unknown"),
+        target_os = "uefi",
+        windows,
+    )),
     path = "common/mod.rs"
 )]
 mod imp;
@@ -288,7 +292,10 @@ if_conversions! {
     use imp::convert;
 }
 
-#[cfg(any(all(feature = "conversions", windows), feature = "raw_os_str"))]
+#[cfg(any(
+    all(feature = "conversions", any(target_os = "uefi", windows)),
+    feature = "raw_os_str",
+))]
 mod util;
 
 if_raw_str! {

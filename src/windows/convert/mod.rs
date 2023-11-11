@@ -10,10 +10,11 @@ use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::ops::Not;
-use std::os::windows::ffi::OsStrExt;
-use std::os::windows::ffi::OsStringExt;
 use std::result;
 use std::str;
+
+use super::sys::ffi::OsStrExt;
+use super::sys::ffi::OsStringExt;
 
 mod wtf8;
 use wtf8::DecodeWide;
