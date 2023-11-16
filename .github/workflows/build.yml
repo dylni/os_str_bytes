@@ -17,18 +17,7 @@ jobs:
     env:
       __OS_STR_BYTES_CI: 1
     steps:
-    - uses: dylni/build-actions/setup@master
-      with:
-        version: beta
-    - run: |
-        rustup component add clippy rustfmt
-        cargo install cargo-hack
-        cargo hack clippy ${{ env.cargo_hack_options }}
-        cargo hack clippy ${{ env.cargo_hack_options }} --tests
-        cargo fmt --check
-      shell: bash
-      env:
-        cargo_hack_options: --feature-powerset --optional-deps
+    - uses: dylni/build-actions/build@master
     timeout-minutes: 10
     strategy:
       matrix:
@@ -47,7 +36,7 @@ jobs:
     strategy:
       matrix:
         target: [wasm32-unknown-unknown, wasm32-wasi, x86_64-unknown-redox]
-        version: [beta, nightly]
+        version: [1.74.0, stable, beta, nightly]
         include:
         - target: x86_64-fortanix-unknown-sgx
           version: nightly
@@ -65,4 +54,4 @@ jobs:
     strategy:
       matrix:
         platform: [macos-latest, ubuntu-latest, windows-latest]
-        version: [beta, nightly]
+        version: [1.74.0, stable, beta, nightly]
