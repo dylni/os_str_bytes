@@ -13,8 +13,8 @@ use std::ops::Not;
 use std::result;
 use std::str;
 
-use super::sys::ffi::OsStrExt;
-use super::sys::ffi::OsStringExt;
+use super::os::ffi::OsStrExt;
+use super::os::ffi::OsStringExt;
 
 mod wtf8;
 use wtf8::DecodeWide;

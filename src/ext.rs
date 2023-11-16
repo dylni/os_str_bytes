@@ -56,36 +56,34 @@ pub(super) fn check_bound(string: &OsStr, index: usize) {
     );
 }
 
-#[cfg(feature = "memchr")]
-use memchr::memmem::find;
-#[cfg(feature = "memchr")]
-use memchr::memmem::rfind;
+macro_rules! r#impl {
+    ( $($name:ident),+ ) => {
+        $(
+            #[cfg(feature = "memchr")]
+            use memchr::memmem::$name;
 
-#[cfg(not(feature = "memchr"))]
-fn find(string: &[u8], pat: &[u8]) -> Option<usize> {
-    (0..=string.len().checked_sub(pat.len())?)
-        .find(|&x| string[x..].starts_with(pat))
+            #[cfg(not(feature = "memchr"))]
+            fn $name(string: &[u8], pat: &[u8]) -> Option<usize> {
+                (pat.len()..=string.len())
+                    .$name(|&x| string[..x].ends_with(pat))
+                    .map(|x| x - pat.len())
+            }
+        )+
+    };
 }
-
-#[cfg(not(feature = "memchr"))]
-fn rfind(string: &[u8], pat: &[u8]) -> Option<usize> {
-    (pat.len()..=string.len())
-        .rfind(|&x| string[..x].ends_with(pat))
-        .map(|x| x - pat.len())
-}
+r#impl!(find, rfind);
 
 pub(super) unsafe fn os_str(string: &[u8]) -> &OsStr {
     // SAFETY: This function has equivalent safety requirements.
     unsafe { OsStr::from_encoded_bytes_unchecked(string) }
 }
 
-fn split_once<'a, 'b, F, P>(
+fn split_once<'a, 'b, P>(
     string: &'a OsStr,
     pat: &'b P,
-    find_fn: F,
+    find_fn: fn(&OsStr, &'b str) -> Option<usize>,
 ) -> Option<(&'a OsStr, &'a OsStr)>
 where
-    F: FnOnce(&OsStr, &'b str) -> Option<usize>,
     P: EncodedPattern,
 {
     let pat = pat.__as_str();
@@ -98,13 +96,12 @@ where
     Some(unsafe { (os_str(prefix), os_str(suffix)) })
 }
 
-fn trim_matches<'a, 'b, P, F>(
+fn trim_matches<'a, 'b, P>(
     mut string: &'a OsStr,
     pat: &'b P,
-    strip_fn: F,
+    strip_fn: for<'c> fn(&'c OsStr, &'b str) -> Option<&'c OsStr>,
 ) -> &'a OsStr
 where
-    F: for<'c> Fn(&'c OsStr, &'b str) -> Option<&'c OsStr>,
     P: EncodedPattern,
 {
     let pat = pat.__as_str();

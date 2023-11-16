@@ -20,12 +20,12 @@ use super::OsStrBytesExt;
 use super::Pattern;
 
 if_checked_conversions! {
-    use super::EncodingError;
     use super::Result;
 }
 
 if_conversions! {
-    use super::convert;
+    use super::OsStrBytes;
+    use super::OsStringBytes;
 }
 
 #[allow(clippy::missing_safety_doc)]
@@ -162,20 +162,7 @@ impl RawOsStr {
     }
 
     if_conversions! {
-        fn cow_from_raw_bytes_checked(
-            string: &[u8],
-        ) -> convert::Result<Cow<'_, Self>> {
-            convert::os_str_from_bytes(string).map(RawOsStrCow::from_os_str)
-        }
-    }
-
-    if_conversions! {
-        /// Converts and wraps a byte string.
-        ///
-        /// # Panics
-        ///
-        /// Panics if the string is not valid for the [unspecified encoding]
-        /// used by this crate.
+        /// Equivalent to [`OsStrBytes::assert_from_raw_bytes`].
         ///
         /// # Examples
         ///
@@ -192,26 +179,17 @@ impl RawOsStr {
         /// #
         /// # Ok::<_, io::Error>(())
         /// ```
-        ///
-        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use = "method should not be used for validation"]
         #[track_caller]
         pub fn assert_cow_from_raw_bytes(string: &[u8]) -> Cow<'_, Self> {
-            expect_encoded!(Self::cow_from_raw_bytes_checked(string))
+            Cow::from_os_str(OsStr::assert_from_raw_bytes(string))
         }
     }
 
     if_checked_conversions! {
-        /// Converts and wraps a byte string.
-        ///
-        /// [`assert_cow_from_raw_bytes`] should almost always be used instead.
-        /// For more information, see [`EncodingError`].
-        ///
-        /// # Errors
-        ///
-        /// See documentation for [`EncodingError`].
+        /// Equivalent to [`OsStrBytes::from_raw_bytes`].
         ///
         /// # Examples
         ///
@@ -231,15 +209,13 @@ impl RawOsStr {
         /// #
         /// # Ok::<_, io::Error>(())
         /// ```
-        ///
-        /// [`assert_cow_from_raw_bytes`]: Self::assert_cow_from_raw_bytes
         #[cfg_attr(
             os_str_bytes_docs_rs,
             doc(cfg(feature = "checked_conversions"))
         )]
         #[inline]
         pub fn cow_from_raw_bytes(string: &[u8]) -> Result<Cow<'_, Self>> {
-            Self::cow_from_raw_bytes_checked(string).map_err(EncodingError)
+            OsStr::from_raw_bytes(string).map(Cow::from_os_str)
         }
     }
 
@@ -643,9 +619,7 @@ impl RawOsStr {
     }
 
     if_conversions! {
-        /// Converts and returns the byte string stored by this container.
-        ///
-        /// The returned string will use an [unspecified encoding].
+        /// Equivalent to [`OsStrBytes::to_raw_bytes`].
         ///
         /// # Examples
         ///
@@ -656,13 +630,11 @@ impl RawOsStr {
         /// let raw = RawOsStr::new(string);
         /// assert_eq!(string.as_bytes(), &*raw.to_raw_bytes());
         /// ```
-        ///
-        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use]
         pub fn to_raw_bytes(&self) -> Cow<'_, [u8]> {
-            convert::os_str_to_bytes(self.as_os_str())
+            self.as_os_str().to_raw_bytes()
         }
     }
 
@@ -1019,18 +991,7 @@ impl RawOsString {
     }
 
     if_conversions! {
-        fn from_raw_vec_checked(string: Vec<u8>) -> convert::Result<Self> {
-            convert::os_string_from_vec(string).map(Self::new)
-        }
-    }
-
-    if_conversions! {
-        /// Wraps a byte string, without copying or encoding conversion.
-        ///
-        /// # Panics
-        ///
-        /// Panics if the string is not valid for the [unspecified encoding]
-        /// used by this crate.
+        /// Equivalent to [`OsStringBytes::assert_from_raw_vec`].
         ///
         /// # Examples
         ///
@@ -1047,26 +1008,17 @@ impl RawOsString {
         /// #
         /// # Ok::<_, io::Error>(())
         /// ```
-        ///
-        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use = "method should not be used for validation"]
         #[track_caller]
         pub fn assert_from_raw_vec(string: Vec<u8>) -> Self {
-            expect_encoded!(Self::from_raw_vec_checked(string))
+            Self::new(OsString::assert_from_raw_vec(string))
         }
     }
 
     if_checked_conversions! {
-        /// Wraps a byte string, without copying or encoding conversion.
-        ///
-        /// [`assert_from_raw_vec`] should almost always be used instead. For
-        /// more information, see [`EncodingError`].
-        ///
-        /// # Errors
-        ///
-        /// See documentation for [`EncodingError`].
+        /// Equivalent to [`OsStringBytes::from_raw_vec`].
         ///
         /// # Examples
         ///
@@ -1083,20 +1035,18 @@ impl RawOsString {
         /// #
         /// # Ok::<_, io::Error>(())
         /// ```
-        ///
-        /// [`assert_from_raw_vec`]: Self::assert_from_raw_vec
         #[cfg_attr(
             os_str_bytes_docs_rs,
             doc(cfg(feature = "checked_conversions"))
         )]
         #[inline]
         pub fn from_raw_vec(string: Vec<u8>) -> Result<Self> {
-            Self::from_raw_vec_checked(string).map_err(EncodingError)
+            OsString::from_raw_vec(string).map(Self::new)
         }
     }
 
     if_conversions! {
-        /// Wraps a byte string, without copying or encoding conversion.
+        /// Converts and wraps a byte string.
         ///
         /// # Safety
         ///
@@ -1225,9 +1175,7 @@ impl RawOsString {
     }
 
     if_conversions! {
-        /// Returns the byte string stored by this container.
-        ///
-        /// The returned string will use an [unspecified encoding].
+        /// Equivalent to [`OsStringBytes::into_raw_vec`].
         ///
         /// # Examples
         ///
@@ -1238,13 +1186,11 @@ impl RawOsString {
         /// let raw = RawOsString::new(string.clone());
         /// assert_eq!(string.into_bytes(), raw.into_raw_vec());
         /// ```
-        ///
-        /// [unspecified encoding]: super#encoding-conversions
         #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "conversions")))]
         #[inline]
         #[must_use]
         pub fn into_raw_vec(self) -> Vec<u8> {
-            convert::os_string_into_vec(self.into_os_string())
+            self.into_os_string().into_raw_vec()
         }
     }
 
