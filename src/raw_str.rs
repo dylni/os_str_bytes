@@ -14,6 +14,7 @@ use std::str;
 
 use super::ext;
 use super::iter::RawSplit;
+use super::iter::RawRSplit;
 use super::iter::Utf8Chunks;
 use super::private;
 use super::OsStrBytesExt;
@@ -425,6 +426,25 @@ impl RawOsStr {
         P: Pattern,
     {
         self.as_os_str().rfind(pat)
+    }
+
+    /// Equivalent to [`OsStrBytesExt::rsplit`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::new("foobar");
+    /// assert!(raw.rsplit("o").eq(["bar", "", "f"]));
+    /// ```
+    #[inline]
+    #[track_caller]
+    pub fn rsplit<P>(&self, pat: P) -> RawRSplit<'_, P>
+    where
+        P: Pattern,
+    {
+        RawRSplit::new(self, pat)
     }
 
     /// Equivalent to [`OsStrBytesExt::rsplit_once`].
