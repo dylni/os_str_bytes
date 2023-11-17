@@ -408,6 +408,22 @@ impl RawOsStr {
         self.as_os_str().is_empty()
     }
 
+    /// Equivalent to [`OsStrBytesExt::repeat`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::new("foo");
+    /// assert_eq!("foofoofoo", raw.repeat(3));
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn repeat(&self, n: usize) -> RawOsString {
+        RawOsString::new(self.as_os_str().repeat(n))
+    }
+
     /// Equivalent to [`OsStrBytesExt::rfind`].
     ///
     /// # Examples

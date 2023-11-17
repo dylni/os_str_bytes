@@ -1,4 +1,6 @@
 use std::ffi::OsStr;
+use std::ffi::OsString;
+use std::iter;
 use std::mem;
 use std::ops::Range;
 use std::ops::RangeFrom;
@@ -257,6 +259,21 @@ pub trait OsStrBytesExt: OsStrBytes {
     fn index<I>(&self, index: I) -> &Self
     where
         I: SliceIndex;
+
+    /// Equivalent to [`str::repeat`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::ffi::OsStr;
+    ///
+    /// use os_str_bytes::OsStrBytesExt;
+    ///
+    /// let os_string = OsStr::new("foo");
+    /// assert_eq!("foofoofoo", os_string.repeat(3));
+    /// ```
+    #[must_use]
+    fn repeat(&self, n: usize) -> Self::Owned;
 
     /// Equivalent to [`str::rfind`].
     ///
@@ -595,6 +612,13 @@ impl OsStrBytesExt for OsStr {
         I: SliceIndex,
     {
         index.index(self)
+    }
+
+    #[inline]
+    fn repeat(&self, n: usize) -> Self::Owned {
+        let mut string = OsString::new();
+        string.extend(iter::repeat(self).take(n));
+        string
     }
 
     #[inline]
