@@ -13,6 +13,7 @@ use std::result;
 use std::str;
 
 use super::ext;
+use super::ext::SliceIndex;
 use super::iter::RawSplit;
 use super::iter::RawRSplit;
 use super::iter::Utf8Chunks;
@@ -390,6 +391,29 @@ impl RawOsStr {
         P: Pattern,
     {
         self.as_os_str().find(pat)
+    }
+
+    /// Equivalent to [`OsStrBytesExt::get_unchecked`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use os_str_bytes::RawOsStr;
+    ///
+    /// let raw = RawOsStr::new("foobar");
+    /// assert_eq!("foo", unsafe { raw.get_unchecked(..3) });
+    /// assert_eq!("bar", unsafe { raw.get_unchecked(3..) });
+    /// ```
+    #[allow(clippy::missing_safety_doc)]
+    #[inline]
+    #[must_use]
+    pub unsafe fn get_unchecked<I>(&self, index: I) -> &Self
+    where
+        I: SliceIndex,
+    {
+        let string = self.as_os_str();
+        // SAFETY: This method has equivalent safety requirements.
+        Self::new(unsafe { string.get_unchecked(index) })
     }
 
     /// Equivalent to [`OsStr::is_empty`].
@@ -864,7 +888,7 @@ impl From<Box<str>> for Box<RawOsStr> {
 
 impl<Idx> Index<Idx> for RawOsStr
 where
-    Idx: ext::SliceIndex,
+    Idx: SliceIndex,
 {
     type Output = Self;
 
@@ -1411,7 +1435,7 @@ r#impl!(RawOsString);
 
 impl<Idx> Index<Idx> for RawOsString
 where
-    Idx: ext::SliceIndex,
+    Idx: SliceIndex,
 {
     type Output = <RawOsStr as Index<Idx>>::Output;
 

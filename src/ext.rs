@@ -234,6 +234,31 @@ pub trait OsStrBytesExt: OsStrBytes {
     where
         P: Pattern;
 
+    /// Equivalent to [`str::get_unchecked`].
+    ///
+    /// # Safety
+    ///
+    /// The index must be a [valid boundary].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::ffi::OsStr;
+    ///
+    /// use os_str_bytes::OsStrBytesExt;
+    ///
+    /// let os_string = OsStr::new("foobar");
+    /// assert_eq!("foo", unsafe { os_string.get_unchecked(..3) });
+    /// assert_eq!("bar", unsafe { os_string.get_unchecked(3..) });
+    /// ```
+    ///
+    /// [valid boundary]: #indices
+    #[must_use]
+    #[track_caller]
+    unsafe fn get_unchecked<I>(&self, index: I) -> &Self
+    where
+        I: SliceIndex;
+
     /// Equivalent to the [`Index::index`] implementation for [`prim@str`].
     ///
     /// # Panics
@@ -607,6 +632,15 @@ impl OsStrBytesExt for OsStr {
     }
 
     #[inline]
+    unsafe fn get_unchecked<I>(&self, index: I) -> &Self
+    where
+        I: SliceIndex,
+    {
+        // SAFETY: This method has equivalent safety requirements.
+        unsafe { index.get_unchecked(self) }
+    }
+
+    #[inline]
     fn index<I>(&self, index: I) -> &Self
     where
         I: SliceIndex,
@@ -751,12 +785,22 @@ impl OsStrBytesExt for OsStr {
 }
 
 pub trait SliceIndex {
+    unsafe fn get_unchecked(self, string: &OsStr) -> &OsStr;
+
     fn index(self, string: &OsStr) -> &OsStr;
 }
 
 macro_rules! r#impl {
     ( $type:ty $(, $var:ident , $($bound:expr),+)? ) => {
         impl SliceIndex for $type {
+            #[inline]
+            unsafe fn get_unchecked(self, string: &OsStr) -> &OsStr {
+                // SAFETY: This method has equivalent safety requirements.
+                unsafe {
+                    os_str(string.as_encoded_bytes().get_unchecked(self))
+                }
+            }
+
             #[inline]
             fn index(self, string: &OsStr) -> &OsStr {
                 $(
