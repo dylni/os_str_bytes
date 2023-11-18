@@ -14,8 +14,8 @@ use std::str;
 
 use super::ext;
 use super::ext::SliceIndex;
-use super::iter::RawSplit;
 use super::iter::RawRSplit;
+use super::iter::RawSplit;
 use super::iter::Utf8Chunks;
 use super::private;
 use super::OsStrBytesExt;
@@ -50,12 +50,6 @@ unsafe impl TransmuteBox for [u8] {}
 /// A container providing additional functionality for [`OsStr`].
 ///
 /// For more information, see [`OsStrBytesExt`].
-///
-/// # Safety
-///
-/// Although this type is annotated with `#[repr(transparent)]`, the inner
-/// representation is not stable. Transmuting between this type and any other
-/// causes immediate undefined behavior.
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 #[repr(transparent)]

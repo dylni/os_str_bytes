@@ -277,7 +277,7 @@ pub trait OsStrBytesExt: OsStrBytes {
     /// assert_eq!("bar", os_string.index(3..));
     /// ```
     ///
-    /// [`Index::index`]: std::ops::Index::index
+    /// [`Index::index`]: ::std::ops::Index::index
     /// [valid boundary]: #indices
     #[must_use]
     #[track_caller]
@@ -826,12 +826,6 @@ r#impl!(RangeToInclusive<usize>, x, x.end.wrapping_add(1));
 /// A container for platform strings containing no unicode characters.
 ///
 /// Instances can only be constructed using [`Utf8Chunks`].
-///
-/// # Safety
-///
-/// Although this type is annotated with `#[repr(transparent)]`, the inner
-/// representation is not stable. Transmuting between this type and any other
-/// causes immediate undefined behavior.
 #[derive(Debug)]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 #[repr(transparent)]

@@ -38,7 +38,6 @@ impl Encoded for &str {
 ///
 /// [`RawOsStr`]: super::RawOsStr
 /// [`RawOsString`]: super::RawOsString
-/// [`str::pattern::Pattern`]: ::std::str::pattern::Pattern
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub trait Pattern: private::Sealed {
     #[doc(hidden)]

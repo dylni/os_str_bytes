@@ -22,8 +22,8 @@
 //! used by this crate is an implementation detail, so it does not make sense
 //! to expose it to users.
 //!
-//! For user input with an unknown encoding that is similar to UTF-8, use the
-//! following IO-safe methods, which avoid errors when [writing to streams on
+//! For user input with an unknown encoding similar to UTF-8, use the following
+//! IO-safe methods, which avoid errors when [writing to streams on
 //! Windows][windows_considerations]. These methods will not accept or return
 //! byte sequences that are invalid for input and output streams. Therefore,
 //! they can be used to convert between bytes strings exposed to users and
