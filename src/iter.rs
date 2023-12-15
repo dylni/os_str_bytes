@@ -19,8 +19,8 @@ use super::RawOsStr;
 
 macro_rules! r#impl {
     (
-        $(#[$attr:meta])* $name:ident ,
-        $(#[$raw_attr:meta])* $raw_name:ident ,
+        $(#[ $attr:meta ])* $name:ident ,
+        $(#[ $raw_attr:meta ])* $raw_name:ident ,
         $split_method:ident ,
         $reverse:expr ,
     ) => {

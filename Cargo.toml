@@ -20,12 +20,12 @@ rustc-args = ["--cfg", "os_str_bytes_docs_rs"]
 rustdoc-args = ["--cfg", "os_str_bytes_docs_rs"]
 
 [dependencies]
-memchr = { version = "2.4", optional = true }
+memchr = { version = "2.3.5", optional = true }
 
 [dev-dependencies]
 fastrand = "2.0"
-lazy_static = "1.4"
-tempfile = "3.2"
+lazy_static = "1.0.3"
+tempfile = "3.8"
 
 [features]
 default = ["memchr", "raw_os_str"]

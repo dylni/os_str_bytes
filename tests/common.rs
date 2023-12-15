@@ -2,10 +2,10 @@
 
 macro_rules! if_checked_conversions {
     ( $($item:item)+ ) => {
-        $(
-            #[cfg(feature = "checked_conversions")]
-            $item
-        )+
+    $(
+        #[cfg(feature = "checked_conversions")]
+        $item
+    )+
     };
 }
 

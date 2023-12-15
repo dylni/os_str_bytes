@@ -69,8 +69,8 @@
 //!   - [`RawOsString::from_raw_vec`]
 //!
 //!   Because this feature should not be used in libraries, the
-//!   "OS_STR_BYTES_CHECKED_CONVERSIONS" environment variable must be defined
-//!   during compilation.
+//!   "OS\_STR\_BYTES\_CHECKED\_CONVERSIONS" environment variable must be
+//!   defined during compilation.
 //!
 //! - **conversions** -
 //!   Provides methods that require encoding conversion and may be expensive:
@@ -213,10 +213,10 @@ use std::path::PathBuf;
 
 macro_rules! if_checked_conversions {
     ( $($item:item)+ ) => {
-        $(
-            #[cfg(feature = "checked_conversions")]
-            $item
-        )+
+    $(
+        #[cfg(feature = "checked_conversions")]
+        $item
+    )+
     };
 }
 
@@ -248,10 +248,10 @@ const _: &str = env!(
 
 macro_rules! if_conversions {
     ( $($item:item)+ ) => {
-        $(
-            #[cfg(feature = "conversions")]
-            $item
-        )+
+    $(
+        #[cfg(feature = "conversions")]
+        $item
+    )+
     };
 }
 
@@ -265,10 +265,10 @@ if_conversions! {
 
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
-        $(
-            #[cfg(feature = "raw_os_str")]
-            $item
-        )+
+    $(
+        #[cfg(feature = "raw_os_str")]
+        $item
+    )+
     };
 }
 

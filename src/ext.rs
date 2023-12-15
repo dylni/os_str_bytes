@@ -61,17 +61,17 @@ pub(super) fn check_bound(string: &OsStr, index: usize) {
 
 macro_rules! r#impl {
     ( $($name:ident),+ ) => {
-        $(
-            #[cfg(feature = "memchr")]
-            use memchr::memmem::$name;
+    $(
+        #[cfg(feature = "memchr")]
+        use memchr::memmem::$name;
 
-            #[cfg(not(feature = "memchr"))]
-            fn $name(string: &[u8], pat: &[u8]) -> Option<usize> {
-                (pat.len()..=string.len())
-                    .$name(|&x| string[..x].ends_with(pat))
-                    .map(|x| x - pat.len())
-            }
-        )+
+        #[cfg(not(feature = "memchr"))]
+        fn $name(string: &[u8], pat: &[u8]) -> Option<usize> {
+            (pat.len()..=string.len())
+                .$name(|&x| string[..x].ends_with(pat))
+                .map(|x| x - pat.len())
+        }
+    )+
     };
 }
 r#impl!(find, rfind);
