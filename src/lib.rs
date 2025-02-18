@@ -203,6 +203,10 @@
     feature(sgx_platform)
 )]
 #![cfg_attr(target_os = "uefi", feature(uefi_std))]
+#![cfg_attr(
+    all(target_os = "wasi", target_env = "p2"),
+    feature(wasip2)
+)]
 #![warn(unused_results)]
 
 use std::borrow::Cow;
