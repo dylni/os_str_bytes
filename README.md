@@ -12,7 +12,7 @@ Add the following lines to your "Cargo.toml" file:
 
 ```toml
 [dependencies]
-os_str_bytes = "7.0"
+os_str_bytes = "7.1"
 ```
 
 See the [documentation] for available functionality and examples.
@@ -81,7 +81,7 @@ crate's minor version:
 
 ```toml
 [dependencies]
-os_str_bytes = "~7.0"
+os_str_bytes = "~7.1"
 ```
 
 ## License
