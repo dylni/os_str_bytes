@@ -887,8 +887,8 @@ where
     type Output = Self;
 
     #[inline]
-    fn index(&self, idx: Idx) -> &Self::Output {
-        Self::new(self.as_os_str().index(idx))
+    fn index(&self, index: Idx) -> &Self::Output {
+        Self::new(self.as_os_str().index(index))
     }
 }
 
@@ -1434,8 +1434,8 @@ where
     type Output = <RawOsStr as Index<Idx>>::Output;
 
     #[inline]
-    fn index(&self, idx: Idx) -> &Self::Output {
-        &(**self)[idx]
+    fn index(&self, index: Idx) -> &Self::Output {
+        &(**self)[index]
     }
 }
 

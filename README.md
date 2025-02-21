@@ -4,7 +4,7 @@ This crate provides additional functionality for [`OsStr`] and [`OsString`],
 without resorting to panics or corruption for invalid UTF-8. Thus, familiar
 methods from [`str`] and [`String`] can be used.
 
-[![GitHub Build Status](https://github.com/dylni/os_str_bytes/workflows/build/badge.svg?branch=master)](https://github.com/dylni/os_str_bytes/actions?query=branch%3Amaster)
+[![GitHub Build Status](https://github.com/dylni/os_str_bytes/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/dylni/os_str_bytes/actions/workflows/build.yml?query=branch%3Amaster)
 
 ## Usage
 
@@ -54,7 +54,7 @@ The minimum supported Rust toolchain version depends on the platform:
     </tr>
     <tr>
         <td>WASI</td>
-        <td><code>*-wasi</code></td>
+        <td><code>*-wasi*</code></td>
         <td>1.74.0</td>
     </tr>
     <tr>
