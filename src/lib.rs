@@ -5,7 +5,7 @@
 //! # Usage
 //!
 //! The most important trait included is [`OsStrBytesExt`], which provides
-//! methods analagous to those of [`str`] but for [`OsStr`]. These methods will
+//! methods analogous to those of [`str`] but for [`OsStr`]. These methods will
 //! never panic for invalid UTF-8 in a platform string, so they can be used to
 //! manipulate [`OsStr`] values with the same simplicity possible for [`str`].
 //!
