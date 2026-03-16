@@ -193,6 +193,10 @@
 //! [uniquote]: https://crates.io/crates/uniquote
 //! [windows_considerations]: https://doc.rust-lang.org/std/io/struct.Stdout.html#note-windows-portability-considerations
 
+#![cfg_attr(
+    all(target_os = "uefi", not(feature = "conversions")),
+    allow(unused_features)
+)]
 // Only require a nightly compiler when building documentation for docs.rs.
 // This is a private option that should not be used.
 // https://github.com/rust-lang/docs.rs/issues/147#issuecomment-389544407
