@@ -11,12 +11,24 @@ use std::os::wasi as os;
 #[cfg(target_os = "xous")]
 use std::os::xous as os;
 
+if_os_conversions! {
+    use std::ffi::OsStr;
+
+    use os::ffi::OsStrExt;
+}
+
 pub(super) mod convert_io;
 
 if_conversions! {
     pub(super) mod convert;
+}
 
-    if_raw_str! {
-        pub(super) mod raw;
+if_raw_str! {
+    pub(super) mod raw;
+}
+
+if_os_conversions! {
+    fn to_bytes(string: &OsStr) -> &[u8] {
+        string.as_bytes()
     }
 }

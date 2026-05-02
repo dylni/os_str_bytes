@@ -11,11 +11,38 @@ use std::mem;
 use std::str;
 
 use super::ext;
+use super::imp::raw;
 use super::pattern::Encoded;
-use super::NonUnicodeOsStr;
 use super::OsStrBytesExt;
 use super::Pattern;
 use super::RawOsStr;
+
+pub(super) mod item;
+use item::NonUnicodeOsStr;
+use item::OsUnit;
+
+/// The iterator returned by [`NonUnicodeOsStr::os_units`].
+#[derive(Clone, Debug)]
+#[must_use]
+pub struct OsUnits<'a>(raw::OsUnits<'a>);
+
+impl<'a> OsUnits<'a> {
+    #[inline]
+    pub(super) fn new(string: &'a NonUnicodeOsStr) -> Self {
+        Self(raw::os_units(string.as_os_str()))
+    }
+}
+
+impl FusedIterator for OsUnits<'_> {}
+
+impl Iterator for OsUnits<'_> {
+    type Item = OsUnit;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(raw::os_unit)
+    }
+}
 
 macro_rules! r#impl {
     (

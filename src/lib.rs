@@ -53,6 +53,7 @@
 //!   - [`iter`]
 //!   - [`NonUnicodeOsStr`]
 //!   - [`OsStrBytesExt`]
+//!   - [`OsUnit`]
 //!   - [`Pattern`]
 //!   - [`RawOsStr`]
 //!   - [`RawOsStrCow`]
@@ -268,6 +269,15 @@ if_conversions! {
     }
 }
 
+macro_rules! if_os_conversions {
+    ( $($item:item)+ ) => {
+    $(
+        #[cfg(any(feature = "conversions", feature = "raw_os_str"))]
+        $item
+    )+
+    };
+}
+
 macro_rules! if_raw_str {
     ( $($item:item)+ ) => {
     $(
@@ -305,10 +315,11 @@ mod util;
 
 if_raw_str! {
     mod ext;
-    pub use ext::NonUnicodeOsStr;
     pub use ext::OsStrBytesExt;
 
     pub mod iter;
+    pub use iter::item::OsUnit;
+    pub use iter::item::NonUnicodeOsStr;
 
     mod pattern;
     pub use pattern::Pattern;

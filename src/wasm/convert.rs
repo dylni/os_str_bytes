@@ -22,15 +22,6 @@ impl Error for EncodingError {}
 
 pub(crate) type Result<T> = result::Result<T, EncodingError>;
 
-macro_rules! expect_utf8 {
-    ( $result:expr ) => {
-        $result.expect(
-            "platform string contains invalid UTF-8, which should not be \
-             possible",
-        )
-    };
-}
-
 pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
     str::from_utf8(string)
         .map(|x| Cow::Borrowed(OsStr::new(x)))
@@ -38,7 +29,7 @@ pub(crate) fn os_str_from_bytes(string: &[u8]) -> Result<Cow<'_, OsStr>> {
 }
 
 pub(crate) fn os_str_to_bytes(string: &OsStr) -> Cow<'_, [u8]> {
-    Cow::Borrowed(expect_utf8!(string.to_str()).as_bytes())
+    Cow::Borrowed(super::to_bytes(string))
 }
 
 pub(crate) fn os_string_from_vec(string: Vec<u8>) -> Result<OsString> {
