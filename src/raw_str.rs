@@ -30,7 +30,7 @@ if_conversions! {
     use super::OsStringBytes;
 }
 
-#[allow(clippy::missing_safety_doc)]
+#[expect(clippy::missing_safety_doc)]
 unsafe trait TransmuteBox {
     fn transmute_box<R>(self: Box<Self>) -> Box<R>
     where
@@ -122,7 +122,7 @@ impl RawOsStr {
     /// let raw = RawOsStr::from_str(string);
     /// assert_eq!(string, raw);
     /// ```
-    #[allow(clippy::should_implement_trait)]
+    #[expect(clippy::should_implement_trait)]
     #[deprecated(since = "7.0.0", note = "use `new` instead")]
     #[inline]
     #[must_use]
@@ -149,7 +149,7 @@ impl RawOsStr {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    #[allow(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc)]
     #[inline]
     #[must_use]
     pub unsafe fn from_encoded_bytes_unchecked(string: &[u8]) -> &Self {
@@ -398,7 +398,7 @@ impl RawOsStr {
     /// assert_eq!("foo", unsafe { raw.get_unchecked(..3) });
     /// assert_eq!("bar", unsafe { raw.get_unchecked(3..) });
     /// ```
-    #[allow(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc)]
     #[inline]
     #[must_use]
     pub unsafe fn get_unchecked<I>(&self, index: I) -> &Self
@@ -1037,7 +1037,7 @@ impl RawOsString {
     /// #
     /// # Ok::<_, io::Error>(())
     /// ```
-    #[allow(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc)]
     #[inline]
     #[must_use]
     pub unsafe fn from_encoded_vec_unchecked(string: Vec<u8>) -> Self {

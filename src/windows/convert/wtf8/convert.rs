@@ -21,7 +21,9 @@ const MAX_WTF8_LENGTH: usize = MAX_UTF8_LENGTH;
 
 macro_rules! static_assert {
     ( $condition:expr ) => {
-        const _: () = assert!($condition, "static assertion failed");
+        const {
+            assert!($condition, "static assertion failed");
+        }
     };
 }
 

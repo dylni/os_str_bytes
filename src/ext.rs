@@ -153,7 +153,6 @@ where
 /// [`memchr::memmem::find`][memchr_complexity]).
 ///
 /// [memchr_complexity]: ::memchr::memmem::find#complexity
-#[cfg_attr(not(feature = "conversions"), allow(private_bounds))]
 #[cfg_attr(os_str_bytes_docs_rs, doc(cfg(feature = "raw_os_str")))]
 pub trait OsStrBytesExt: OsStrBytes {
     /// Equivalent to [`str::contains`].
