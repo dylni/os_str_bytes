@@ -1,4 +1,3 @@
-use std::char;
 use std::char::DecodeUtf16;
 use std::iter::FusedIterator;
 use std::num::NonZeroU16;
