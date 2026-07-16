@@ -73,5 +73,5 @@ fn test_panics() {
     test(|| string.index(0..=0));
     test(|| string.index(..1));
     test(|| string.index(..=0));
-    test(|| string.split_at(1));
+    test(|| OsStrBytesExt::split_at(string, 1));
 }

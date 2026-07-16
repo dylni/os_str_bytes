@@ -540,7 +540,7 @@ impl RawOsStr {
     #[must_use]
     #[track_caller]
     pub fn split_at(&self, mid: usize) -> (&Self, &Self) {
-        Self::from_tuple(self.as_os_str().split_at(mid))
+        Self::from_tuple(OsStrBytesExt::split_at(self.as_os_str(), mid))
     }
 
     /// Equivalent to [`OsStrBytesExt::split_once`].
