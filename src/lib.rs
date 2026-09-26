@@ -356,6 +356,7 @@ if_checked_conversions! {
     pub struct EncodingError(convert::EncodingError);
 
     impl Display for EncodingError {
+        #[cfg_attr(not(windows), allow(unreachable_code))]
         #[inline]
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             self.0.fmt(f)
